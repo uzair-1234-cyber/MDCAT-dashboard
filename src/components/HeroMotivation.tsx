@@ -87,7 +87,7 @@ export const HeroMotivation: React.FC<HeroMotivationProps> = ({
           {/* Book Stack & Desk Still Life Photo */}
           <div className="w-64 sm:w-72 lg:w-80 h-44 sm:h-48 lg:h-52 rounded-2xl overflow-hidden shadow-md border border-white/60 bg-white/40">
             <img
-              src="../src/assets/images/dashboard_hero_desk_1790761688566.jpg"
+              src="https://res.cloudinary.com/rojfyoyk/image/upload/f_auto,q_auto/dashboard_hero_desk_1790761688566"
               alt="Medical Study Desk"
               className="w-full h-full object-cover object-center transform hover:scale-105 transition-transform duration-700"
             />
