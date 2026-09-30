@@ -2,7 +2,7 @@ import express from 'express';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import app from './server/app';
+import app from './api/index';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -11,10 +11,7 @@ const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
 
 async function startServer() {
-  // If running in a serverless function runtime, do not start HTTP listener
-  if (isServerless) {
-    return;
-  }
+  if (isServerless) return;
 
   if (process.env.NODE_ENV !== 'production') {
     const { createServer: createViteServer } = await import('vite');
