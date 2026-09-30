@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <script>
+      // Safeguard against: "Uncaught TypeError: Cannot set property fetch of #<Window> which has only a getter"
+      // Allows devtools, test runners, inspection consoles (e.g. vConsole), or proxy polyfills to safely assign window.fetch
+      (function() {
+        try {
+          var originalFetch = window.fetch ? window.fetch.bind(window) : undefined;
+          var currentFetch = originalFetch;
+          Object.defineProperty(window, 'fetch', {
+            configurable: true,
+            enumerable: true,
+            get: function() {
+              return currentFetch;
+            },
+            set: function(fn) {
+              currentFetch = fn;
+            }
+          });
+        } catch (e1) {
+          try {
+            if (window.Window && window.Window.prototype) {
+              var protoFetch = window.Window.prototype.fetch || window.fetch;
+              var curProtoFetch = protoFetch ? protoFetch.bind(window) : undefined;
+              Object.defineProperty(window.Window.prototype, 'fetch', {
+                configurable: true,
+                enumerable: true,
+                get: function() {
+                  return curProtoFetch;
+                },
+                set: function(fn) {
+                  curProtoFetch = fn;
+                }
+              });
+            }
+          } catch (e2) {}
+        }
+      })();
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MediPrep AI - Medical Study & MDCAT Preparation Dashboard</title>
+    <meta name="description" content="AI-powered study command center and MDCAT preparation dashboard for First-Year Sindh Board medical aspirants covering Biology, Chemistry, Physics, and English." />
+    <meta property="og:title" content="MediPrep AI - Medical Study & MDCAT Preparation Dashboard" />
+    <meta property="og:description" content="AI-powered study command center and MDCAT preparation dashboard for First-Year Sindh Board medical aspirants covering Biology, Chemistry, Physics, and English." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" type="image/jpeg" href="/logo.jpg" />
+    <link rel="apple-touch-icon" href="/logo.jpg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  </head>
+  <body class="bg-slate-50 text-slate-800 antialiased font-['Plus_Jakarta_Sans',sans-serif]">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+

@@ -1,0 +1,6 @@
+{
+  "name": "MediPrep AI - Medical Study & MDCAT Preparation Dashboard",
+  "description": "AI-powered study command center and MDCAT preparation dashboard for First-Year Sindh Board medical aspirants covering Biology, Chemistry, Physics, and English.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
