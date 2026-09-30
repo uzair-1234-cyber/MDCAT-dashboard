@@ -1,4 +1,4 @@
-// api/index.ts
+// src/api-handler.ts
 import express from "express";
 import path from "path";
 import fs from "fs";
@@ -2650,10 +2650,10 @@ app.use((err, req, res, next) => {
     });
   }
 });
-var index_default = app;
+var api_handler_default = app;
 export {
   aiClient,
   app,
   dbStore,
-  index_default as default
+  api_handler_default as default
 };
