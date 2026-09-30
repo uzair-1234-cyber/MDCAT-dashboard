@@ -7,6 +7,8 @@ import { fileURLToPath } from "url";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 import { GoogleGenAI, Type } from "@google/genai";
+import jwt from "jsonwebtoken";
+import bcrypt from "bcrypt";
 dotenv.config();
 var appDir = process.cwd();
 try {
@@ -378,7 +380,8 @@ var INITIAL_DATABASE = {
   aiSessions: []
 };
 var MaterialMongoSchema = new mongoose.Schema({
-  id: { type: String, required: true, unique: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  id: { type: String, required: true },
   title: { type: String, default: "" },
   subject: { type: String, default: "Biology" },
   chapter: { type: String, default: "" },
@@ -395,7 +398,8 @@ var MaterialMongoSchema = new mongoose.Schema({
   bookmarked: { type: Boolean, default: false }
 }, { timestamps: true });
 var MCQMongoSchema = new mongoose.Schema({
-  id: { type: String, required: true, unique: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  id: { type: String, required: true },
   subject: { type: String, default: "Biology" },
   chapter: { type: String, default: "" },
   topic: { type: String, default: "" },
@@ -416,7 +420,8 @@ var MCQMongoSchema = new mongoose.Schema({
   createdAt: { type: String, default: "" }
 }, { timestamps: true });
 var QuizAttemptMongoSchema = new mongoose.Schema({
-  id: { type: String, required: true, unique: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  id: { type: String, required: true },
   title: { type: String, default: "" },
   subject: { type: String, default: "" },
   chapter: { type: String, default: "" },
@@ -432,7 +437,8 @@ var QuizAttemptMongoSchema = new mongoose.Schema({
   answersSummary: [mongoose.Schema.Types.Mixed]
 }, { timestamps: true });
 var StudyNoteMongoSchema = new mongoose.Schema({
-  id: { type: String, required: true, unique: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  id: { type: String, required: true },
   title: { type: String, default: "" },
   subject: { type: String, default: "Biology" },
   chapter: { type: String, default: "" },
@@ -444,7 +450,8 @@ var StudyNoteMongoSchema = new mongoose.Schema({
   updatedAt: { type: String, default: "" }
 }, { timestamps: true });
 var RevisionPlanMongoSchema = new mongoose.Schema({
-  id: { type: String, required: true, unique: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  id: { type: String, required: true },
   subject: { type: String, default: "Biology" },
   chapter: { type: String, default: "" },
   topic: { type: String, default: "" },
@@ -455,7 +462,8 @@ var RevisionPlanMongoSchema = new mongoose.Schema({
   notes: { type: String, default: "" }
 }, { timestamps: true });
 var ActivityMongoSchema = new mongoose.Schema({
-  id: { type: String, required: true, unique: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  id: { type: String, required: true },
   title: { type: String, default: "" },
   description: { type: String, default: "" },
   subject: { type: String, default: "" },
@@ -463,14 +471,16 @@ var ActivityMongoSchema = new mongoose.Schema({
   timestamp: { type: String, default: "" }
 }, { timestamps: true });
 var AppStateMongoSchema = new mongoose.Schema({
-  key: { type: String, required: true, unique: true, default: "main_state" },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  key: { type: String, required: true, default: "main_state" },
   userProfile: mongoose.Schema.Types.Mixed,
   studyState: mongoose.Schema.Types.Mixed,
   chapters: [mongoose.Schema.Types.Mixed],
   subjects: [mongoose.Schema.Types.Mixed]
 }, { timestamps: true });
 var MistakeMongoSchema = new mongoose.Schema({
-  id: { type: String, required: true, unique: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  id: { type: String, required: true },
   mcqId: { type: String, default: "" },
   question: { type: String, default: "" },
   subject: { type: String, default: "Biology" },
@@ -494,6 +504,11 @@ var MistakeMongoSchema = new mongoose.Schema({
   createdAt: { type: String, default: "" },
   lastAttemptedAt: { type: String, default: "" }
 }, { timestamps: true });
+var UserSchema = new mongoose.Schema({
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true }
+}, { timestamps: true });
+var UserModel = mongoose.models.User || mongoose.model("User", UserSchema);
 var MaterialModel = mongoose.models.Material || mongoose.model("Material", MaterialMongoSchema);
 var MCQModel = mongoose.models.MCQ || mongoose.model("MCQ", MCQMongoSchema);
 var QuizAttemptModel = mongoose.models.QuizAttempt || mongoose.model("QuizAttempt", QuizAttemptMongoSchema);
@@ -891,6 +906,30 @@ var DatabaseStore = class {
   }
 };
 var dbStore = new DatabaseStore();
+var JWT_SECRET = process.env.JWT_SECRET || "supersecretkey123";
+app.post("/api/auth/signup", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = await UserModel.create({ email, password: hashedPassword });
+    res.status(201).json({ message: "User created successfully" });
+  } catch (err) {
+    res.status(500).json({ error: "Signup failed", details: err.message });
+  }
+});
+app.post("/api/auth/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await UserModel.findOne({ email });
+    if (!user) return res.status(400).json({ error: "User not found" });
+    const validPassword = await bcrypt.compare(password, user.password);
+    if (!validPassword) return res.status(400).json({ error: "Invalid password" });
+    const token = jwt.sign({ userId: user._id, email: user.email }, JWT_SECRET, { expiresIn: "1h" });
+    res.json({ token });
+  } catch (err) {
+    res.status(500).json({ error: "Login failed", details: err.message });
+  }
+});
 var handleHealth = (req, res) => {
   res.json({
     status: "ok",

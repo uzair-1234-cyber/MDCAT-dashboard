@@ -648,7 +648,8 @@ const INITIAL_DATABASE: DatabaseSchema = {
 // MONGOOSE SCHEMAS & MODELS FOR REAL CLOUD PERSISTENCE
 // -------------------------------------------------------------
 const MaterialMongoSchema = new mongoose.Schema({
-  id: { type: String, required: true, unique: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  id: { type: String, required: true },
   title: { type: String, default: '' },
   subject: { type: String, default: 'Biology' },
   chapter: { type: String, default: '' },
@@ -666,7 +667,8 @@ const MaterialMongoSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 const MCQMongoSchema = new mongoose.Schema({
-  id: { type: String, required: true, unique: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  id: { type: String, required: true },
   subject: { type: String, default: 'Biology' },
   chapter: { type: String, default: '' },
   topic: { type: String, default: '' },
@@ -688,7 +690,8 @@ const MCQMongoSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 const QuizAttemptMongoSchema = new mongoose.Schema({
-  id: { type: String, required: true, unique: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  id: { type: String, required: true },
   title: { type: String, default: '' },
   subject: { type: String, default: '' },
   chapter: { type: String, default: '' },
@@ -705,7 +708,8 @@ const QuizAttemptMongoSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 const StudyNoteMongoSchema = new mongoose.Schema({
-  id: { type: String, required: true, unique: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  id: { type: String, required: true },
   title: { type: String, default: '' },
   subject: { type: String, default: 'Biology' },
   chapter: { type: String, default: '' },
@@ -718,7 +722,8 @@ const StudyNoteMongoSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 const RevisionPlanMongoSchema = new mongoose.Schema({
-  id: { type: String, required: true, unique: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  id: { type: String, required: true },
   subject: { type: String, default: 'Biology' },
   chapter: { type: String, default: '' },
   topic: { type: String, default: '' },
@@ -730,7 +735,8 @@ const RevisionPlanMongoSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 const ActivityMongoSchema = new mongoose.Schema({
-  id: { type: String, required: true, unique: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  id: { type: String, required: true },
   title: { type: String, default: '' },
   description: { type: String, default: '' },
   subject: { type: String, default: '' },
@@ -739,7 +745,8 @@ const ActivityMongoSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 const AppStateMongoSchema = new mongoose.Schema({
-  key: { type: String, required: true, unique: true, default: 'main_state' },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  key: { type: String, required: true, default: 'main_state' },
   userProfile: mongoose.Schema.Types.Mixed,
   studyState: mongoose.Schema.Types.Mixed,
   chapters: [mongoose.Schema.Types.Mixed],
@@ -747,7 +754,8 @@ const AppStateMongoSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 const MistakeMongoSchema = new mongoose.Schema({
-  id: { type: String, required: true, unique: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  id: { type: String, required: true },
   mcqId: { type: String, default: '' },
   question: { type: String, default: '' },
   subject: { type: String, default: 'Biology' },
@@ -771,6 +779,12 @@ const MistakeMongoSchema = new mongoose.Schema({
   createdAt: { type: String, default: '' },
   lastAttemptedAt: { type: String, default: '' },
 }, { timestamps: true });
+
+const UserSchema = new mongoose.Schema({
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+}, { timestamps: true });
+const UserModel = mongoose.models.User || mongoose.model('User', UserSchema);
 
 const MaterialModel = mongoose.models.Material || mongoose.model('Material', MaterialMongoSchema);
 const MCQModel = mongoose.models.MCQ || mongoose.model('MCQ', MCQMongoSchema);
@@ -1236,6 +1250,54 @@ class DatabaseStore {
 
 const dbStore = new DatabaseStore();
 
+
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcrypt';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey123';
+
+// Auth Middleware
+const authenticateToken = (req: any, res: express.Response, next: express.NextFunction) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) return res.sendStatus(401);
+
+  jwt.verify(token, JWT_SECRET, (err: any, user: any) => {
+    if (err) return res.sendStatus(403);
+    req.user = user;
+    next();
+  });
+};
+
+// Auth Routes
+app.post('/api/auth/signup', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = await UserModel.create({ email, password: hashedPassword });
+    res.status(201).json({ message: 'User created successfully' });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Signup failed', details: err.message });
+  }
+});
+
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await UserModel.findOne({ email });
+    if (!user) return res.status(400).json({ error: 'User not found' });
+
+    const validPassword = await bcrypt.compare(password, user.password);
+    if (!validPassword) return res.status(400).json({ error: 'Invalid password' });
+
+    const token = jwt.sign({ userId: user._id, email: user.email }, JWT_SECRET, { expiresIn: '1h' });
+    res.json({ token });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Login failed', details: err.message });
+  }
+});
+
 // -------------------------------------------------------------
 // API ROUTES
 // -------------------------------------------------------------
@@ -1285,7 +1347,7 @@ app.post(['/api/db-test', '/db-test'], async (req, res) => {
 });
 
 // Full Dashboard & Initial Data
-app.get(['/api/init', '/init'], (req, res) => {
+app.get(['/api/init', '/init'], authenticateToken, (req: any, res) => {
   try {
     const data = dbStore.getData();
     const dbStatus = dbStore.getStatus();
@@ -1300,7 +1362,7 @@ app.get(['/api/init', '/init'], (req, res) => {
 });
 
 // Update Medical Aspirant Profile
-app.put('/api/user-profile', async (req, res) => {
+app.put('/api/user-profile', authenticateToken, async (req: any, res) => {
   try {
     const { name, targetExam, targetYear, dreamMedicalCollege, personalMotto, aspirantType } = req.body;
     const currentData = dbStore.getData();
@@ -1327,11 +1389,11 @@ app.put('/api/user-profile', async (req, res) => {
 
 
 // Subjects & Chapters
-app.get('/api/subjects', (req, res) => {
+app.get('/api/subjects', authenticateToken, (req, res) => {
   res.json(dbStore.getData().subjects);
 });
 
-app.get('/api/chapters', (req, res) => {
+app.get('/api/chapters', authenticateToken, (req, res) => {
   const { subject } = req.query;
   const allChapters = dbStore.getData().chapters;
   if (subject) {
