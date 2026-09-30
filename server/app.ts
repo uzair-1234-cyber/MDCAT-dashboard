@@ -9,14 +9,23 @@ import { GoogleGenAI, Type } from '@google/genai';
 
 dotenv.config();
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Determine app directory safely in both ESM and CJS serverless environments
+let appDir = process.cwd();
+try {
+  if (typeof __dirname !== 'undefined') {
+    appDir = __dirname;
+  } else if (typeof import.meta !== 'undefined' && (import.meta as any)?.url) {
+    appDir = path.dirname(fileURLToPath((import.meta as any).url));
+  }
+} catch (_) {
+  appDir = process.cwd();
+}
 
 const app = express();
 
 // Determine writable directory for serverless environments (e.g. Vercel)
 const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
-const BASE_STORAGE_DIR = isServerless ? os.tmpdir() : process.cwd();
+const BASE_STORAGE_DIR = isServerless ? os.tmpdir() : appDir;
 
 const UPLOADS_DIR = path.join(BASE_STORAGE_DIR, 'uploads');
 const DATA_DIR = path.join(BASE_STORAGE_DIR, 'data');
@@ -24,30 +33,39 @@ const DATA_DIR = path.join(BASE_STORAGE_DIR, 'data');
 try {
   if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 } catch (e) {
-  console.warn('[Storage] Uploads directory creation notice:', e);
+  // Silent fallback in serverless
 }
 
 try {
   if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 } catch (e) {
-  console.warn('[Storage] Data directory creation notice:', e);
+  // Silent fallback in serverless
 }
 
-// CORS & Preflight handling for Vercel deployments & preview environments
+// Permissive CORS & Preflight handling for Vercel deployments & preview environments
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, X-CSRF-Token, X-Api-Version');
   if (req.method === 'OPTIONS') {
     return res.sendStatus(200);
   }
   next();
 });
 
-// Vercel Serverless URL Normalization:
-// Rewrites or routes on Vercel may supply URLs either with or without the /api prefix.
+// Robust Vercel Serverless URL Normalization:
+// Handles rewrites where Vercel supplies original path in headers or rewrites /api/(.*) -> /api
 app.use((req, res, next) => {
-  if (req.url && !req.url.startsWith('/api') && !req.url.startsWith('/uploads')) {
+  const matchedPath =
+    (req.headers['x-matched-path'] as string) ||
+    (req.headers['x-invoke-path'] as string) ||
+    (req.headers['x-forwarded-uri'] as string) ||
+    (req.headers['x-original-url'] as string) ||
+    '';
+
+  if (matchedPath && (matchedPath.startsWith('/api') || matchedPath.startsWith('/uploads'))) {
+    req.url = matchedPath;
+  } else if (req.url && !req.url.startsWith('/api') && !req.url.startsWith('/uploads')) {
     const cleanUrl = req.url.startsWith('/') ? req.url : `/${req.url}`;
     req.url = `/api${cleanUrl}`;
   }
@@ -781,10 +799,16 @@ class DatabaseStore {
 
   constructor() {
     this.data = this.loadFromFile();
-    this.initMongo();
+    this.initMongo().catch((err) => {
+      console.warn('[MongoDB] Init notice:', err?.message || err);
+    });
   }
 
   private loadFromFile(): DatabaseSchema {
+    // In serverless environments, avoid blocking disk reads during cold start
+    if (isServerless) {
+      return JSON.parse(JSON.stringify(INITIAL_DATABASE));
+    }
     try {
       if (fs.existsSync(DB_FILE)) {
         const raw = fs.readFileSync(DB_FILE, 'utf-8');
@@ -1214,17 +1238,32 @@ const dbStore = new DatabaseStore();
 // API ROUTES
 // -------------------------------------------------------------
 
+// Health Check for Vercel & Monitoring
+const handleHealth = (req: express.Request, res: express.Response) => {
+  res.json({
+    status: 'ok',
+    service: 'MediPrep AI Serverless Backend',
+    timestamp: new Date().toISOString(),
+    isServerless,
+    database: dbStore.getStatus(),
+  });
+};
+
+app.get('/api', handleHealth);
+app.get('/api/health', handleHealth);
+app.get('/health', handleHealth);
+
 // DB Status, Reset & Setup
-app.post('/api/reset-data', (req, res) => {
+app.post(['/api/reset-data', '/reset-data'], (req, res) => {
   const freshData = dbStore.resetData();
   res.json({ success: true, data: freshData, status: dbStore.getStatus() });
 });
 
-app.get('/api/db-status', (req, res) => {
+app.get(['/api/db-status', '/db-status'], (req, res) => {
   res.json(dbStore.getStatus());
 });
 
-app.post('/api/db-sync', async (req, res) => {
+app.post(['/api/db-sync', '/db-sync'], async (req, res) => {
   try {
     await dbStore.syncFromMongoOrSeed();
     await dbStore.syncToMongo();
@@ -1234,7 +1273,7 @@ app.post('/api/db-sync', async (req, res) => {
   }
 });
 
-app.post('/api/db-test', async (req, res) => {
+app.post(['/api/db-test', '/db-test'], async (req, res) => {
   const { uri } = req.body;
   if (!uri) {
     return res.status(400).json({ success: false, message: 'MongoDB URI is required.' });
@@ -1244,13 +1283,18 @@ app.post('/api/db-test', async (req, res) => {
 });
 
 // Full Dashboard & Initial Data
-app.get('/api/init', (req, res) => {
-  const data = dbStore.getData();
-  const dbStatus = dbStore.getStatus();
-  res.json({
-    data,
-    status: dbStatus,
-  });
+app.get(['/api/init', '/init'], (req, res) => {
+  try {
+    const data = dbStore.getData();
+    const dbStatus = dbStore.getStatus();
+    res.json({
+      data,
+      status: dbStatus,
+    });
+  } catch (err: any) {
+    console.error('Error serving /api/init:', err);
+    res.status(500).json({ error: 'Failed to retrieve initial data', message: err?.message || String(err) });
+  }
 });
 
 // Update Medical Aspirant Profile
@@ -3217,6 +3261,25 @@ Requirements:
       basedOnPapers: ['MDCAT 2023 Sindh', 'MDCAT 2022 UHS', 'MDCAT 2021 PMC'],
       questions: fallbackMCQs,
       createdAt: new Date().toISOString(),
+    });
+  }
+});
+
+// 404 Fallback for unmatched API routes
+app.use((req, res) => {
+  res.status(404).json({
+    error: 'Not Found',
+    message: `API route ${req.method} ${req.url} was not found on this server.`,
+  });
+});
+
+// Global Error Handler to catch all unhandled errors gracefully
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error('[API Unhandled Error]:', err);
+  if (!res.headersSent) {
+    res.status(500).json({
+      error: 'Internal Server Error',
+      message: err?.message || 'An unexpected server error occurred',
     });
   }
 });
