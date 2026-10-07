@@ -18,7 +18,9 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { NavTab } from './Sidebar';
-import { UserProfile } from '../types';
+import { UserProfile, AuthUser } from '../types';
+import { LogOut, KeyRound, ShieldCheck } from 'lucide-react';
+import { MedicalLogo } from './MedicalLogo';
 
 interface HeaderProps {
   currentTab: NavTab;
@@ -30,6 +32,10 @@ interface HeaderProps {
   studyMinutesToday: number;
   onResetToZero?: () => void;
   userProfile?: UserProfile;
+  currentUser?: AuthUser | null;
+  onOpenAuth?: (mode?: 'login' | 'register') => void;
+  onOpenAccount?: () => void;
+  onLogout?: () => void;
   theme?: 'light' | 'dark';
   onToggleTheme?: () => void;
   onSelectTheme?: (t: 'light' | 'dark') => void;
@@ -44,6 +50,10 @@ export const Header: React.FC<HeaderProps> = ({
   timerActive,
   studyMinutesToday,
   userProfile,
+  currentUser,
+  onOpenAuth,
+  onOpenAccount,
+  onLogout,
   theme = 'light',
   onToggleTheme,
 }) => {
@@ -89,13 +99,14 @@ export const Header: React.FC<HeaderProps> = ({
     };
   }, [onOpenSearch]);
 
-  const studentName = userProfile?.name || 'Muhammad Uzair';
-  const targetCollege = userProfile?.dreamMedicalCollege || 'Dow / SMC / AKU';
+  const studentName = userProfile?.name || currentUser?.name || 'Sindh Board Aspirant';
+  const targetCollege = userProfile?.dreamMedicalCollege || currentUser?.dreamMedicalCollege || 'Dow / SMC / LUMHS';
+  const avatarUrl = userProfile?.avatarUrl || currentUser?.avatarUrl || '';
 
   const notifications = [
     {
       id: 1,
-      title: 'Sindh Board XI Curriculum Live',
+      title: 'MDCAT PREP Curriculum Live',
       description: 'New updated MCQs & Chapter Summaries for Biology, Physics & Chemistry added.',
       time: 'Just now',
       unread: true,
@@ -142,6 +153,11 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <Menu className="w-5 h-5" />
           </button>
+
+          {/* Mobile Medical Logo */}
+          <div className="lg:hidden shrink-0 flex items-center">
+            <MedicalLogo size="sm" iconOnly />
+          </div>
 
           {/* Search Pill: Responsive with truncated text & keyboard badge */}
           <button
@@ -324,126 +340,149 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
 
           {/* User Profile Pill & Dropdown Menu */}
-          <div className="relative" ref={profileMenuRef}>
-            <button
-              onClick={() => {
-                setProfileDropdownOpen(!profileDropdownOpen);
-                setNotificationsOpen(false);
-              }}
-              className="flex items-center gap-1.5 sm:gap-2 pl-1 pr-1.5 sm:pr-2.5 py-1 rounded-full bg-white dark:bg-[#121E28] hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-200/90 dark:border-slate-700 shadow-2xs transition-all group shrink-0 focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
-              title="User Profile & Quick Menu"
-              aria-label="User Profile"
-            >
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full overflow-hidden bg-emerald-800 text-white flex items-center justify-center font-bold text-xs shrink-0 ring-1 ring-emerald-500/30 shadow-2xs relative">
-                {userProfile?.name ? (
-                  <span>{userProfile.name.charAt(0).toUpperCase()}</span>
-                ) : (
-                  <img
-                    src="/logo.jpg"
-                    alt={studentName}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                    }}
-                  />
-                )}
-                {/* Online indicator */}
-                <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 ring-1 ring-white dark:ring-slate-900" />
-              </div>
-              <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 truncate max-w-[90px] sm:max-w-[120px] hidden md:inline">
-                {studentName}
-              </span>
-              <ChevronDown
-                className={`w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200 transition-transform duration-200 ${
-                  profileDropdownOpen ? 'rotate-180' : ''
-                }`}
-              />
-            </button>
+          {currentUser ? (
+            <div className="relative" ref={profileMenuRef}>
+              <button
+                onClick={() => {
+                  setProfileDropdownOpen(!profileDropdownOpen);
+                  setNotificationsOpen(false);
+                }}
+                className="flex items-center gap-1.5 sm:gap-2 pl-1 pr-1.5 sm:pr-2.5 py-1 rounded-full bg-white dark:bg-[#121E28] hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-200/90 dark:border-slate-700 shadow-2xs transition-all group shrink-0 focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+                title="User Profile & Quick Menu"
+                aria-label="User Profile"
+              >
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full overflow-hidden bg-emerald-800 text-white flex items-center justify-center font-bold text-xs shrink-0 ring-1 ring-emerald-500/30 shadow-2xs relative">
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt={studentName} className="w-full h-full object-cover" />
+                  ) : (
+                    <span>{studentName.charAt(0).toUpperCase()}</span>
+                  )}
+                  {/* Online indicator */}
+                  <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 ring-1 ring-white dark:ring-slate-900" />
+                </div>
+                <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 truncate max-w-[90px] sm:max-w-[120px] hidden md:inline">
+                  Dr. {studentName}
+                </span>
+                <ChevronDown
+                  className={`w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200 transition-transform duration-200 ${
+                    profileDropdownOpen ? 'rotate-180' : ''
+                  }`}
+                />
+              </button>
 
-            {/* Profile Dropdown Menu */}
-            {profileDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-64 sm:w-72 bg-white dark:bg-[#0E1A24] border border-slate-200 dark:border-slate-700/80 rounded-2xl shadow-xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-                {/* Header with User Info */}
-                <div className="p-4 bg-gradient-to-br from-emerald-50 to-slate-50 dark:from-[#0E201B] dark:to-[#12222F] border-b border-slate-200/80 dark:border-slate-700/80">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-emerald-800 text-white flex items-center justify-center font-bold text-sm shadow-md ring-2 ring-emerald-500/40 shrink-0">
-                      {studentName.charAt(0).toUpperCase()}
+              {/* Profile Dropdown Menu */}
+              {profileDropdownOpen && (
+                <div className="absolute right-0 mt-2 w-64 sm:w-72 bg-white dark:bg-[#0E1A24] border border-slate-200 dark:border-slate-700/80 rounded-2xl shadow-xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                  {/* Header with User Info */}
+                  <div className="p-4 bg-gradient-to-br from-emerald-50 to-slate-50 dark:from-[#0E201B] dark:to-[#12222F] border-b border-slate-200/80 dark:border-slate-700/80">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full overflow-hidden bg-emerald-800 text-white flex items-center justify-center font-bold text-sm shadow-md ring-2 ring-emerald-500/40 shrink-0">
+                        {avatarUrl ? (
+                          <img src={avatarUrl} alt={studentName} className="w-full h-full object-cover" />
+                        ) : (
+                          <span>{studentName.charAt(0).toUpperCase()}</span>
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-slate-900 dark:text-white truncate">
+                          Dr. {studentName}
+                        </p>
+                        <p className="text-[11px] text-emerald-700 dark:text-emerald-400 font-semibold truncate">
+                          {currentUser?.email || ''}
+                        </p>
+                      </div>
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-bold text-slate-900 dark:text-white truncate">
-                        {studentName}
-                      </p>
-                      <p className="text-[11px] text-emerald-700 dark:text-emerald-400 font-semibold truncate">
-                        Sindh Board XI • MDCAT
-                      </p>
+                    <div className="mt-3 pt-2.5 border-t border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between text-[11px] text-slate-600 dark:text-slate-300">
+                      <span className="truncate max-w-[150px]">Target: <strong className="text-slate-800 dark:text-slate-100">{targetCollege}</strong></span>
+                      <span className="font-mono bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 px-1.5 py-0.5 rounded font-bold shrink-0">
+                        {studyMinutesToday}m
+                      </span>
                     </div>
                   </div>
-                  <div className="mt-3 pt-2.5 border-t border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between text-[11px] text-slate-600 dark:text-slate-300">
-                    <span>Target: <strong className="text-slate-800 dark:text-slate-100">{targetCollege}</strong></span>
-                    <span className="font-mono bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 px-1.5 py-0.5 rounded font-bold">
-                      {studyMinutesToday}m studied
-                    </span>
+
+                  {/* Navigation Links */}
+                  <div className="p-2 space-y-1">
+                    <button
+                      onClick={() => {
+                        onOpenAccount?.();
+                        setProfileDropdownOpen(false);
+                      }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#162736] transition-colors"
+                    >
+                      <User className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                      <span>My Account & MDCAT Goals</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        onSelectTab('mistakes');
+                        setProfileDropdownOpen(false);
+                      }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#162736] transition-colors"
+                    >
+                      <AlertTriangle className="w-4 h-4 text-amber-500" />
+                      <span>Mistake Book Drills</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        onSelectTab('settings');
+                        setProfileDropdownOpen(false);
+                      }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#162736] transition-colors"
+                    >
+                      <ShieldCheck className="w-4 h-4 text-teal-500" />
+                      <span>App Settings & Sync</span>
+                    </button>
+
+                    {/* Dark / Light Toggle */}
+                    <button
+                      onClick={() => {
+                        onToggleTheme?.();
+                      }}
+                      className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#162736] transition-colors cursor-pointer"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        {theme === 'dark' ? (
+                          <Sun className="w-4 h-4 text-amber-400" />
+                        ) : (
+                          <Moon className="w-4 h-4 text-emerald-600" />
+                        )}
+                        <span>{theme === 'dark' ? 'Day Light Mode' : 'Night Dark Mode'}</span>
+                      </div>
+                      <span className="text-[10px] text-slate-400 uppercase font-mono">
+                        {theme}
+                      </span>
+                    </button>
+
+                    {/* Logout Option */}
+                    <div className="pt-1 mt-1 border-t border-slate-200/80 dark:border-slate-800">
+                      <button
+                        onClick={() => {
+                          setProfileDropdownOpen(false);
+                          onLogout?.();
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        <span>Sign Out (Log Out)</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
-
-                {/* Navigation Links */}
-                <div className="p-2 space-y-1">
-                  <button
-                    onClick={() => {
-                      onSelectTab('settings');
-                      setProfileDropdownOpen(false);
-                    }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#162736] transition-colors"
-                  >
-                    <User className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                    <span>My Profile & Settings</span>
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      onSelectTab('mistakes');
-                      setProfileDropdownOpen(false);
-                    }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#162736] transition-colors"
-                  >
-                    <AlertTriangle className="w-4 h-4 text-amber-500" />
-                    <span>Mistake Book Drills</span>
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      onSelectTab('revision');
-                      setProfileDropdownOpen(false);
-                    }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#162736] transition-colors"
-                  >
-                    <Calendar className="w-4 h-4 text-indigo-500" />
-                    <span>Revision Planner</span>
-                  </button>
-
-                  {/* Dark / Light Toggle Option inside menu */}
-                  <button
-                    onClick={() => {
-                      onToggleTheme?.();
-                    }}
-                    className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#162736] transition-colors"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      {theme === 'dark' ? (
-                        <Sun className="w-4 h-4 text-amber-400" />
-                      ) : (
-                        <Moon className="w-4 h-4 text-emerald-600" />
-                      )}
-                      <span>{theme === 'dark' ? 'Day Light Mode' : 'Night Dark Mode'}</span>
-                    </div>
-                    <span className="text-[10px] text-slate-400 uppercase font-mono">
-                      {theme}
-                    </span>
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => onOpenAuth?.('login')}
+                className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-md transition-all shrink-0"
+              >
+                <User className="w-3.5 h-3.5" />
+                <span>Sign In / Join</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </header>

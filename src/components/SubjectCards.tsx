@@ -120,7 +120,18 @@ export const SubjectCards: React.FC<SubjectCardsProps> = ({
                 <h3 className="text-base font-bold text-slate-900 group-hover:text-slate-800 transition-colors">
                   {sub.name}
                 </h3>
-                <p className="text-xs text-slate-500 line-clamp-2 mt-1 mb-3.5 leading-relaxed">
+
+                {/* 1st Year & 2nd Year System Indicator */}
+                <div className="flex items-center gap-1.5 mt-1 mb-2">
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    1st Year: {subChapters.filter((c) => (c.classYear || '1st Year') === '1st Year').length}
+                  </span>
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200">
+                    2nd Year: {subChapters.filter((c) => c.classYear === '2nd Year').length > 0 ? subChapters.filter((c) => c.classYear === '2nd Year').length : 'Ready'}
+                  </span>
+                </div>
+
+                <p className="text-xs text-slate-500 line-clamp-2 mb-3.5 leading-relaxed">
                   {sub.description}
                 </p>
 

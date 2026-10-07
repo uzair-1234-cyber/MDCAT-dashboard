@@ -237,7 +237,7 @@ export const UploadMaterialModal: React.FC<UploadMaterialModalProps> = ({
               <option value="">Select Chapter...</option>
               {subjectChapters.map((ch) => (
                 <option key={ch.id} value={ch.title}>
-                  Chapter {ch.chapterNumber}: {ch.title}
+                  [{ch.classYear || '1st Year'}] Ch {ch.chapterNumber}: {ch.title}
                 </option>
               ))}
             </select>

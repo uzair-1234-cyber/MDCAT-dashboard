@@ -9,6 +9,8 @@ export interface SubjectData {
   badge: string;
 }
 
+export type AcademicYear = '1st Year' | '2nd Year';
+
 export interface ChapterData {
   id: string;
   subject: SubjectName;
@@ -19,6 +21,7 @@ export interface ChapterData {
   status: 'not_started' | 'in_progress' | 'completed';
   notesCount: number;
   mcqsCount: number;
+  classYear?: AcademicYear;
 }
 
 export type MaterialType = 'Book' | 'PDF' | 'Notes' | 'MCQs' | 'Question Paper' | 'Diagram / Image' | 'Other';
@@ -39,6 +42,7 @@ export interface StudyMaterial {
   uploadDate: string;
   tags: string[];
   bookmarked?: boolean;
+  userId?: string;
 }
 
 export const isMaterialImage = (mat: Partial<StudyMaterial>): boolean => {
@@ -79,6 +83,7 @@ export interface MCQ {
   isBookmarked?: boolean;
   isDifficult?: boolean;
   createdAt: string;
+  classYear?: AcademicYear;
 }
 
 export interface QuizAnswerSummary {
@@ -156,6 +161,7 @@ export interface UserProfile {
   targetYear: string;
   dreamMedicalCollege: string;
   personalMotto: string;
+  avatarUrl?: string;
 }
 
 export interface MistakeItem {
@@ -313,4 +319,46 @@ export interface DbStatus {
   };
   lastMongoSync?: string | null;
   geminiConnected: boolean;
+}
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  name: string;
+  aspirantType: string;
+  targetExam: string;
+  targetYear: string;
+  dreamMedicalCollege: string;
+  personalMotto: string;
+  createdAt: string;
+  lastLoginAt?: string;
+  avatarUrl?: string;
+}
+
+export interface AuthResponse {
+  success: boolean;
+  token: string;
+  user: AuthUser;
+  message?: string;
+}
+
+export interface LoginCredentials {
+  email: string;
+  password: string;
+}
+
+export interface RegisterCredentials {
+  name: string;
+  email: string;
+  password: string;
+  aspirantType?: string;
+  targetExam?: string;
+  targetYear?: string;
+  dreamMedicalCollege?: string;
+  personalMotto?: string;
+}
+
+export interface ChangePasswordPayload {
+  currentPassword: string;
+  newPassword: string;
 }

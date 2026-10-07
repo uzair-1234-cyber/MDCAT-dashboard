@@ -1,37 +1,86 @@
 import express from 'express';
 import path from 'path';
 import fs from 'fs';
+import os from 'os';
 import { fileURLToPath } from 'url';
-import { AsyncLocalStorage } from 'node:async_hooks';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import { GoogleGenAI, Type } from '@google/genai';
-import { authManager } from './server/authManager';
 
 dotenv.config();
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Determine app directory safely in both ESM and CJS serverless environments
+let appDir = process.cwd();
+try {
+  if (typeof __dirname !== 'undefined') {
+    appDir = __dirname;
+  } else if (typeof import.meta !== 'undefined' && (import.meta as any)?.url) {
+    appDir = path.dirname(fileURLToPath((import.meta as any).url));
+  }
+} catch (_) {
+  appDir = process.cwd();
+}
 
 const app = express();
-const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
-export const requestContext = new AsyncLocalStorage<{ req: express.Request }>();
+// Determine writable directory for serverless environments (e.g. Vercel)
+const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+const BASE_STORAGE_DIR = isServerless ? os.tmpdir() : appDir;
 
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+const UPLOADS_DIR = path.join(BASE_STORAGE_DIR, 'uploads');
+const DATA_DIR = path.join(BASE_STORAGE_DIR, 'data');
 
-// Attach request to async local storage for seamless per-user data store isolation
+try {
+  if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+} catch (e) {
+  // Silent fallback in serverless
+}
+
+try {
+  if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+} catch (e) {
+  // Silent fallback in serverless
+}
+
+// Permissive CORS & Preflight handling for Vercel deployments & preview environments
 app.use((req, res, next) => {
-  requestContext.enterWith({ req });
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, X-CSRF-Token, X-Api-Version');
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
   next();
 });
 
-// Ensure upload and data directory exists
-const UPLOADS_DIR = path.join(__dirname, 'uploads');
-const DATA_DIR = path.join(__dirname, 'data');
-if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
-if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+app.use((req, res, next) => {
+  console.log(`[Request Log] ${req.method} ${req.url}`);
+  next();
+});
+
+// Robust Vercel Serverless URL Normalization:
+// Preserves incoming subpaths (e.g. /api/init, /init) and ensures proper routing in serverless
+if (isServerless) {
+  app.use((req, res, next) => {
+    const originalUrl =
+      (req.headers['x-forwarded-uri'] as string) ||
+      (req.headers['x-original-url'] as string) ||
+      '';
+
+    if ((req.url === '/' || req.url === '/api' || req.url === '/api/') && originalUrl && (originalUrl.startsWith('/api/') || originalUrl.startsWith('/uploads/'))) {
+      req.url = originalUrl;
+    }
+
+    if (req.url && !req.url.startsWith('/api') && !req.url.startsWith('/uploads')) {
+      const cleanUrl = req.url.startsWith('/') ? req.url : `/${req.url}`;
+      req.url = `/api${cleanUrl}`;
+    }
+    next();
+  });
+}
+
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Serve uploaded files statically
 app.use('/uploads', express.static(UPLOADS_DIR));
@@ -364,7 +413,6 @@ interface MCQ {
   isBookmarked?: boolean;
   isDifficult?: boolean;
   createdAt: string;
-  classYear?: '1st Year' | '2nd Year';
 }
 
 interface QuizAttempt {
@@ -494,7 +542,6 @@ interface DatabaseSchema {
     targetYear: string;
     dreamMedicalCollege: string;
     personalMotto: string;
-    avatarUrl?: string;
   };
   pastPapers?: PastPaper[];
   aiSessions?: any[];
@@ -512,7 +559,6 @@ const INITIAL_DATABASE: DatabaseSchema = {
     targetYear: '2026',
     dreamMedicalCollege: 'Dow University of Health Sciences (DUHS, Karachi)',
     personalMotto: 'Discipline Today → Doctor Tomorrow. Make my parents proud.',
-    avatarUrl: '',
   },
   studyState: {
     dailyStreak: 0,
@@ -542,7 +588,7 @@ const INITIAL_DATABASE: DatabaseSchema = {
       id: 'sub_phys',
       name: 'Physics',
       chaptersCount: 14,
-      description: 'First-Year Sindh Board: Measurements, kinematics, dynamics, circular motion, fluids, oscillations, optics & electrostatics.',
+      description: 'Mechanics, vectors, rotational dynamics, work-energy, fluid flow, circular motion, and physical optics.',
       color: 'teal',
       badge: '27% MDCAT Weightage',
     },
@@ -1052,7 +1098,6 @@ const INITIAL_DATABASE: DatabaseSchema = {
       status: 'not_started',
       notesCount: 0,
       mcqsCount: 0,
-      classYear: '1st Year',
     },
     {
       id: 'ch_phys_2',
@@ -1069,7 +1114,6 @@ const INITIAL_DATABASE: DatabaseSchema = {
       status: 'not_started',
       notesCount: 0,
       mcqsCount: 0,
-      classYear: '1st Year',
     },
     {
       id: 'ch_phys_3',
@@ -1087,7 +1131,6 @@ const INITIAL_DATABASE: DatabaseSchema = {
       status: 'not_started',
       notesCount: 0,
       mcqsCount: 0,
-      classYear: '1st Year',
     },
     {
       id: 'ch_phys_4',
@@ -1105,7 +1148,6 @@ const INITIAL_DATABASE: DatabaseSchema = {
       status: 'not_started',
       notesCount: 0,
       mcqsCount: 0,
-      classYear: '1st Year',
     },
     {
       id: 'ch_phys_5',
@@ -1123,7 +1165,6 @@ const INITIAL_DATABASE: DatabaseSchema = {
       status: 'not_started',
       notesCount: 0,
       mcqsCount: 0,
-      classYear: '1st Year',
     },
     {
       id: 'ch_phys_6',
@@ -1141,7 +1182,6 @@ const INITIAL_DATABASE: DatabaseSchema = {
       status: 'not_started',
       notesCount: 0,
       mcqsCount: 0,
-      classYear: '1st Year',
     },
     {
       id: 'ch_phys_7',
@@ -1159,7 +1199,6 @@ const INITIAL_DATABASE: DatabaseSchema = {
       status: 'not_started',
       notesCount: 0,
       mcqsCount: 0,
-      classYear: '1st Year',
     },
     {
       id: 'ch_phys_8',
@@ -1177,7 +1216,6 @@ const INITIAL_DATABASE: DatabaseSchema = {
       status: 'not_started',
       notesCount: 0,
       mcqsCount: 0,
-      classYear: '1st Year',
     },
     {
       id: 'ch_phys_9',
@@ -1195,7 +1233,6 @@ const INITIAL_DATABASE: DatabaseSchema = {
       status: 'not_started',
       notesCount: 0,
       mcqsCount: 0,
-      classYear: '1st Year',
     },
     {
       id: 'ch_phys_10',
@@ -1213,7 +1250,6 @@ const INITIAL_DATABASE: DatabaseSchema = {
       status: 'not_started',
       notesCount: 0,
       mcqsCount: 0,
-      classYear: '1st Year',
     },
     {
       id: 'ch_phys_11',
@@ -1231,7 +1267,6 @@ const INITIAL_DATABASE: DatabaseSchema = {
       status: 'not_started',
       notesCount: 0,
       mcqsCount: 0,
-      classYear: '1st Year',
     },
     {
       id: 'ch_phys_12',
@@ -1249,7 +1284,6 @@ const INITIAL_DATABASE: DatabaseSchema = {
       status: 'not_started',
       notesCount: 0,
       mcqsCount: 0,
-      classYear: '1st Year',
     },
     {
       id: 'ch_phys_13',
@@ -1267,7 +1301,6 @@ const INITIAL_DATABASE: DatabaseSchema = {
       status: 'not_started',
       notesCount: 0,
       mcqsCount: 0,
-      classYear: '1st Year',
     },
     {
       id: 'ch_phys_14',
@@ -1285,7 +1318,6 @@ const INITIAL_DATABASE: DatabaseSchema = {
       status: 'not_started',
       notesCount: 0,
       mcqsCount: 0,
-      classYear: '1st Year',
     },
 
     // English Chapters
@@ -1311,8 +1343,8 @@ const INITIAL_DATABASE: DatabaseSchema = {
 // MONGOOSE SCHEMAS & MODELS FOR REAL CLOUD PERSISTENCE
 // -------------------------------------------------------------
 const MaterialMongoSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   id: { type: String, required: true },
-  userId: { type: String, required: true, default: 'usr_uzair_primary', index: true },
   title: { type: String, default: '' },
   subject: { type: String, default: 'Biology' },
   chapter: { type: String, default: '' },
@@ -1328,11 +1360,10 @@ const MaterialMongoSchema = new mongoose.Schema({
   tags: { type: [String], default: [] },
   bookmarked: { type: Boolean, default: false },
 }, { timestamps: true });
-MaterialMongoSchema.index({ id: 1, userId: 1 }, { unique: true });
 
 const MCQMongoSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   id: { type: String, required: true },
-  userId: { type: String, required: true, default: 'usr_uzair_primary', index: true },
   subject: { type: String, default: 'Biology' },
   chapter: { type: String, default: '' },
   topic: { type: String, default: '' },
@@ -1352,11 +1383,10 @@ const MCQMongoSchema = new mongoose.Schema({
   isDifficult: { type: Boolean, default: false },
   createdAt: { type: String, default: '' },
 }, { timestamps: true });
-MCQMongoSchema.index({ id: 1, userId: 1 }, { unique: true });
 
 const QuizAttemptMongoSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   id: { type: String, required: true },
-  userId: { type: String, required: true, default: 'usr_uzair_primary', index: true },
   title: { type: String, default: '' },
   subject: { type: String, default: '' },
   chapter: { type: String, default: '' },
@@ -1371,11 +1401,10 @@ const QuizAttemptMongoSchema = new mongoose.Schema({
   weakTopics: { type: [String], default: [] },
   answersSummary: [mongoose.Schema.Types.Mixed],
 }, { timestamps: true });
-QuizAttemptMongoSchema.index({ id: 1, userId: 1 }, { unique: true });
 
 const StudyNoteMongoSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   id: { type: String, required: true },
-  userId: { type: String, required: true, default: 'usr_uzair_primary', index: true },
   title: { type: String, default: '' },
   subject: { type: String, default: 'Biology' },
   chapter: { type: String, default: '' },
@@ -1386,11 +1415,10 @@ const StudyNoteMongoSchema = new mongoose.Schema({
   createdAt: { type: String, default: '' },
   updatedAt: { type: String, default: '' },
 }, { timestamps: true });
-StudyNoteMongoSchema.index({ id: 1, userId: 1 }, { unique: true });
 
 const RevisionPlanMongoSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   id: { type: String, required: true },
-  userId: { type: String, required: true, default: 'usr_uzair_primary', index: true },
   subject: { type: String, default: 'Biology' },
   chapter: { type: String, default: '' },
   topic: { type: String, default: '' },
@@ -1400,22 +1428,20 @@ const RevisionPlanMongoSchema = new mongoose.Schema({
   status: { type: String, default: 'Not Started' },
   notes: { type: String, default: '' },
 }, { timestamps: true });
-RevisionPlanMongoSchema.index({ id: 1, userId: 1 }, { unique: true });
 
 const ActivityMongoSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   id: { type: String, required: true },
-  userId: { type: String, required: true, default: 'usr_uzair_primary', index: true },
   title: { type: String, default: '' },
   description: { type: String, default: '' },
   subject: { type: String, default: '' },
   type: { type: String, default: '' },
   timestamp: { type: String, default: '' },
 }, { timestamps: true });
-ActivityMongoSchema.index({ id: 1, userId: 1 }, { unique: true });
 
 const AppStateMongoSchema = new mongoose.Schema({
-  key: { type: String, required: true, unique: true },
-  userId: { type: String, required: true, default: 'usr_uzair_primary', index: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  key: { type: String, required: true, default: 'main_state' },
   userProfile: mongoose.Schema.Types.Mixed,
   studyState: mongoose.Schema.Types.Mixed,
   chapters: [mongoose.Schema.Types.Mixed],
@@ -1423,8 +1449,8 @@ const AppStateMongoSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 const MistakeMongoSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   id: { type: String, required: true },
-  userId: { type: String, required: true, default: 'usr_uzair_primary', index: true },
   mcqId: { type: String, default: '' },
   question: { type: String, default: '' },
   subject: { type: String, default: 'Biology' },
@@ -1448,7 +1474,13 @@ const MistakeMongoSchema = new mongoose.Schema({
   createdAt: { type: String, default: '' },
   lastAttemptedAt: { type: String, default: '' },
 }, { timestamps: true });
-MistakeMongoSchema.index({ id: 1, userId: 1 }, { unique: true });
+
+const UserSchema = new mongoose.Schema({
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  name: { type: String, default: '' },
+}, { timestamps: true });
+const UserModel = mongoose.models.User || mongoose.model('User', UserSchema);
 
 const MaterialModel = mongoose.models.Material || mongoose.model('Material', MaterialMongoSchema);
 const MCQModel = mongoose.models.MCQ || mongoose.model('MCQ', MCQMongoSchema);
@@ -1459,7 +1491,15 @@ const RevisionPlanModel = mongoose.models.RevisionPlan || mongoose.model('Revisi
 const ActivityModel = mongoose.models.Activity || mongoose.model('Activity', ActivityMongoSchema);
 const AppStateModel = mongoose.models.AppState || mongoose.model('AppState', AppStateMongoSchema);
 
-// Helper: Sync standard 1st Year Biology (14), Chemistry (12), Physics (14) & English chapters while preserving user progress & all 2nd Year chapters
+// Dedicated per-user document store in MongoDB cluster
+const UserStudyDataSchema = new mongoose.Schema({
+  userId: { type: String, required: true, unique: true, index: true },
+  userEmail: { type: String, default: '' },
+  data: mongoose.Schema.Types.Mixed,
+}, { timestamps: true });
+const UserStudyDataModel = mongoose.models.UserStudyData || mongoose.model('UserStudyData', UserStudyDataSchema);
+
+// Helper: Sync standard 1st Year Biology (14), Chemistry (12), Physics (14) & English chapters while preserving user progress & 2nd Year chapters
 function syncStandardChapters(existingChapters: ChapterData[]): ChapterData[] {
   const standard1stBio = INITIAL_DATABASE.chapters.filter((c) => c.subject === 'Biology' && (c.classYear === '1st Year' || !c.classYear));
   const standard1stChem = INITIAL_DATABASE.chapters.filter((c) => c.subject === 'Chemistry' && (c.classYear === '1st Year' || !c.classYear));
@@ -1506,8 +1546,6 @@ function syncStandardChapters(existingChapters: ChapterData[]): ChapterData[] {
 // In-Memory / File / MongoDB Persistent Store Controller
 class DatabaseStore {
   private data: DatabaseSchema;
-  private dbFilePath: string;
-  private userId: string;
   private isMongoConnected: boolean = false;
   private mongoUri: string | null = null;
   private lastMongoError: string | null = null;
@@ -1523,17 +1561,21 @@ class DatabaseStore {
   };
   private isSyncing: boolean = false;
 
-  constructor(dbFilePath: string = DB_FILE, userId: string = 'usr_uzair_primary') {
-    this.dbFilePath = dbFilePath;
-    this.userId = userId;
+  constructor() {
     this.data = this.loadFromFile();
-    this.initMongo();
+    this.initMongo().catch((err) => {
+      console.warn('[MongoDB] Init notice:', err?.message || err);
+    });
   }
 
   private loadFromFile(): DatabaseSchema {
+    // In serverless environments, avoid blocking disk reads during cold start
+    if (isServerless) {
+      return JSON.parse(JSON.stringify(INITIAL_DATABASE));
+    }
     try {
-      if (fs.existsSync(this.dbFilePath)) {
-        const raw = fs.readFileSync(this.dbFilePath, 'utf-8');
+      if (fs.existsSync(DB_FILE)) {
+        const raw = fs.readFileSync(DB_FILE, 'utf-8');
         const parsed = JSON.parse(raw);
         const starterMistakeIds = ['mistake_bio_cell_div', 'mistake_chem_stoich', 'mistake_phy_vectors'];
         const starterPastPaperIds = ['past_mdcat_2023', 'past_mdcat_2022', 'past_mdcat_2021', 'past_mdcat_2020'];
@@ -1554,46 +1596,28 @@ class DatabaseStore {
           parsed.aiSessions = [];
         }
 
-        parsed.chapters = syncStandardChapters(parsed.chapters || []);
-        parsed.chapters.forEach((c: any) => {
-          if (!c.classYear) c.classYear = '1st Year';
-        });
+        parsed.chapters = syncStandardChapters(parsed.chapters);
         const bioSub = (parsed.subjects || []).find((s: any) => s.id === 'sub_bio' || s.name === 'Biology');
-        if (bioSub) bioSub.chaptersCount = parsed.chapters.filter((c: any) => c.subject === 'Biology').length || 14;
-        const chemSub = (parsed.subjects || []).find((s: any) => s.id === 'sub_chem' || s.name === 'Chemistry');
-        if (chemSub) chemSub.chaptersCount = parsed.chapters.filter((c: any) => c.subject === 'Chemistry').length || 12;
-        const physSub = (parsed.subjects || []).find((s: any) => s.id === 'sub_phys' || s.name === 'Physics');
-        if (physSub) physSub.chaptersCount = parsed.chapters.filter((c: any) => c.subject === 'Physics').length || 14;
+        if (bioSub) bioSub.chaptersCount = 14;
 
         return parsed;
       }
     } catch (e) {
       console.error('Failed reading DB file, using initial data:', e);
     }
-    const initialCopy = JSON.parse(JSON.stringify(INITIAL_DATABASE));
-    const userRecord = authManager.getUserById(this.userId);
-    if (userRecord) {
-      initialCopy.userProfile = {
-        name: userRecord.name,
-        aspirantType: userRecord.aspirantType,
-        targetExam: userRecord.targetExam,
-        targetYear: userRecord.targetYear,
-        dreamMedicalCollege: userRecord.dreamMedicalCollege,
-        personalMotto: userRecord.personalMotto,
-      };
-    }
-    this.saveToFile(initialCopy);
-    return initialCopy;
+    this.saveToFile(INITIAL_DATABASE);
+    return INITIAL_DATABASE;
   }
 
   public saveToFile(dataToSave?: DatabaseSchema) {
     if (dataToSave) this.data = dataToSave;
     try {
-      const parentDir = path.dirname(this.dbFilePath);
-      if (!fs.existsSync(parentDir)) fs.mkdirSync(parentDir, { recursive: true });
-      fs.writeFileSync(this.dbFilePath, JSON.stringify(this.data, null, 2), 'utf-8');
-    } catch (e) {
-      console.error('Failed saving to DB file:', e);
+      fs.writeFileSync(DB_FILE, JSON.stringify(this.data, null, 2), 'utf-8');
+    } catch (e: any) {
+      // In serverless / read-only environments, local disk save is skipped gracefully
+      if (process.env.NODE_ENV !== 'production') {
+        console.warn('[Storage] File write skipped (serverless / read-only filesystem):', e?.message);
+      }
     }
   }
 
@@ -1602,13 +1626,17 @@ class DatabaseStore {
     if (!this.mongoUri || this.mongoUri.includes('your_mongodb_connection_string')) {
       return;
     }
+    // Reuse existing connection in warm serverless containers
+    if (mongoose.connection.readyState >= 1) {
+      this.isMongoConnected = true;
+      this.lastMongoError = null;
+      return;
+    }
     try {
-      if (mongoose.connection.readyState < 1) {
-        await mongoose.connect(this.mongoUri, {
-          serverSelectionTimeoutMS: 5000,
-          dbName: 'studypannel',
-        });
-      }
+      await mongoose.connect(this.mongoUri, {
+        serverSelectionTimeoutMS: 5000,
+        dbName: 'studypannel',
+      });
       this.isMongoConnected = true;
       this.lastMongoError = null;
       console.log('MongoDB successfully connected to database:', mongoose.connection.name || 'studypannel');
@@ -1622,89 +1650,61 @@ class DatabaseStore {
     }
   }
 
-  public async ensureSynced(): Promise<void> {
-    if (mongoose.connection.readyState >= 1) {
-      this.isMongoConnected = true;
-    } else if (this.mongoUri) {
-      await this.initMongo();
-    }
-    await this.syncFromMongoOrSeed();
-  }
-
   /**
    * On startup, check if MongoDB has data. If yes, load it.
    * If local has data not in MongoDB (e.g. uploaded materials), persist to MongoDB.
    */
   public async syncFromMongoOrSeed() {
-    if (mongoose.connection.readyState >= 1) {
-      this.isMongoConnected = true;
-    }
     if (!this.isMongoConnected || this.isSyncing) return;
     this.isSyncing = true;
     try {
-      // 1. Study Materials: Strict multi-tenant isolation. Fetch ONLY materials belonging to THIS student (userId)
-      const userMongoMaterials = (await MaterialModel.find({ userId: this.userId }).lean()) as any[];
-      console.log(`[MongoDB Sync] Found ${userMongoMaterials.length} study materials in MongoDB Atlas for student workspace (${this.userId})`);
+      const materialCount = await MaterialModel.countDocuments();
+      const mcqCount = await MCQModel.countDocuments();
+      const noteCount = await StudyNoteModel.countDocuments();
 
-      const existingMap = new Map<string, StudyMaterial>();
-      for (const m of userMongoMaterials) {
-        const matItem: StudyMaterial = {
-          id: m.id,
-          title: m.title || '',
-          subject: m.subject || 'Biology',
-          chapter: m.chapter || '',
-          topic: m.topic || 'General',
-          type: m.type || 'PDF',
-          description: m.description || '',
-          fileName: m.fileName || 'Material.pdf',
-          fileUrl: m.fileUrl || '',
-          fileBase64: m.fileBase64 || '',
-          fileSize: m.fileSize || '1.5 MB',
-          contentSnippet: m.contentSnippet || '',
-          uploadDate: m.uploadDate || new Date().toISOString().split('T')[0],
-          tags: Array.isArray(m.tags) ? m.tags : [],
-          bookmarked: !!m.bookmarked,
-          userId: this.userId,
-        };
-        existingMap.set(m.id, matItem);
+      console.log(`Checking MongoDB collections: materials=${materialCount}, mcqs=${mcqCount}, notes=${noteCount}`);
 
-        // Restore physical file to /uploads/ if missing on server disk
-        if (m.fileBase64 && m.fileUrl) {
-          try {
-            const baseName = path.basename(m.fileUrl);
-            const targetPath = path.join(UPLOADS_DIR, baseName);
-            if (!fs.existsSync(targetPath)) {
-              const base64Data = m.fileBase64.replace(/^data:([A-Za-z-+/]+);base64,/, '');
-              fs.writeFileSync(targetPath, Buffer.from(base64Data, 'base64'));
-            }
-          } catch (_) {}
+      if (materialCount === 0 && this.data.materials.length > 0) {
+        console.log(`Seeding ${this.data.materials.length} local materials to MongoDB...`);
+        for (const mat of this.data.materials) {
+          await MaterialModel.findOneAndUpdate({ id: mat.id }, mat, { upsert: true, new: true });
         }
+      } else if (materialCount > 0) {
+        // Load materials from MongoDB into memory
+        const mongoMaterials = (await MaterialModel.find().lean()) as any[];
+        // Merge: keep mongo materials, also push any local materials that might not be in mongo yet
+        const existingMap = new Map<string, StudyMaterial>();
+        for (const m of mongoMaterials) {
+          existingMap.set(m.id, {
+            id: m.id,
+            title: m.title || '',
+            subject: m.subject || 'Biology',
+            chapter: m.chapter || '',
+            topic: m.topic || '',
+            type: m.type || 'PDF',
+            description: m.description || '',
+            fileName: m.fileName,
+            fileUrl: m.fileUrl,
+            fileBase64: m.fileBase64,
+            fileSize: m.fileSize,
+            contentSnippet: m.contentSnippet,
+            uploadDate: m.uploadDate || '',
+            tags: m.tags || [],
+            bookmarked: !!m.bookmarked,
+          });
+        }
+        for (const localMat of this.data.materials) {
+          if (!existingMap.has(localMat.id)) {
+            existingMap.set(localMat.id, localMat);
+            await MaterialModel.findOneAndUpdate({ id: localMat.id }, localMat, { upsert: true });
+          }
+        }
+        this.data.materials = Array.from(existingMap.values());
       }
 
-      // Merge only local materials that strictly belong to THIS user
-      for (const localMat of (this.data.materials || [])) {
-        // Discard any material that belongs to another user
-        if (localMat.userId && localMat.userId !== this.userId) {
-          continue;
-        }
-        if (!existingMap.has(localMat.id)) {
-          const matWithUser = { ...localMat, userId: this.userId };
-          existingMap.set(localMat.id, matWithUser);
-          await MaterialModel.findOneAndUpdate(
-            { id: localMat.id, userId: this.userId },
-            matWithUser,
-            { upsert: true, new: true }
-          );
-        }
-      }
-      // Update in-memory state and local file cache with only this user's materials
-      this.data.materials = Array.from(existingMap.values()).sort((a, b) => (b.id || '').localeCompare(a.id || ''));
-      this.saveToFile();
-
-      // 2. MCQs: Load MCQs
-      const mcqCount = await MCQModel.countDocuments({ userId: this.userId });
+      // Check MCQs in MongoDB
       if (mcqCount > 0) {
-        const mongoMCQs = (await MCQModel.find({ userId: this.userId }).lean()) as any[];
+        const mongoMCQs = (await MCQModel.find().lean()) as any[];
         const mcqMap = new Map<string, MCQ>();
         for (const m of mongoMCQs) {
           mcqMap.set(m.id, m);
@@ -1712,20 +1712,19 @@ class DatabaseStore {
         for (const localMCQ of this.data.mcqs) {
           if (!mcqMap.has(localMCQ.id)) {
             mcqMap.set(localMCQ.id, localMCQ);
-            await MCQModel.findOneAndUpdate({ id: localMCQ.id, userId: this.userId }, { ...localMCQ, userId: this.userId }, { upsert: true });
+            await MCQModel.findOneAndUpdate({ id: localMCQ.id }, localMCQ, { upsert: true });
           }
         }
         this.data.mcqs = Array.from(mcqMap.values());
       } else if (this.data.mcqs.length > 0) {
         for (const mcq of this.data.mcqs) {
-          await MCQModel.findOneAndUpdate({ id: mcq.id, userId: this.userId }, { ...mcq, userId: this.userId }, { upsert: true });
+          await MCQModel.findOneAndUpdate({ id: mcq.id }, mcq, { upsert: true });
         }
       }
 
-      // 3. Notes
-      const noteCount = await StudyNoteModel.countDocuments({ userId: this.userId });
+      // Check Notes in MongoDB
       if (noteCount > 0) {
-        const mongoNotes = (await StudyNoteModel.find({ userId: this.userId }).lean()) as any[];
+        const mongoNotes = (await StudyNoteModel.find().lean()) as any[];
         const noteMap = new Map<string, StudyNote>();
         for (const n of mongoNotes) {
           noteMap.set(n.id, n);
@@ -1733,79 +1732,87 @@ class DatabaseStore {
         for (const localNote of this.data.notes) {
           if (!noteMap.has(localNote.id)) {
             noteMap.set(localNote.id, localNote);
-            await StudyNoteModel.findOneAndUpdate({ id: localNote.id, userId: this.userId }, { ...localNote, userId: this.userId }, { upsert: true });
+            await StudyNoteModel.findOneAndUpdate({ id: localNote.id }, localNote, { upsert: true });
           }
         }
         this.data.notes = Array.from(noteMap.values());
       } else if (this.data.notes.length > 0) {
         for (const note of this.data.notes) {
-          await StudyNoteModel.findOneAndUpdate({ id: note.id, userId: this.userId }, { ...note, userId: this.userId }, { upsert: true });
+          await StudyNoteModel.findOneAndUpdate({ id: note.id }, note, { upsert: true });
         }
       }
 
-      // 4. Quiz Attempts
-      const quizCount = await QuizAttemptModel.countDocuments({ userId: this.userId });
+      // Quiz attempts
+      const quizCount = await QuizAttemptModel.countDocuments();
       if (quizCount > 0) {
-        const mongoQuizzes = (await QuizAttemptModel.find({ userId: this.userId }).lean()) as any[];
+        const mongoQuizzes = (await QuizAttemptModel.find().lean()) as any[];
         const qMap = new Map<string, QuizAttempt>();
         for (const q of mongoQuizzes) qMap.set(q.id, q);
         for (const lq of this.data.quizAttempts) {
           if (!qMap.has(lq.id)) {
             qMap.set(lq.id, lq);
-            await QuizAttemptModel.findOneAndUpdate({ id: lq.id, userId: this.userId }, { ...lq, userId: this.userId }, { upsert: true });
+            await QuizAttemptModel.findOneAndUpdate({ id: lq.id }, lq, { upsert: true });
           }
         }
         this.data.quizAttempts = Array.from(qMap.values());
       } else if (this.data.quizAttempts.length > 0) {
         for (const q of this.data.quizAttempts) {
-          await QuizAttemptModel.findOneAndUpdate({ id: q.id, userId: this.userId }, { ...q, userId: this.userId }, { upsert: true });
+          await QuizAttemptModel.findOneAndUpdate({ id: q.id }, q, { upsert: true });
         }
       }
 
-      // 5. Revision plans
-      const planCount = await RevisionPlanModel.countDocuments({ userId: this.userId });
+      // Revision plans
+      const planCount = await RevisionPlanModel.countDocuments();
       if (planCount > 0) {
-        const mongoPlans = (await RevisionPlanModel.find({ userId: this.userId }).lean()) as any[];
+        const mongoPlans = (await RevisionPlanModel.find().lean()) as any[];
         const pMap = new Map<string, RevisionPlanItem>();
         for (const p of mongoPlans) pMap.set(p.id, p);
         for (const lp of this.data.revisionPlans) {
           if (!pMap.has(lp.id)) {
             pMap.set(lp.id, lp);
-            await RevisionPlanModel.findOneAndUpdate({ id: lp.id, userId: this.userId }, { ...lp, userId: this.userId }, { upsert: true });
+            await RevisionPlanModel.findOneAndUpdate({ id: lp.id }, lp, { upsert: true });
           }
         }
         this.data.revisionPlans = Array.from(pMap.values());
       } else if (this.data.revisionPlans.length > 0) {
         for (const p of this.data.revisionPlans) {
-          await RevisionPlanModel.findOneAndUpdate({ id: p.id, userId: this.userId }, { ...p, userId: this.userId }, { upsert: true });
+          await RevisionPlanModel.findOneAndUpdate({ id: p.id }, p, { upsert: true });
         }
       }
 
-      // 6. Mistakes
-      const mistakeCount = await MistakeModel.countDocuments({ userId: this.userId });
+      // Purge starter dummy mistakes if present in Mongo
+      try {
+        await MistakeModel.deleteMany({ id: { $in: ['mistake_bio_cell_div', 'mistake_chem_stoich', 'mistake_phy_vectors'] } });
+      } catch (e) {
+        // ignore
+      }
+
+      // Mistakes ("Mistake Book" / Error Bank)
+      const mistakeCount = await MistakeModel.countDocuments();
       if (mistakeCount > 0) {
-        const mongoMistakes = (await MistakeModel.find({ userId: this.userId }).lean()) as any[];
+        const mongoMistakes = (await MistakeModel.find().lean()) as any[];
+        const starterMistakeIds = ['mistake_bio_cell_div', 'mistake_chem_stoich', 'mistake_phy_vectors'];
         const mistMap = new Map<string, MistakeItem>();
         for (const m of mongoMistakes) {
-          mistMap.set(m.id, m);
+          if (!starterMistakeIds.includes(m.id)) {
+            mistMap.set(m.id, m);
+          }
         }
         for (const lm of (this.data.mistakes || [])) {
-          if (!mistMap.has(lm.id)) {
+          if (!starterMistakeIds.includes(lm.id) && !mistMap.has(lm.id)) {
             mistMap.set(lm.id, lm);
-            await MistakeModel.findOneAndUpdate({ id: lm.id, userId: this.userId }, { ...lm, userId: this.userId }, { upsert: true });
+            await MistakeModel.findOneAndUpdate({ id: lm.id }, lm, { upsert: true });
           }
         }
         this.data.mistakes = Array.from(mistMap.values());
       } else if (this.data.mistakes && this.data.mistakes.length > 0) {
         for (const m of this.data.mistakes) {
-          await MistakeModel.findOneAndUpdate({ id: m.id, userId: this.userId }, { ...m, userId: this.userId }, { upsert: true });
+          await MistakeModel.findOneAndUpdate({ id: m.id }, m, { upsert: true });
         }
       }
 
-      // 7. AppState (chapters, studyState)
-      // 7. AppState (chapters, studyState)
-      const userStateKey = `user_state_${this.userId}`;
-      const existingAppState = (await AppStateModel.findOne({ key: userStateKey }).lean()) as any;
+      // AppState (chapters, studyState, userProfile)
+      const existingAppState = (await AppStateModel.findOne({ key: 'main_state' }).lean()) as any;
       if (existingAppState) {
         if (existingAppState.chapters && existingAppState.chapters.length > 0) {
           this.data.chapters = syncStandardChapters(existingAppState.chapters);
@@ -1815,27 +1822,38 @@ class DatabaseStore {
         if (existingAppState.studyState) {
           this.data.studyState = existingAppState.studyState;
         }
+        if (existingAppState.userProfile) {
+          this.data.userProfile = existingAppState.userProfile;
+        }
         const bioSub = (this.data.subjects || []).find((s: any) => s.id === 'sub_bio' || s.name === 'Biology');
-        if (bioSub) bioSub.chaptersCount = (this.data.chapters || []).filter((c: any) => c.subject === 'Biology').length || 14;
-        const chemSub = (this.data.subjects || []).find((s: any) => s.id === 'sub_chem' || s.name === 'Chemistry');
-        if (chemSub) chemSub.chaptersCount = (this.data.chapters || []).filter((c: any) => c.subject === 'Chemistry').length || 12;
-        const physSub = (this.data.subjects || []).find((s: any) => s.id === 'sub_phys' || s.name === 'Physics');
-        if (physSub) physSub.chaptersCount = (this.data.chapters || []).filter((c: any) => c.subject === 'Physics').length || 14;
+        if (bioSub) bioSub.chaptersCount = 14;
         await AppStateModel.findOneAndUpdate(
-          { key: userStateKey },
+          { key: 'main_state' },
           { $set: { chapters: this.data.chapters, subjects: this.data.subjects } }
+        );
+      } else {
+        await AppStateModel.findOneAndUpdate(
+          { key: 'main_state' },
+          {
+            key: 'main_state',
+            userProfile: this.data.userProfile,
+            studyState: this.data.studyState,
+            chapters: this.data.chapters,
+            subjects: this.data.subjects,
+          },
+          { upsert: true }
         );
       }
 
-      // Save to local user file
+      // Save merged copy to file
       this.saveToFile();
 
       // Update counts
       await this.refreshMongoCounts();
       this.lastMongoSyncTime = new Date().toISOString();
-      console.log(`[MongoDB Sync] Synchronized successfully for student (${this.userId}):`, this.mongoCounts);
+      console.log('MongoDB sync completed successfully:', this.mongoCounts);
     } catch (err: any) {
-      console.error(`[MongoDB Sync Error] student (${this.userId}):`, err);
+      console.error('Error during MongoDB sync:', err);
       this.lastMongoError = err.message || 'Error syncing with MongoDB';
     } finally {
       this.isSyncing = false;
@@ -1843,91 +1861,59 @@ class DatabaseStore {
   }
 
   /**
-   * Persists all in-memory changes directly into MongoDB.
-   * Safe upserts only - NEVER executes destructive blind deleteMany with $nin!
+   * Persists all in-memory changes directly into MongoDB
    */
   public async syncToMongo() {
     if (!this.isMongoConnected) return;
     try {
-      // 1. Materials: Upsert only this user's materials
+      // 1. Materials: Safe upsert only - NEVER delete items not in memory
       for (const mat of this.data.materials) {
-        if (mat.userId && mat.userId !== this.userId) continue;
-        await MaterialModel.findOneAndUpdate(
-          { id: mat.id, userId: this.userId },
-          { ...mat, userId: this.userId },
-          { upsert: true, new: true }
-        );
+        await MaterialModel.findOneAndUpdate({ id: mat.id }, mat, { upsert: true, new: true });
       }
 
-      // 2. MCQs: Upsert only
+      // 2. MCQs: Safe upsert only
       for (const mcq of this.data.mcqs) {
-        await MCQModel.findOneAndUpdate(
-          { id: mcq.id, userId: this.userId },
-          { ...mcq, userId: this.userId },
-          { upsert: true, new: true }
-        );
+        await MCQModel.findOneAndUpdate({ id: mcq.id }, mcq, { upsert: true, new: true });
       }
 
-      // 3. Notes: Upsert only
+      // 3. Notes: Safe upsert only
       for (const note of this.data.notes) {
-        await StudyNoteModel.findOneAndUpdate(
-          { id: note.id, userId: this.userId },
-          { ...note, userId: this.userId },
-          { upsert: true, new: true }
-        );
+        await StudyNoteModel.findOneAndUpdate({ id: note.id }, note, { upsert: true, new: true });
       }
 
-      // 4. Quiz Attempts: Upsert only
+      // 4. Quiz Attempts: Safe upsert only
       for (const quiz of this.data.quizAttempts) {
-        await QuizAttemptModel.findOneAndUpdate(
-          { id: quiz.id, userId: this.userId },
-          { ...quiz, userId: this.userId },
-          { upsert: true, new: true }
-        );
+        await QuizAttemptModel.findOneAndUpdate({ id: quiz.id }, quiz, { upsert: true, new: true });
       }
 
-      // 5. Mistakes: Upsert only
+      // 5. Mistakes ("Mistake Book"): Safe upsert only
       if (this.data.mistakes && this.data.mistakes.length > 0) {
         for (const mistake of this.data.mistakes) {
-          await MistakeModel.findOneAndUpdate(
-            { id: mistake.id, userId: this.userId },
-            { ...mistake, userId: this.userId },
-            { upsert: true, new: true }
-          );
+          await MistakeModel.findOneAndUpdate({ id: mistake.id }, mistake, { upsert: true, new: true });
         }
       }
 
-      // 6. Revision Plans: Upsert only
+      // 6. Revision Plans: Safe upsert only
       for (const plan of this.data.revisionPlans) {
-        await RevisionPlanModel.findOneAndUpdate(
-          { id: plan.id, userId: this.userId },
-          { ...plan, userId: this.userId },
-          { upsert: true, new: true }
-        );
+        await RevisionPlanModel.findOneAndUpdate({ id: plan.id }, plan, { upsert: true, new: true });
       }
 
       // 7. Activities (keep latest 50)
       for (const act of this.data.activities.slice(0, 50)) {
-        await ActivityModel.findOneAndUpdate(
-          { id: act.id, userId: this.userId },
-          { ...act, userId: this.userId },
-          { upsert: true, new: true }
-        );
+        await ActivityModel.findOneAndUpdate({ id: act.id }, act, { upsert: true, new: true });
       }
 
       // 8. App State
-      const userStateKey = `user_state_${this.userId}`;
       await AppStateModel.findOneAndUpdate(
-        { key: userStateKey },
+        { key: 'main_state' },
         {
-          key: userStateKey,
-          userId: this.userId,
+          key: 'main_state',
           userProfile: this.data.userProfile,
           studyState: this.data.studyState,
           chapters: this.data.chapters,
           subjects: this.data.subjects,
         },
-        { upsert: true, new: true }
+        { upsert: true }
       );
 
       await this.refreshMongoCounts();
@@ -1942,23 +1928,14 @@ class DatabaseStore {
   private async refreshMongoCounts() {
     if (!this.isMongoConnected) return;
     try {
-      const [materials, mcqs, notes, quizAttempts, mistakes, revisionPlans, activities] = await Promise.all([
-        MaterialModel.countDocuments({ userId: this.userId }),
-        MCQModel.countDocuments({ userId: this.userId }),
-        StudyNoteModel.countDocuments({ userId: this.userId }),
-        QuizAttemptModel.countDocuments({ userId: this.userId }),
-        MistakeModel.countDocuments({ userId: this.userId }),
-        RevisionPlanModel.countDocuments({ userId: this.userId }),
-        ActivityModel.countDocuments({ userId: this.userId }),
-      ]);
       this.mongoCounts = {
-        materials,
-        mcqs,
-        notes,
-        quizAttempts,
-        mistakes,
-        revisionPlans,
-        activities,
+        materials: await MaterialModel.countDocuments(),
+        mcqs: await MCQModel.countDocuments(),
+        notes: await StudyNoteModel.countDocuments(),
+        quizAttempts: await QuizAttemptModel.countDocuments(),
+        mistakes: await MistakeModel.countDocuments(),
+        revisionPlans: await RevisionPlanModel.countDocuments(),
+        activities: await ActivityModel.countDocuments(),
       };
     } catch (e) {
       // ignore
@@ -1995,17 +1972,6 @@ class DatabaseStore {
   }
 
   public getData(): DatabaseSchema {
-    const userRecord = authManager.getUserById(this.userId);
-    if (userRecord) {
-      this.data.userProfile = {
-        name: userRecord.name,
-        aspirantType: userRecord.aspirantType,
-        targetExam: userRecord.targetExam,
-        targetYear: userRecord.targetYear,
-        dreamMedicalCollege: userRecord.dreamMedicalCollege,
-        personalMotto: userRecord.personalMotto,
-      };
-    }
     return this.data;
   }
 
@@ -2021,19 +1987,7 @@ class DatabaseStore {
   }
 
   public resetData(): DatabaseSchema {
-    const initialCopy = JSON.parse(JSON.stringify(INITIAL_DATABASE));
-    const userRecord = authManager.getUserById(this.userId);
-    if (userRecord) {
-      initialCopy.userProfile = {
-        name: userRecord.name,
-        aspirantType: userRecord.aspirantType,
-        targetExam: userRecord.targetExam,
-        targetYear: userRecord.targetYear,
-        dreamMedicalCollege: userRecord.dreamMedicalCollege,
-        personalMotto: userRecord.personalMotto,
-      };
-    }
-    this.data = initialCopy;
+    this.data = JSON.parse(JSON.stringify(INITIAL_DATABASE));
     this.saveToFile();
     if (this.isMongoConnected) {
       this.syncToMongo().catch((err) => {
@@ -2044,187 +1998,276 @@ class DatabaseStore {
   }
 }
 
-// Multi-tenant Database Store Registry
-const userStores = new Map<string, DatabaseStore>();
+const dbStore = new DatabaseStore();
 
-export function getUserStore(userId: string): DatabaseStore {
-  const sanitized = userId.replace(/[^a-zA-Z0-9_\-]/g, '_');
-  if (!userStores.has(sanitized)) {
-    const dbPath = authManager.getUserDbPath(sanitized);
-    userStores.set(sanitized, new DatabaseStore(dbPath, sanitized));
-  }
-  return userStores.get(sanitized)!;
-}
 
-export function getCurrentStore(reqOverride?: express.Request): DatabaseStore {
-  const req = reqOverride || requestContext.getStore()?.req;
-  let userId = 'usr_guest_fresh';
-  if (req) {
-    const safeUser = authManager.getReqUser(req);
-    if (safeUser) {
-      userId = safeUser.id;
-    } else {
-      const guestHeader = req.headers['x-guest-id'] || req.headers['x-user-id'];
-      if (guestHeader) {
-        userId = String(guestHeader).trim();
-      }
-    }
-  }
-  return getUserStore(userId);
-}
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcrypt';
 
-// Dynamic dbStore facade that automatically routes to the calling user's isolated database
-const dbStore = {
-  getData: (req?: express.Request) => getCurrentStore(req).getData(),
-  updateData: (updater: (data: DatabaseSchema) => void, req?: express.Request) => getCurrentStore(req).updateData(updater),
-  getStatus: (req?: express.Request) => getCurrentStore(req).getStatus(),
-  resetData: (req?: express.Request) => getCurrentStore(req).resetData(),
-  syncFromMongoOrSeed: (req?: express.Request) => getCurrentStore(req).syncFromMongoOrSeed(),
-  ensureSynced: (req?: express.Request) => getCurrentStore(req).ensureSynced(),
-  syncToMongo: (req?: express.Request) => getCurrentStore(req).syncToMongo(),
-  testMongoConnection: (uri: string, req?: express.Request) => getCurrentStore(req).testMongoConnection(uri),
+const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey123';
+
+// Auth Middleware
+const authenticateToken = (req: any, res: express.Response, next: express.NextFunction) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) return res.sendStatus(401);
+
+  jwt.verify(token, JWT_SECRET, (err: any, user: any) => {
+    if (err) return res.sendStatus(403);
+    req.user = user;
+    next();
+  });
 };
 
+
+const optionalAuthenticateToken = (req: any, res: express.Response, next: express.NextFunction) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+    req.user = null;
+    return next();
+  }
+
+  jwt.verify(token, JWT_SECRET, (err: any, user: any) => {
+    if (!err && user) {
+      req.user = user;
+    } else {
+      req.user = null;
+    }
+    next();
+  });
+};
+
+// Helper: Get user's dedicated document from MongoDB cluster
+async function getUserData(userId: string, email?: string): Promise<DatabaseSchema> {
+  if (mongoose.connection.readyState >= 1) {
+    try {
+      let doc = await UserStudyDataModel.findOne({ userId });
+      if (!doc) {
+        doc = await UserStudyDataModel.create({
+          userId,
+          userEmail: email || '',
+          data: JSON.parse(JSON.stringify(INITIAL_DATABASE)),
+        });
+        console.log(`[MongoDB] Created new dedicated document for user ${userId} (${email || 'unknown'})`);
+      } else if (doc.data) {
+        const currentBio = (doc.data.chapters || []).filter((c: any) => c.subject === 'Biology');
+        const hasGaseousExchange = currentBio.some((c: any) => c.title === 'Gaseous Exchange');
+        if (currentBio.length !== 14 || !hasGaseousExchange) {
+          doc.data.chapters = syncStandardChapters(doc.data.chapters || []);
+          const bioSub = (doc.data.subjects || []).find((s: any) => s.id === 'sub_bio' || s.name === 'Biology');
+          if (bioSub) bioSub.chaptersCount = 14;
+          doc.markModified('data');
+          await doc.save();
+          console.log(`[Chapters] Synchronized 14 Biology chapters for user ${userId}`);
+        }
+      }
+      return doc.data as DatabaseSchema;
+    } catch (e) {
+      console.warn('[MongoDB] Error retrieving user document, falling back:', e);
+    }
+  }
+  return dbStore.getData();
+}
+
+// Helper: Update user's dedicated document in MongoDB cluster
+async function updateUserData(userId: string, updater: (data: DatabaseSchema) => void, email?: string): Promise<DatabaseSchema> {
+  if (mongoose.connection.readyState >= 1) {
+    try {
+      let doc = await UserStudyDataModel.findOne({ userId });
+      let currentData: DatabaseSchema;
+      if (!doc) {
+        currentData = JSON.parse(JSON.stringify(INITIAL_DATABASE));
+        updater(currentData);
+        doc = await UserStudyDataModel.create({
+          userId,
+          userEmail: email || '',
+          data: currentData,
+        });
+      } else {
+        currentData = doc.data;
+        updater(currentData);
+        doc.data = currentData;
+        doc.markModified('data');
+        await doc.save();
+      }
+      return currentData;
+    } catch (e) {
+      console.warn('[MongoDB] Error updating user document:', e);
+    }
+  }
+  dbStore.updateData(updater);
+  return dbStore.getData();
+}
+
 // -------------------------------------------------------------
-// USER AUTHENTICATION & MULTI-USER API ROUTES
+// REAL AUTHENTICATION & AUTHORIZATION API (JWT + MONGODB)
 // -------------------------------------------------------------
 
-// 1. Register new medical aspirant
-app.post('/api/auth/register', (req, res) => {
+// Sign Up: Hashes password with bcrypt, creates User & dedicated MongoDB data document
+app.post('/api/auth/signup', async (req, res) => {
   try {
-    const result = authManager.register(req.body);
-    if (!result.success || !result.user) {
-      return res.status(400).json(result);
+    const { email, password, name, targetExam, targetYear, dreamMedicalCollege } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
     }
-    // Initialize the new user's isolated database store
-    const store = getUserStore(result.user.id);
-    store.updateData((data) => {
-      data.userProfile = {
-        name: result.user!.name,
-        aspirantType: result.user!.aspirantType,
-        targetExam: result.user!.targetExam,
-        targetYear: result.user!.targetYear,
-        dreamMedicalCollege: result.user!.dreamMedicalCollege,
-        personalMotto: result.user!.personalMotto,
-      };
+    if (typeof password !== 'string' || password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+    }
+
+    const normalizedEmail = String(email).toLowerCase().trim();
+    const existing = await UserModel.findOne({ email: normalizedEmail });
+    if (existing) {
+      return res.status(409).json({ error: 'An account with this email already exists. Please log in.' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const userName = name && String(name).trim() ? String(name).trim() : normalizedEmail.split('@')[0];
+    const newUser = await UserModel.create({
+      email: normalizedEmail,
+      password: hashedPassword,
+      name: userName,
     });
-    console.log(`[Auth] Registered new student: Dr. ${result.user.name} (${result.user.email}) -> Store ID: ${result.user.id}`);
-    res.status(201).json(result);
+
+    // Create a brand new dedicated MongoDB document for this specific user
+    const userInitialData: DatabaseSchema = JSON.parse(JSON.stringify(INITIAL_DATABASE));
+    userInitialData.userProfile.name = userName;
+    if (targetExam) userInitialData.userProfile.targetExam = String(targetExam).trim();
+    if (targetYear) userInitialData.userProfile.targetYear = String(targetYear).trim();
+    if (dreamMedicalCollege) userInitialData.userProfile.dreamMedicalCollege = String(dreamMedicalCollege).trim();
+
+    await UserStudyDataModel.findOneAndUpdate(
+      { userId: newUser._id.toString() },
+      { userId: newUser._id.toString(), userEmail: normalizedEmail, data: userInitialData },
+      { upsert: true, new: true }
+    );
+
+    const token = jwt.sign(
+      { userId: newUser._id.toString(), email: newUser.email, name: newUser.name },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    res.status(201).json({
+      success: true,
+      message: 'Account created successfully! Cloud study document initialized in MongoDB cluster.',
+      token,
+      user: {
+        id: newUser._id.toString(),
+        email: newUser.email,
+        name: newUser.name,
+      },
+      data: userInitialData,
+    });
   } catch (err: any) {
-    console.error('Registration error:', err);
-    res.status(500).json({ success: false, message: err.message || 'Registration failed' });
+    console.error('Signup failed:', err);
+    res.status(500).json({ error: 'Signup failed', details: err?.message || String(err) });
   }
 });
 
-// 2. Student Login
-app.post('/api/auth/login', (req, res) => {
+// Login: Authenticates credentials, issues JWT token & accesses user's MongoDB document
+app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
-    const result = authManager.login(email, password);
-    if (!result.success) {
-      return res.status(401).json(result);
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
     }
-    console.log(`[Auth] Student logged in: Dr. ${result.user?.name} (${result.user?.email})`);
-    res.json(result);
-  } catch (err: any) {
-    console.error('Login error:', err);
-    res.status(500).json({ success: false, message: err.message || 'Login failed' });
-  }
-});
 
-
-// 4. Get Current User profile from session
-app.get('/api/auth/me', (req, res) => {
-  try {
-    const user = authManager.getReqUser(req);
+    const normalizedEmail = String(email).toLowerCase().trim();
+    const user = await UserModel.findOne({ email: normalizedEmail });
     if (!user) {
-      return res.status(401).json({ success: false, message: 'Session expired or not authenticated' });
+      return res.status(401).json({ error: 'Invalid email or password' });
     }
-    res.json({ success: true, user });
+
+    const validPassword = await bcrypt.compare(password, user.password);
+    if (!validPassword) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+
+    // Ensure dedicated user document exists in MongoDB
+    const userData = await getUserData(user._id.toString(), user.email);
+
+    const token = jwt.sign(
+      { userId: user._id.toString(), email: user.email, name: user.name || user.email.split('@')[0] },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    res.json({
+      success: true,
+      message: 'Logged in successfully',
+      token,
+      user: {
+        id: user._id.toString(),
+        email: user.email,
+        name: user.name || user.email.split('@')[0],
+      },
+      data: userData,
+    });
   } catch (err: any) {
-    res.status(500).json({ success: false, message: err.message });
+    console.error('Login failed:', err);
+    res.status(500).json({ error: 'Login failed', details: err?.message || String(err) });
   }
 });
 
-// 5. Logout session
-app.post('/api/auth/logout', (req, res) => {
+// Current User Details
+app.get('/api/auth/me', authenticateToken, async (req: any, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    let token = '';
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      token = authHeader.substring(7).trim();
-    } else if (req.headers['x-auth-token']) {
-      token = String(req.headers['x-auth-token']).trim();
-    }
-    if (token) authManager.logout(token);
-    res.json({ success: true, message: 'Logged out successfully' });
+    const user = await UserModel.findById(req.user.userId).select('-password');
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json({
+      success: true,
+      user: {
+        id: user._id.toString(),
+        email: user.email,
+        name: user.name,
+      },
+    });
   } catch (err: any) {
-    res.status(500).json({ success: false, message: err.message });
+    res.status(500).json({ error: 'Failed to fetch current user' });
   }
 });
 
-// 6. Update user account details & goals
-app.put('/api/auth/profile', (req, res) => {
-  try {
-    const user = authManager.getReqUser(req);
-    if (!user) {
-      return res.status(401).json({ success: false, message: 'Not authenticated' });
-    }
-    const result = authManager.updateProfile(user.id, req.body);
-    if (result.success && result.user) {
-      // Sync into isolated store
-      const store = getCurrentStore(req);
-      store.updateData((data) => {
-        data.userProfile = {
-          name: result.user!.name,
-          aspirantType: result.user!.aspirantType,
-          targetExam: result.user!.targetExam,
-          targetYear: result.user!.targetYear,
-          dreamMedicalCollege: result.user!.dreamMedicalCollege,
-          personalMotto: result.user!.personalMotto,
-          avatarUrl: result.user!.avatarUrl || '',
-        };
-      });
-    }
-    res.json(result);
-  } catch (err: any) {
-    res.status(500).json({ success: false, message: err.message || 'Profile update failed' });
-  }
-});
+// Health Check for Vercel & Monitoring
+const handleHealth = (req: express.Request, res: express.Response) => {
+  res.json({
+    status: 'ok',
+    service: 'MediPrep AI Serverless Backend',
+    timestamp: new Date().toISOString(),
+    isServerless,
+    database: dbStore.getStatus(),
+  });
+};
 
-// 7. Change account password
-app.post('/api/auth/change-password', (req, res) => {
-  try {
-    const user = authManager.getReqUser(req);
-    if (!user) {
-      return res.status(401).json({ success: false, message: 'Not authenticated' });
-    }
-    const { currentPassword, newPassword } = req.body;
-    const result = authManager.changePassword(user.id, currentPassword, newPassword);
-    if (!result.success) {
-      return res.status(400).json(result);
-    }
-    res.json(result);
-  } catch (err: any) {
-    res.status(500).json({ success: false, message: err.message || 'Password change failed' });
-  }
-});
+app.get('/api', handleHealth);
+app.get('/api/health', handleHealth);
+app.get('/health', handleHealth);
 
-// -------------------------------------------------------------
-// CORE STUDY DATA API ROUTES (Per-User Isolated)
-// -------------------------------------------------------------
+app.post('/api/log-client-error', (req, res) => {
+  console.error('\n>>> CLIENT ERROR RECEIVED FROM BROWSER <<<');
+  console.error(JSON.stringify(req.body, null, 2));
+  console.error('>>> END CLIENT ERROR <<<\n');
+  res.json({ ok: true });
+});
 
 // DB Status, Reset & Setup
-app.post('/api/reset-data', (req, res) => {
+app.post(['/api/reset-data', '/reset-data'], optionalAuthenticateToken, async (req: any, res) => {
+  if (req.user && req.user.userId) {
+    const fresh = JSON.parse(JSON.stringify(INITIAL_DATABASE));
+    await updateUserData(req.user.userId, () => fresh, req.user.email);
+    return res.json({ success: true, data: fresh, status: dbStore.getStatus() });
+  }
   const freshData = dbStore.resetData();
   res.json({ success: true, data: freshData, status: dbStore.getStatus() });
 });
 
-app.get('/api/db-status', (req, res) => {
+app.get(['/api/db-status', '/db-status'], (req, res) => {
   res.json(dbStore.getStatus());
 });
 
-app.post('/api/db-sync', async (req, res) => {
+app.post(['/api/db-sync', '/db-sync'], async (req, res) => {
   try {
     await dbStore.syncFromMongoOrSeed();
     await dbStore.syncToMongo();
@@ -2234,7 +2277,7 @@ app.post('/api/db-sync', async (req, res) => {
   }
 });
 
-app.post('/api/db-test', async (req, res) => {
+app.post(['/api/db-test', '/db-test'], async (req, res) => {
   const { uri } = req.body;
   if (!uri) {
     return res.status(400).json({ success: false, message: 'MongoDB URI is required.' });
@@ -2243,205 +2286,118 @@ app.post('/api/db-test', async (req, res) => {
   res.json(result);
 });
 
-// Full Dashboard & Initial Data (Strict Multi-Tenant Isolation)
-app.get('/api/init', async (req, res) => {
-  const store = getCurrentStore(req);
-  await store.ensureSynced();
-  const currentUserId = (store as any).userId;
-  const rawData = store.getData();
-  const data = {
-    ...rawData,
-    materials: (rawData.materials || []).filter(
-      (m) => !m.userId || m.userId === currentUserId
-    ),
-  };
-  const dbStatus = store.getStatus();
-  res.json({
-    data,
-    status: dbStatus,
-  });
+// Full Dashboard & Initial Data (Loads user's dedicated MongoDB document if logged in)
+app.get(['/api/init', '/init'], optionalAuthenticateToken, async (req: any, res) => {
+  try {
+    const dbStatus = dbStore.getStatus();
+    if (req.user && req.user.userId) {
+      const userData = await getUserData(req.user.userId, req.user.email);
+      return res.json({
+        data: userData,
+        status: dbStatus,
+        user: {
+          id: req.user.userId,
+          email: req.user.email,
+          name: req.user.name || req.user.email.split('@')[0],
+        },
+      });
+    }
+
+    const data = dbStore.getData();
+    res.json({
+      data,
+      status: dbStatus,
+      user: null,
+    });
+  } catch (err: any) {
+    console.error('Error serving /api/init:', err);
+    res.status(500).json({ error: 'Failed to retrieve initial data', message: err?.message || String(err) });
+  }
 });
 
-// Update Medical Aspirant Profile (Strict Multi-Tenant & User Sync)
-app.put('/api/user-profile', async (req, res) => {
+// Update Medical Aspirant Profile (Saves to user's MongoDB document)
+app.put('/api/user-profile', optionalAuthenticateToken, async (req: any, res) => {
   try {
-    const { name, targetExam, targetYear, dreamMedicalCollege, personalMotto, aspirantType, avatarUrl } = req.body;
-    const store = getCurrentStore(req);
-    const user = authManager.getReqUser(req);
-    let updatedSafeUser: any = null;
+    const { name, targetExam, targetYear, dreamMedicalCollege, personalMotto, aspirantType } = req.body;
 
-    if (user) {
-      const authRes = authManager.updateProfile(user.id, {
+    const updater = (targetData: DatabaseSchema) => {
+      targetData.userProfile = {
+        ...targetData.userProfile,
         ...(name !== undefined && { name: String(name).trim() }),
         ...(targetExam !== undefined && { targetExam: String(targetExam).trim() }),
         ...(targetYear !== undefined && { targetYear: String(targetYear).trim() }),
         ...(dreamMedicalCollege !== undefined && { dreamMedicalCollege: String(dreamMedicalCollege).trim() }),
         ...(personalMotto !== undefined && { personalMotto: String(personalMotto).trim() }),
         ...(aspirantType !== undefined && { aspirantType: String(aspirantType).trim() }),
-        ...(avatarUrl !== undefined && { avatarUrl: String(avatarUrl) }),
-      });
-      if (authRes.success && authRes.user) {
-        updatedSafeUser = authRes.user;
-      }
-    }
-
-    const currentData = store.getData();
-    const updatedProfile = {
-      ...currentData.userProfile,
-      ...(name !== undefined && { name: String(name).trim() }),
-      ...(targetExam !== undefined && { targetExam: String(targetExam).trim() }),
-      ...(targetYear !== undefined && { targetYear: String(targetYear).trim() }),
-      ...(dreamMedicalCollege !== undefined && { dreamMedicalCollege: String(dreamMedicalCollege).trim() }),
-      ...(personalMotto !== undefined && { personalMotto: String(personalMotto).trim() }),
-      ...(aspirantType !== undefined && { aspirantType: String(aspirantType).trim() }),
-      ...(avatarUrl !== undefined && { avatarUrl: String(avatarUrl) }),
+      };
     };
 
-    store.updateData((data) => {
-      data.userProfile = updatedProfile;
-    });
+    if (req.user && req.user.userId) {
+      const updatedData = await updateUserData(req.user.userId, updater, req.user.email);
+      return res.json({ success: true, userProfile: updatedData.userProfile });
+    }
 
-    res.json({
-      success: true,
-      userProfile: updatedProfile,
-      user: updatedSafeUser || {
-        ...user,
-        ...updatedProfile,
-      },
-    });
+    dbStore.updateData(updater);
+    res.json({ success: true, userProfile: dbStore.getData().userProfile });
   } catch (err: any) {
     console.error('Failed to update user profile:', err);
     res.status(500).json({ error: err.message || 'Failed to update user profile' });
   }
 });
 
-
 // Subjects & Chapters
-app.get('/api/subjects', (req, res) => {
+app.get('/api/subjects', optionalAuthenticateToken, async (req: any, res) => {
+  if (req.user && req.user.userId) {
+    const userData = await getUserData(req.user.userId, req.user.email);
+    return res.json(userData.subjects);
+  }
   res.json(dbStore.getData().subjects);
 });
 
-app.get('/api/chapters', (req, res) => {
-  const { subject, classYear } = req.query;
-  const store = getCurrentStore(req);
-  let chapters = store.getData().chapters;
+app.get('/api/chapters', optionalAuthenticateToken, async (req: any, res) => {
+  const { subject } = req.query;
+  let allChapters: ChapterData[];
+  if (req.user && req.user.userId) {
+    const userData = await getUserData(req.user.userId, req.user.email);
+    allChapters = userData.chapters;
+  } else {
+    allChapters = dbStore.getData().chapters;
+  }
+
   if (subject) {
-    chapters = chapters.filter((c) => c.subject.toLowerCase() === (subject as string).toLowerCase());
+    return res.json(allChapters.filter((c) => c.subject.toLowerCase() === (subject as string).toLowerCase()));
   }
-  if (classYear) {
-    chapters = chapters.filter((c) => (c.classYear || '1st Year') === classYear);
-  }
-  res.json(chapters);
+  res.json(allChapters);
 });
 
-app.post('/api/chapters', (req, res) => {
-  try {
-    const { subject, chapterNumber, title, topics, classYear } = req.body;
-    if (!subject || !title) {
-      return res.status(400).json({ error: 'Subject and title are required' });
-    }
-    const store = getCurrentStore(req);
-    let newChapter: ChapterData | null = null;
-    store.updateData((data) => {
-      const targetYear = (classYear || '2nd Year') as '1st Year' | '2nd Year';
-      const existingInYear = data.chapters.filter((c) => c.subject.toLowerCase() === subject.toLowerCase() && (c.classYear || '1st Year') === targetYear);
-      const assignedNum = Number(chapterNumber) || (existingInYear.length + 1);
-
-      newChapter = {
-        id: `ch_${subject.toLowerCase().slice(0, 4)}_${targetYear === '2nd Year' ? '2_' : ''}${Date.now()}`,
-        subject,
-        chapterNumber: assignedNum,
-        title: title.trim(),
-        topics: Array.isArray(topics) ? topics : (typeof topics === 'string' && topics.trim() ? topics.split(',').map((t: string) => t.trim()).filter(Boolean) : []),
-        completed: false,
-        status: 'not_started',
-        notesCount: 0,
-        mcqsCount: 0,
-        classYear: targetYear,
-      };
-
-      data.chapters.push(newChapter);
-      const sub = data.subjects.find((s) => s.name.toLowerCase() === subject.toLowerCase());
-      if (sub) {
-        sub.chaptersCount = data.chapters.filter((c) => c.subject.toLowerCase() === subject.toLowerCase()).length;
-      }
-    });
-
-    res.status(201).json(newChapter);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Failed to add chapter' });
-  }
-});
-
-app.post('/api/chapters/batch', (req, res) => {
-  try {
-    const { chapters } = req.body;
-    if (!Array.isArray(chapters) || chapters.length === 0) {
-      return res.status(400).json({ error: 'chapters array is required' });
-    }
-    const store = getCurrentStore(req);
-    const addedChapters: ChapterData[] = [];
-    store.updateData((data) => {
-      chapters.forEach((item: any, idx: number) => {
-        const { subject, chapterNumber, title, topics, classYear } = item;
-        if (!subject || !title) return;
-        const targetYear = (classYear || '2nd Year') as '1st Year' | '2nd Year';
-        const existingInYear = data.chapters.filter((c) => c.subject.toLowerCase() === subject.toLowerCase() && (c.classYear || '1st Year') === targetYear);
-        const assignedNum = Number(chapterNumber) || (existingInYear.length + 1);
-
-        const newCh: ChapterData = {
-          id: `ch_${subject.toLowerCase().slice(0, 4)}_${targetYear === '2nd Year' ? '2_' : ''}${Date.now()}_${idx}`,
-          subject,
-          chapterNumber: assignedNum,
-          title: title.trim(),
-          topics: Array.isArray(topics) ? topics : (typeof topics === 'string' && topics.trim() ? topics.split(',').map((t: string) => t.trim()).filter(Boolean) : []),
-          completed: false,
-          status: 'not_started',
-          notesCount: 0,
-          mcqsCount: 0,
-          classYear: targetYear,
-        };
-
-        data.chapters.push(newCh);
-        addedChapters.push(newCh);
-      });
-
-      // Update subjects count
-      data.subjects.forEach((sub) => {
-        sub.chaptersCount = data.chapters.filter((c) => c.subject.toLowerCase() === sub.name.toLowerCase()).length;
-      });
-    });
-
-    res.status(201).json(addedChapters);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Failed to add batch chapters' });
-  }
-});
-
-app.post('/api/chapters/:id/toggle', (req, res) => {
+app.post('/api/chapters/:id/toggle', optionalAuthenticateToken, async (req: any, res) => {
   const { id } = req.params;
   const { status } = req.body;
   let updatedChapter: ChapterData | undefined;
 
-  const store = getCurrentStore(req);
-  store.updateData((data) => {
+  const toggleLogic = (data: DatabaseSchema) => {
     const ch = data.chapters.find((c) => c.id === id);
     if (ch) {
       ch.status = status || (ch.status === 'completed' ? 'in_progress' : 'completed');
       ch.completed = ch.status === 'completed';
       updatedChapter = ch;
 
-      // Add activity
       data.activities.unshift({
         id: 'act_' + Date.now(),
         title: `Chapter ${ch.completed ? 'Completed' : 'Updated'}: ${ch.title}`,
-        description: `Marked Chapter ${ch.chapterNumber} of ${ch.subject} (${ch.classYear || '1st Year'}) as ${ch.status}.`,
+        description: `Marked Chapter ${ch.chapterNumber} of ${ch.subject} as ${ch.status}.`,
         subject: ch.subject,
         type: 'chapter_completed',
         timestamp: 'Just now',
       });
     }
-  });
+  };
+
+  if (req.user && req.user.userId) {
+    await updateUserData(req.user.userId, toggleLogic, req.user.email);
+  } else {
+    dbStore.updateData(toggleLogic);
+  }
 
   if (!updatedChapter) {
     return res.status(404).json({ error: 'Chapter not found' });
@@ -2449,15 +2405,10 @@ app.post('/api/chapters/:id/toggle', (req, res) => {
   res.json(updatedChapter);
 });
 
-// Study Materials CRUD (Strict Multi-Tenant Isolation)
-app.get('/api/materials', async (req, res) => {
+// Study Materials CRUD
+app.get('/api/materials', (req, res) => {
   const { subject, type, search } = req.query;
-  const store = getCurrentStore(req);
-  await store.ensureSynced();
-  const currentUserId = (store as any).userId;
-  let list = (store.getData().materials || []).filter(
-    (m) => !m.userId || m.userId === currentUserId
-  );
+  let list = dbStore.getData().materials;
 
   if (subject && subject !== 'All') {
     list = list.filter((m) => m.subject.toLowerCase() === (subject as string).toLowerCase());
@@ -2503,9 +2454,6 @@ app.post('/api/materials', async (req, res) => {
     }
   }
 
-  const currentStore = getCurrentStore(req);
-  const currentUserId = (currentStore as any).userId || 'usr_uzair_primary';
-
   const newMaterial: StudyMaterial = {
     id: 'mat_' + Date.now(),
     title,
@@ -2524,8 +2472,7 @@ app.post('/api/materials', async (req, res) => {
     bookmarked: false,
   };
 
-  // 1. Immediately save to in-memory store and user's local file
-  currentStore.updateData((data) => {
+  dbStore.updateData((data) => {
     data.materials.unshift(newMaterial);
     data.activities.unshift({
       id: 'act_' + Date.now(),
@@ -2537,14 +2484,16 @@ app.post('/api/materials', async (req, res) => {
     });
   });
 
-  // 2. Immediately persist to MongoDB Atlas with explicit upsert
+  // Explicitly persist to MongoDB Atlas immediately
   try {
-    await MaterialModel.findOneAndUpdate(
-      { id: newMaterial.id },
-      { ...newMaterial, userId: currentUserId },
-      { upsert: true, new: true }
-    );
-    console.log(`[MongoDB] Successfully persisted study material '${newMaterial.title}' (${newMaterial.id})`);
+    if (mongoose.connection.readyState >= 1) {
+      await MaterialModel.findOneAndUpdate(
+        { id: newMaterial.id },
+        newMaterial,
+        { upsert: true, new: true }
+      );
+      console.log(`[MongoDB] Successfully persisted study material '${newMaterial.title}' (${newMaterial.id})`);
+    }
   } catch (mongoErr: any) {
     console.error('[MongoDB Error] Saving material to MongoDB:', mongoErr?.message || mongoErr);
   }
@@ -2554,35 +2503,26 @@ app.post('/api/materials', async (req, res) => {
 
 app.delete('/api/materials/:id', async (req, res) => {
   const { id } = req.params;
-  let deletedMat: StudyMaterial | null = null;
-  const store = getCurrentStore(req);
-  const currentUserId = (store as any).userId;
+  let deleted = false;
 
-  store.updateData((data) => {
+  dbStore.updateData((data) => {
     const idx = data.materials.findIndex((m) => m.id === id);
     if (idx !== -1) {
-      deletedMat = data.materials[idx];
       data.materials.splice(idx, 1);
+      deleted = true;
     }
   });
 
-  // Explicitly delete from MongoDB Atlas only if belonging to current user
   try {
-    await MaterialModel.deleteOne({ id, userId: currentUserId });
-    console.log(`[MongoDB] Successfully deleted study material ${id} from MongoDB for user ${currentUserId}`);
-  } catch (err) {
-    console.error('[MongoDB Error] Deleting material:', err);
+    if (mongoose.connection.readyState >= 1) {
+      await MaterialModel.deleteOne({ id });
+      console.log(`[MongoDB] Successfully deleted study material ${id} from MongoDB`);
+    }
+  } catch (mongoErr: any) {
+    console.error('[MongoDB Error] Deleting material from MongoDB:', mongoErr?.message || mongoErr);
   }
 
-  // Remove local uploaded file if present
-  if (deletedMat && (deletedMat as StudyMaterial).fileUrl) {
-    try {
-      const baseName = path.basename((deletedMat as StudyMaterial).fileUrl!);
-      const filePath = path.join(UPLOADS_DIR, baseName);
-      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-    } catch (_) {}
-  }
-
+  if (!deleted) return res.status(404).json({ error: 'Material not found' });
   res.json({ success: true, id });
 });
 
@@ -3624,7 +3564,7 @@ app.delete('/api/ai/sessions', (req, res) => {
 
 // AI MCQ Generator
 app.post('/api/ai/generate-mcqs', async (req, res) => {
-  const { subject, chapter, topic, sourceMaterialId, numberOfMCQs, difficulty, questionType, classYear } = req.body;
+  const { subject, chapter, topic, sourceMaterialId, numberOfMCQs, difficulty, questionType } = req.body;
 
   if (!aiClient) {
     return res.status(503).json({
@@ -3637,7 +3577,6 @@ app.post('/api/ai/generate-mcqs', async (req, res) => {
   const targetChapter = chapter || 'Key Concepts';
   const targetDiff = difficulty || 'MDCAT Level';
   const targetType = questionType || 'Conceptual';
-  const targetYear = classYear || (dbStore.getData().chapters.find((c) => c.title.toLowerCase() === targetChapter.toLowerCase())?.classYear || '1st Year');
 
   let materialExcerpt = '';
   if (sourceMaterialId) {
@@ -3647,10 +3586,8 @@ app.post('/api/ai/generate-mcqs', async (req, res) => {
     }
   }
 
-  const syllabusLevel = `${targetYear} (Class ${targetYear === '1st Year' ? 'XI' : 'XII'}) Sindh Board & MDCAT`;
-  const prompt = `Generate exactly ${count} multiple choice questions (MCQs) for ${syllabusLevel} preparation.
+  const prompt = `Generate exactly ${count} multiple choice questions (MCQs) for First-Year Sindh Board and MDCAT preparation.
 Subject: ${targetSubject}
-Academic Level: ${targetYear}
 Chapter: ${targetChapter}
 Topic: ${topic || 'Key high-yield topics'}
 Difficulty: ${targetDiff}
@@ -3658,7 +3595,7 @@ Question Type: ${targetType}
 ${materialExcerpt}
 
 Requirements for each question:
-1. Question stem must be clear, medical-standard, testing reasoning or recall as per Sindh Board and MDCAT past trends for ${targetYear}.
+1. Question stem must be clear, medical-standard, testing reasoning or recall as per Sindh Board and MDCAT past trends.
 2. Provide exactly four options: A, B, C, D. All distractors must be plausible.
 3. Correct Answer must be exactly one letter: "A", "B", "C", or "D".
 4. Provide a thorough "explanation" justifying why the correct answer is right and why other common misconceptions are wrong.
@@ -3711,7 +3648,6 @@ Requirements for each question:
       difficulty: targetDiff,
       questionType: targetType,
       source: `AI Generated (${modelUsed})`,
-      classYear: targetYear,
       isBookmarked: false,
       isDifficult: targetDiff === 'Hard' || targetDiff === 'MDCAT Level',
       createdAt: new Date().toISOString().split('T')[0],
@@ -4389,63 +4325,28 @@ Requirements:
   }
 });
 
-// -------------------------------------------------------------
-// FRONTEND INTEGRATION (Vite Middleware in Dev, Static in Prod)
-// -------------------------------------------------------------
-async function startServer() {
-  const mongoUri = process.env.MONGODB_URI;
-  if (mongoUri && !mongoUri.includes('your_mongodb_connection_string')) {
-    try {
-      if (mongoose.connection.readyState < 1) {
-        await mongoose.connect(mongoUri, {
-          serverSelectionTimeoutMS: 5000,
-          dbName: 'studypannel',
-        });
-        console.log('[MongoDB Startup] Connected successfully to database:', mongoose.connection.name || 'studypannel');
-      }
-      // Pre-sync materials into default store on boot
-      const defaultStore = getUserStore('usr_uzair_primary');
-      await defaultStore.syncFromMongoOrSeed();
-
-      // Also pre-sync all active user sessions from data/auth_sessions.json so memory is hot
-      try {
-        const sessFile = path.join(DATA_DIR, 'auth_sessions.json');
-        if (fs.existsSync(sessFile)) {
-          const sessionsObj = JSON.parse(fs.readFileSync(sessFile, 'utf-8'));
-          const userIds = new Set<string>(Object.values(sessionsObj).map((s: any) => s.userId).filter(Boolean));
-          for (const uid of userIds) {
-            const store = getUserStore(uid);
-            await store.syncFromMongoOrSeed();
-          }
-        }
-      } catch (_) {}
-    } catch (err: any) {
-      console.warn('[MongoDB Startup] Notice:', err?.message || err);
-    }
-  }
-
-  if (process.env.NODE_ENV !== 'production') {
-    const { createServer: createViteServer } = await import('vite');
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: 'spa',
+// 404 Fallback for unmatched API routes ONLY (allow frontend SPA routes to pass through to Vite)
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
+    return res.status(404).json({
+      error: 'Not Found',
+      message: `API route ${req.method} ${req.url} was not found on this server.`,
     });
-    app.use(vite.middlewares);
-  } else {
-    const distPath = path.join(__dirname, 'dist');
-    if (fs.existsSync(distPath)) {
-      app.use(express.static(distPath));
-      app.get('*', (req, res) => {
-        res.sendFile(path.join(distPath, 'index.html'));
-      });
-    }
   }
-
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`MediPrep AI Server listening on http://0.0.0.0:${PORT}`);
-  });
-}
-
-startServer().catch((err) => {
-  console.error('Failed to start MediPrep AI server:', err);
+  next();
 });
+
+// Global Error Handler to catch all unhandled errors gracefully
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error('[API Unhandled Error]:', err);
+  if (!res.headersSent) {
+    res.status(500).json({
+      error: 'Internal Server Error',
+      message: err?.message || 'An unexpected server error occurred',
+    });
+  }
+});
+
+// Export the Express app instance for serverless function runtimes (Vercel) & local server
+export { app, dbStore, aiClient };
+export default app;

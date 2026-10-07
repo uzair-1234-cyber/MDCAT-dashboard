@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   LayoutDashboard,
   BookOpen,
@@ -16,7 +16,9 @@ import {
   Bookmark,
   CalendarCheck2,
 } from 'lucide-react';
-import { UserProfile } from '../types';
+import { UserProfile, AuthUser } from '../types';
+import { User, LogIn } from 'lucide-react';
+import { MedicalLogo } from './MedicalLogo';
 
 export type NavTab =
   | 'dashboard'
@@ -41,6 +43,9 @@ interface SidebarProps {
   onClearSubject?: () => void;
   mistakesCount?: number;
   userProfile?: UserProfile;
+  currentUser?: AuthUser | null;
+  onOpenAuth?: (mode?: 'login' | 'register') => void;
+  onOpenAccount?: () => void;
 }
 
 interface NavItemConfig {
@@ -58,6 +63,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
   activeSubject,
   onClearSubject,
   mistakesCount = 0,
+  userProfile,
+  currentUser,
+  onOpenAuth,
+  onOpenAccount,
 }) => {
   // Main Navigation items matching the reference design exactly
   const primaryNavItems: NavItemConfig[] = [
@@ -120,23 +129,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        {/* Top Header: Brain Icon + Sindh Board XI */}
-        <div className="px-5 pt-6 pb-4 flex items-center justify-between border-b border-[#13352D]/60">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center shrink-0 shadow-inner">
-              <Brain className="w-5 h-5 text-emerald-400" />
-            </div>
-            <div className="min-w-0">
-              <h1 className="text-base font-bold text-white tracking-tight truncate">
-                Sindh Board XI
-              </h1>
-            </div>
+        {/* Top Header: Simple Official Medical Logo */}
+        <div className="px-4 pt-5 pb-3.5 flex items-center justify-between border-b border-[#13352D]/60">
+          <div className="flex items-center gap-2 min-w-0">
+            <MedicalLogo size="md" />
           </div>
 
           {/* Mobile Close Button */}
           <button
             onClick={onCloseMobile}
-            className="lg:hidden text-emerald-300/70 hover:text-white p-1 rounded-lg hover:bg-white/10"
+            className="lg:hidden text-emerald-300/70 hover:text-white p-1 rounded-lg hover:bg-white/10 cursor-pointer"
             aria-label="Close menu"
           >
             <X className="w-5 h-5" />
@@ -217,8 +219,48 @@ export const Sidebar: React.FC<SidebarProps> = ({
           })}
         </div>
 
+        {/* User Account / Profile Area */}
+        <div className="px-3.5 pt-2">
+          {currentUser ? (
+            <button
+              onClick={() => {
+                onOpenAccount?.();
+                onCloseMobile();
+              }}
+              className="w-full flex items-center gap-2.5 p-2 rounded-xl bg-emerald-950/60 hover:bg-emerald-900/60 border border-emerald-800/50 text-left transition-colors group"
+            >
+              <div className="w-8 h-8 rounded-lg overflow-hidden bg-emerald-700 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+                {currentUser.avatarUrl ? (
+                  <img src={currentUser.avatarUrl} alt={currentUser.name} className="w-full h-full object-cover" />
+                ) : (
+                  currentUser.name.charAt(0).toUpperCase()
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-bold text-emerald-100 truncate group-hover:text-white">
+                  Dr. {currentUser.name}
+                </p>
+                <p className="text-[10px] text-emerald-300/70 truncate">
+                  {currentUser.targetExam || 'MDCAT 2026'}
+                </p>
+              </div>
+            </button>
+          ) : (
+            <button
+              onClick={() => {
+                onOpenAuth?.();
+                onCloseMobile();
+              }}
+              className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-md transition-all"
+            >
+              <LogIn className="w-3.5 h-3.5" />
+              <span>Create Account / Login</span>
+            </button>
+          )}
+        </div>
+
         {/* Bottom Motivation Card: Sprout Icon + Wave Background */}
-        <div className="p-3.5 mt-auto">
+        <div className="p-3.5 mt-auto space-y-2">
           <div className="relative overflow-hidden rounded-2xl bg-[#061814] border border-emerald-900/40 p-4 text-emerald-100 shadow-inner group">
             {/* Soft decorative background glow */}
             <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-emerald-500/10 rounded-full blur-xl pointer-events-none" />
@@ -230,6 +272,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 Small steps every day lead to big results.
               </p>
             </div>
+          </div>
+          <div className="text-center pt-1 text-[11px] text-emerald-400/70 font-medium">
+            Created by <span className="font-bold text-emerald-300">Muhammad Uzair</span>
           </div>
         </div>
       </aside>

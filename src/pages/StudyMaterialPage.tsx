@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Upload,
   Search,
@@ -17,6 +17,12 @@ import {
   AlertTriangle,
   Stethoscope,
   Sparkles,
+  RefreshCw,
+  Cloud,
+  Database,
+  ArrowLeft,
+  RotateCw,
+  Move,
 } from 'lucide-react';
 import { StudyMaterial, SubjectName, MaterialType, ChapterData, isMaterialImage } from '../types';
 
@@ -27,6 +33,7 @@ interface StudyMaterialPageProps {
   onOpenUpload: () => void;
   onDeleteMaterial: (id: string) => Promise<void>;
   onAskAboutMaterial: (material: StudyMaterial) => void;
+  onRefreshMaterials?: () => Promise<void>;
 }
 
 export const StudyMaterialPage: React.FC<StudyMaterialPageProps> = ({
@@ -36,16 +43,210 @@ export const StudyMaterialPage: React.FC<StudyMaterialPageProps> = ({
   onOpenUpload,
   onDeleteMaterial,
   onAskAboutMaterial,
+  onRefreshMaterials,
 }) => {
   const [subjectFilter, setSubjectFilter] = useState<string>(selectedSubject || 'All');
   const [typeFilter, setTypeFilter] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+
+  // Auto-refresh once if materials is empty on mount
+  useEffect(() => {
+    if (materials.length === 0 && onRefreshMaterials) {
+      onRefreshMaterials().catch(() => {});
+    }
+  }, []);
+
+  const handleManualRefresh = async () => {
+    if (!onRefreshMaterials || isRefreshing) return;
+    setIsRefreshing(true);
+    try {
+      await onRefreshMaterials();
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   // Preview Modal state
   const [previewMaterial, setPreviewMaterial] = useState<StudyMaterial | null>(null);
   const [zoomLevel, setZoomLevel] = useState<number>(1);
   const [imageError, setImageError] = useState<boolean>(false);
+
+  // Fullscreen Interactive Lightbox state
   const [fullscreenImage, setFullscreenImage] = useState<StudyMaterial | null>(null);
+  const [fullscreenZoom, setFullscreenZoom] = useState<number>(1);
+  const [fullscreenRotation, setFullscreenRotation] = useState<number>(0);
+  const [fullscreenPosition, setFullscreenPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+  const [dragStart, setDragStart] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [isWheeling, setIsWheeling] = useState<boolean>(false);
+  const fullscreenCanvasRef = useRef<HTMLDivElement>(null);
+  const wheelTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Fullscreen open/close handlers
+  const handleOpenFullscreen = (mat: StudyMaterial) => {
+    setFullscreenImage(mat);
+    setFullscreenZoom(1);
+    setFullscreenRotation(0);
+    setFullscreenPosition({ x: 0, y: 0 });
+    setIsDragging(false);
+  };
+
+  const handleCloseFullscreen = () => {
+    setFullscreenImage(null);
+    setFullscreenZoom(1);
+    setFullscreenRotation(0);
+    setFullscreenPosition({ x: 0, y: 0 });
+    setIsDragging(false);
+  };
+
+  const handleFullscreenZoomIn = () => {
+    setFullscreenZoom((prev) => Math.min(Number((prev + 0.25).toFixed(2)), 4));
+  };
+
+  const handleFullscreenZoomOut = () => {
+    setFullscreenZoom((prev) => {
+      const next = Math.max(Number((prev - 0.25).toFixed(2)), 0.5);
+      if (next <= 1) {
+        setFullscreenPosition({ x: 0, y: 0 });
+      }
+      return next;
+    });
+  };
+
+  const handleFullscreenReset = () => {
+    setFullscreenZoom(1);
+    setFullscreenPosition({ x: 0, y: 0 });
+  };
+
+  const handleSetExactZoom = (targetZoom: number) => {
+    setFullscreenZoom(targetZoom);
+    if (targetZoom <= 1) {
+      setFullscreenPosition({ x: 0, y: 0 });
+    }
+  };
+
+  const handleFullscreenRotate = () => {
+    setFullscreenRotation((prev) => (prev + 90) % 360);
+  };
+
+  // Keyboard controls for fullscreen lightbox (Esc to close, +/- to zoom, 0 to reset, R to rotate)
+  useEffect(() => {
+    if (!fullscreenImage) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        handleCloseFullscreen();
+      } else if (e.key === '+' || e.key === '=') {
+        e.preventDefault();
+        setFullscreenZoom((z) => Math.min(Number((z + 0.25).toFixed(2)), 4));
+      } else if (e.key === '-' || e.key === '_') {
+        e.preventDefault();
+        setFullscreenZoom((z) => {
+          const next = Math.max(Number((z - 0.25).toFixed(2)), 0.5);
+          if (next <= 1) setFullscreenPosition({ x: 0, y: 0 });
+          return next;
+        });
+      } else if (e.key === '0') {
+        e.preventDefault();
+        setFullscreenZoom(1);
+        setFullscreenPosition({ x: 0, y: 0 });
+      } else if (e.key.toLowerCase() === 'r') {
+        setFullscreenRotation((r) => (r + 90) % 360);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [fullscreenImage]);
+
+  // Calibrated, smooth non-passive wheel zoom listener (Works perfectly on Trackpad & Mouse Wheels)
+  useEffect(() => {
+    const el = fullscreenCanvasRef.current;
+    if (!el || !fullscreenImage) return;
+
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Temporarily disable CSS transitions during active wheeling to eliminate lag & overshooting
+      setIsWheeling(true);
+      if (wheelTimeoutRef.current) clearTimeout(wheelTimeoutRef.current);
+      wheelTimeoutRef.current = setTimeout(() => {
+        setIsWheeling(false);
+      }, 120);
+
+      // Fine, natural sensitivity:
+      // Trackpad gives small values (1-10), standard mouse notch gives ~100
+      // 1 notch (-100) => +0.075 zoom (~7.5% per notch, perfectly controlled)
+      const zoomDelta = -e.deltaY * 0.00075;
+      const clampedDelta = Math.max(-0.08, Math.min(0.08, zoomDelta));
+
+      setFullscreenZoom((prev) => {
+        const next = Math.min(Math.max(prev + clampedDelta, 0.5), 4);
+        const rounded = Number(next.toFixed(2));
+        if (rounded <= 1) {
+          setFullscreenPosition({ x: 0, y: 0 });
+        }
+        return rounded;
+      });
+    };
+
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => {
+      el.removeEventListener('wheel', onWheel);
+      if (wheelTimeoutRef.current) clearTimeout(wheelTimeoutRef.current);
+    };
+  }, [fullscreenImage]);
+
+  // Mouse & Touch Pan / Drag Handlers
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (e.button !== 0) return; // left click only
+    setIsDragging(true);
+    setDragStart({ x: e.clientX - fullscreenPosition.x, y: e.clientY - fullscreenPosition.y });
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return;
+    setFullscreenPosition({
+      x: e.clientX - dragStart.x,
+      y: e.clientY - dragStart.y,
+    });
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleDoubleClick = () => {
+    if (fullscreenZoom === 1) {
+      setFullscreenZoom(2);
+    } else {
+      setFullscreenZoom(1);
+      setFullscreenPosition({ x: 0, y: 0 });
+    }
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      const touch = e.touches[0];
+      setIsDragging(true);
+      setDragStart({ x: touch.clientX - fullscreenPosition.x, y: touch.clientY - fullscreenPosition.y });
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging || e.touches.length !== 1) return;
+    const touch = e.touches[0];
+    setFullscreenPosition({
+      x: touch.clientX - dragStart.x,
+      y: touch.clientY - dragStart.y,
+    });
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+  };
 
   // In-app Delete Confirmation (replaces blocked window.confirm)
   const [deleteTarget, setDeleteTarget] = useState<StudyMaterial | null>(null);
@@ -114,25 +315,44 @@ export const StudyMaterialPage: React.FC<StudyMaterialPageProps> = ({
       {/* Header & Upload Button */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 sm:p-6 rounded-2xl border border-slate-200/90 shadow-xs">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Study Material & Diagrams</h2>
             <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/80">
               {filteredMaterials.length} Items
             </span>
+            <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200">
+              <Database className="w-3 h-3 text-teal-600" />
+              <span>MongoDB Cloud Saved</span>
+            </span>
           </div>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Sindh Board textbooks, diagrams, notes, and PDFs organized by subject and chapter.
+            Sindh Board textbooks, diagrams, notes, and PDFs saved permanently in your MongoDB Atlas cloud.
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={onOpenUpload}
-          className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs sm:text-sm shadow-sm transition-all active:scale-[0.98] min-h-[44px] shrink-0"
-        >
-          <Upload className="w-4 h-4" />
-          <span>Upload Image / PDF</span>
-        </button>
+        <div className="flex items-center gap-2 self-stretch sm:self-auto shrink-0">
+          {onRefreshMaterials && (
+            <button
+              type="button"
+              onClick={handleManualRefresh}
+              disabled={isRefreshing}
+              title="Sync study materials with MongoDB Cloud"
+              className="flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 font-semibold text-xs sm:text-sm shadow-2xs transition-all active:scale-[0.98] min-h-[44px] disabled:opacity-50"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 text-slate-600 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <span>{isRefreshing ? 'Syncing...' : 'Sync Cloud'}</span>
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={onOpenUpload}
+            className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs sm:text-sm shadow-sm transition-all active:scale-[0.98] min-h-[44px]"
+          >
+            <Upload className="w-4 h-4" />
+            <span>Upload Image / PDF</span>
+          </button>
+        </div>
       </div>
 
       {/* Filter and Search Bar */}
@@ -448,8 +668,8 @@ export const StudyMaterialPage: React.FC<StudyMaterialPageProps> = ({
                       {!imageError && (previewMaterial.fileBase64 || previewMaterial.fileUrl) && (
                         <button
                           type="button"
-                          onClick={() => setFullscreenImage(previewMaterial)}
-                          className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 font-medium shadow-2xs"
+                          onClick={() => handleOpenFullscreen(previewMaterial)}
+                          className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 font-medium shadow-2xs cursor-pointer"
                           title="Fullscreen Lightbox"
                         >
                           <Maximize2 className="w-3.5 h-3.5 text-slate-600" />
@@ -484,7 +704,7 @@ export const StudyMaterialPage: React.FC<StudyMaterialPageProps> = ({
                           transition: 'transform 0.15s ease-out',
                         }}
                         className="max-h-[40vh] max-w-full object-contain rounded-lg shadow-sm cursor-zoom-in"
-                        onClick={() => setFullscreenImage(previewMaterial)}
+                        onClick={() => handleOpenFullscreen(previewMaterial)}
                       />
                     ) : (
                       /* Clean Styled Graphic Fallback if file URL is broken or missing */
@@ -585,53 +805,271 @@ export const StudyMaterialPage: React.FC<StudyMaterialPageProps> = ({
         </div>
       )}
 
-      {/* Fullscreen Lightbox Modal */}
+      {/* Fullscreen Interactive Lightbox Modal */}
       {fullscreenImage && (
-        <div className="fixed inset-0 z-60 bg-black/95 backdrop-blur-md flex flex-col p-4 animate-fadeIn">
-          {/* Top Bar */}
-          <div className="flex items-center justify-between text-white p-2 sm:p-4">
-            <div>
-              <h3 className="text-base sm:text-lg font-bold">{fullscreenImage.title}</h3>
-              <p className="text-xs text-slate-400">
-                {fullscreenImage.subject} • {fullscreenImage.chapter}
-              </p>
-            </div>
+        <div
+          className="fixed inset-0 z-[100] bg-slate-950/98 backdrop-blur-xl flex flex-col h-screen w-screen overflow-hidden select-none animate-fadeIn"
+          onMouseUp={handleMouseUp}
+          onTouchEnd={handleTouchEnd}
+        >
+          {/* Top Bar - Guaranteed Always Visible & Sticky with Back Button */}
+          <div className="shrink-0 flex items-center justify-between text-white px-3 sm:px-6 py-3 bg-slate-900/95 border-b border-white/10 backdrop-blur-md z-30 shadow-lg">
+            {/* Left: Prominent Back Button */}
             <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={handleCloseFullscreen}
+                className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold text-xs sm:text-sm border border-emerald-500/50 shadow-md transition-all cursor-pointer group"
+                title="Go Back (Esc)"
+              >
+                <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+                <span>Back</span>
+                <span className="hidden sm:inline-block text-[10px] text-emerald-200/80 font-mono bg-emerald-700/60 px-1.5 py-0.5 rounded ml-1">
+                  Esc
+                </span>
+              </button>
+
+              <div className="hidden md:block h-6 w-[1px] bg-white/10" />
+
+              {/* Title & Subject Info */}
+              <div className="hidden sm:block text-left">
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                    {fullscreenImage.subject}
+                  </span>
+                  <h3 className="text-sm font-bold text-white truncate max-w-[240px] lg:max-w-md">
+                    {fullscreenImage.title}
+                  </h3>
+                </div>
+                <p className="text-[11px] text-slate-400 truncate mt-0.5">
+                  Chapter: <span className="text-slate-300 font-medium">{fullscreenImage.chapter}</span>
+                  {fullscreenImage.topic && <> • Topic: <span className="text-slate-300 font-medium">{fullscreenImage.topic}</span></>}
+                </p>
+              </div>
+            </div>
+
+            {/* Center Quick Zoom Controls (Desktop) */}
+            <div className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-white/5 border border-white/10">
+              <button
+                type="button"
+                onClick={handleFullscreenZoomOut}
+                disabled={fullscreenZoom <= 0.5}
+                className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 disabled:opacity-40 transition-colors cursor-pointer"
+                title="Zoom Out (-)"
+              >
+                <ZoomOut className="w-4 h-4" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleSetExactZoom(1)}
+                className={`px-2 py-0.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                  fullscreenZoom === 1 ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-300 hover:text-white hover:bg-white/10'
+                }`}
+                title="Fit 100%"
+              >
+                100%
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSetExactZoom(1.5)}
+                className={`px-2 py-0.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                  fullscreenZoom === 1.5 ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-300 hover:text-white hover:bg-white/10'
+                }`}
+                title="Zoom 150% (Comfortable Reading)"
+              >
+                150%
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSetExactZoom(2)}
+                className={`px-2 py-0.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                  fullscreenZoom === 2 ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-300 hover:text-white hover:bg-white/10'
+                }`}
+                title="Zoom 200% (High Detail)"
+              >
+                200%
+              </button>
+
+              <button
+                type="button"
+                onClick={handleFullscreenZoomIn}
+                disabled={fullscreenZoom >= 4}
+                className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 disabled:opacity-40 transition-colors cursor-pointer"
+                title="Zoom In (+)"
+              >
+                <ZoomIn className="w-4 h-4" />
+              </button>
+
+              <div className="h-4 w-[1px] bg-white/10 mx-1" />
+
+              <button
+                type="button"
+                onClick={handleFullscreenRotate}
+                className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-colors flex items-center gap-1 text-xs cursor-pointer"
+                title="Rotate 90° (R)"
+              >
+                <RotateCw className="w-4 h-4" />
+                {fullscreenRotation !== 0 && <span className="text-[10px] font-mono">{fullscreenRotation}°</span>}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleFullscreenReset}
+                className="px-2 py-1 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 text-xs font-medium transition-colors cursor-pointer"
+                title="Reset Zoom & Pan (0)"
+              >
+                Reset
+              </button>
+            </div>
+
+            {/* Right: Actions */}
+            <div className="flex items-center gap-2">
               {(fullscreenImage.fileBase64 || fullscreenImage.fileUrl) && (
                 <a
                   href={fullscreenImage.fileBase64 || fullscreenImage.fileUrl}
-                  download={fullscreenImage.fileName || 'diagram.png'}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold border border-white/20 transition-colors"
+                  download={fullscreenImage.fileName || `${fullscreenImage.title.replace(/\s+/g, '_')}.png`}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold border border-white/15 transition-colors shadow-sm cursor-pointer"
+                  title="Download Image"
                 >
-                  <Download className="w-4 h-4" />
-                  <span>Download</span>
+                  <Download className="w-4 h-4 text-emerald-400" />
+                  <span className="hidden sm:inline">Download</span>
                 </a>
               )}
               <button
                 type="button"
-                onClick={() => setFullscreenImage(null)}
-                className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
-                title="Close Fullscreen"
+                onClick={handleCloseFullscreen}
+                className="p-2 rounded-xl bg-white/10 hover:bg-rose-500/20 hover:text-rose-400 text-white border border-white/10 transition-colors cursor-pointer"
+                title="Close Lightbox (Esc)"
               >
-                <X className="w-6 h-6" />
+                <X className="w-5 h-5" />
               </button>
             </div>
           </div>
 
-          {/* Centered Large Image */}
-          <div className="flex-1 flex items-center justify-center p-2 sm:p-6 overflow-auto">
+          {/* Centered Large Interactive Image Canvas with Drag & Zoom */}
+          <div
+            ref={fullscreenCanvasRef}
+            className="flex-1 relative w-full h-full flex items-center justify-center overflow-hidden p-2 sm:p-6"
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            style={{ cursor: fullscreenZoom > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default' }}
+          >
             <img
               src={fullscreenImage.fileBase64 || fullscreenImage.fileUrl}
               alt={fullscreenImage.title}
-              className="max-h-[85vh] max-w-full object-contain rounded-xl shadow-2xl"
+              onDoubleClick={handleDoubleClick}
+              draggable={false}
+              style={{
+                transform: `translate3d(${fullscreenPosition.x}px, ${fullscreenPosition.y}px, 0) scale(${fullscreenZoom}) rotate(${fullscreenRotation}deg)`,
+                transformOrigin: 'center center',
+                transition: isDragging || isWheeling ? 'none' : 'transform 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
+                maxHeight: fullscreenZoom <= 1 ? '82vh' : 'none',
+                maxWidth: fullscreenZoom <= 1 ? '92vw' : 'none',
+              }}
+              className="object-contain rounded-lg shadow-2xl pointer-events-auto select-none"
             />
+
+            {/* Quick helper tip when zoomed */}
+            {fullscreenZoom > 1 && (
+              <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 pointer-events-none px-3 py-1 rounded-full bg-slate-900/85 border border-white/15 text-slate-200 text-[11px] font-medium backdrop-blur-md shadow-md flex items-center gap-1.5 animate-fadeIn">
+                <Move className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Drag to pan • Double-click or click 100% to reset</span>
+              </div>
+            )}
+          </div>
+
+          {/* Floating Bottom Navigation & Zoom Pill Bar (Always reachable on mobile & desktop) */}
+          <div className="shrink-0 pb-5 pt-2 flex items-center justify-center z-30 pointer-events-none">
+            <div className="pointer-events-auto flex items-center gap-1 sm:gap-1.5 px-3 py-2 rounded-2xl bg-slate-900/90 border border-white/20 shadow-2xl backdrop-blur-md">
+              {/* Back Button in bottom pill */}
+              <button
+                type="button"
+                onClick={handleCloseFullscreen}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold text-xs shadow-sm transition-all cursor-pointer"
+                title="Back (Wapas)"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Back</span>
+              </button>
+
+              <div className="h-4 w-[1px] bg-white/20 mx-0.5" />
+
+              {/* Zoom Out */}
+              <button
+                type="button"
+                onClick={handleFullscreenZoomOut}
+                disabled={fullscreenZoom <= 0.5}
+                className="p-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white disabled:opacity-30 transition-colors cursor-pointer"
+                title="Zoom Out (-)"
+              >
+                <ZoomOut className="w-4 h-4" />
+              </button>
+
+              {/* Exact Presets */}
+              <button
+                type="button"
+                onClick={() => handleSetExactZoom(1)}
+                className={`px-2 py-1 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
+                  fullscreenZoom === 1 ? 'bg-emerald-600 text-white shadow-xs' : 'bg-white/5 hover:bg-white/15 text-slate-300'
+                }`}
+                title="100% (Fit)"
+              >
+                100%
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSetExactZoom(1.5)}
+                className={`px-2 py-1 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
+                  fullscreenZoom === 1.5 ? 'bg-emerald-600 text-white shadow-xs' : 'bg-white/5 hover:bg-white/15 text-slate-300'
+                }`}
+                title="150% (Comfortable Reading)"
+              >
+                150%
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSetExactZoom(2)}
+                className={`px-2 py-1 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
+                  fullscreenZoom === 2 ? 'bg-emerald-600 text-white shadow-xs' : 'bg-white/5 hover:bg-white/15 text-slate-300'
+                }`}
+                title="200% (High Detail)"
+              >
+                200%
+              </button>
+
+              {/* Zoom In */}
+              <button
+                type="button"
+                onClick={handleFullscreenZoomIn}
+                disabled={fullscreenZoom >= 4}
+                className="p-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white disabled:opacity-30 transition-colors cursor-pointer"
+                title="Zoom In (+)"
+              >
+                <ZoomIn className="w-4 h-4" />
+              </button>
+
+              <div className="h-4 w-[1px] bg-white/20 mx-0.5" />
+
+              {/* Rotate */}
+              <button
+                type="button"
+                onClick={handleFullscreenRotate}
+                className="p-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
+                title="Rotate 90°"
+              >
+                <RotateCw className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
       )}
 
       {/* Guaranteed In-App Delete Confirmation Modal (Works in all Iframes/Devices) */}
       {deleteTarget && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fadeIn">
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fadeIn">
           <div className="bg-white rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-slate-200 space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center shrink-0">

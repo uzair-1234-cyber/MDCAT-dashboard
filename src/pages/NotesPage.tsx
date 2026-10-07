@@ -309,7 +309,7 @@ export const NotesPage: React.FC<NotesPageProps> = ({
                     <option value="">Select Chapter...</option>
                     {filteredChapters.map((ch) => (
                       <option key={ch.id} value={ch.title}>
-                        Ch {ch.chapterNumber}: {ch.title}
+                        [{ch.classYear || '1st Year'}] Ch {ch.chapterNumber}: {ch.title}
                       </option>
                     ))}
                   </select>

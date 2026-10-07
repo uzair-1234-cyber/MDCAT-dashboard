@@ -30,7 +30,7 @@ export const DashboardMetrics: React.FC<DashboardMetricsProps> = ({
   const todayPercent = Math.min(Math.round((todayMins / Math.max(goalMins, 1)) * 100), 100);
 
   // Syllabus
-  const totalChapters = chapters?.length || 29;
+  const totalChapters = chapters?.length || 35;
   const completedChapters = chapters?.filter((c) => c.completed).length || 0;
   const syllabusPercent = totalChapters > 0 ? Math.round((completedChapters / totalChapters) * 100) : 0;
 
@@ -127,10 +127,15 @@ export const DashboardMetrics: React.FC<DashboardMetricsProps> = ({
             </span>
           </div>
 
-          {/* Subtitle */}
-          <p className="text-xs text-slate-600 font-medium mb-3">
-            Sindh Board XI Pre-Medical
-          </p>
+          {/* Subtitle with 1st & 2nd Year tags */}
+          <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-bold text-slate-600 mb-3">
+            <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200">
+              1st Year: {chapters?.filter((c) => (c.classYear || '1st Year') === '1st Year').length || 0} Ch
+            </span>
+            <span className="px-2 py-0.5 rounded bg-purple-100 text-purple-800 border border-purple-200">
+              2nd Year: {chapters?.filter((c) => c.classYear === '2nd Year').length || 0 > 0 ? `${chapters?.filter((c) => c.classYear === '2nd Year').length} Ch` : 'System Ready'}
+            </span>
+          </div>
 
           {/* Progress Bar */}
           <div className="w-full bg-[#DCEAF8] rounded-full h-2 overflow-hidden mb-4">

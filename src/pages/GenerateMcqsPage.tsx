@@ -13,8 +13,9 @@ import {
   Eye,
   EyeOff,
   Trash2,
+  GraduationCap,
 } from 'lucide-react';
-import { MCQ, SubjectName, ChapterData, StudyMaterial } from '../types';
+import { MCQ, SubjectName, ChapterData, StudyMaterial, AcademicYear } from '../types';
 import { api } from '../services/api';
 
 interface GenerateMcqsPageProps {
@@ -39,6 +40,7 @@ export const GenerateMcqsPage: React.FC<GenerateMcqsPageProps> = ({
   onToggleDifficult,
 }) => {
   const [subject, setSubject] = useState<SubjectName>(preselectedSubject || 'Biology');
+  const [academicYear, setAcademicYear] = useState<'All' | '1st Year' | '2nd Year'>('All');
   const [chapter, setChapter] = useState(preselectedChapter || '');
   const [topic, setTopic] = useState('');
   const [sourceMaterialId, setSourceMaterialId] = useState('');
@@ -54,7 +56,17 @@ export const GenerateMcqsPage: React.FC<GenerateMcqsPageProps> = ({
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [error, setError] = useState('');
 
-  const filteredChapters = chapters.filter((c) => c.subject.toLowerCase() === subject.toLowerCase());
+  // Dynamically group chapters for the selected subject
+  const subjectChapters = chapters.filter((c) => c.subject.toLowerCase() === subject.toLowerCase());
+  const firstYearChapters = subjectChapters.filter((c) => (c.classYear || '1st Year') === '1st Year');
+  const secondYearChapters = subjectChapters.filter((c) => c.classYear === '2nd Year');
+
+  // Filter chapters based on active academicYear filter
+  const filteredChapters = subjectChapters.filter((c) => {
+    if (academicYear === 'All') return true;
+    return (c.classYear || '1st Year') === academicYear;
+  });
+
   const filteredMaterials = materials.filter((m) => m.subject.toLowerCase() === subject.toLowerCase());
 
   const handleGenerate = async (e: React.FormEvent) => {
@@ -64,6 +76,9 @@ export const GenerateMcqsPage: React.FC<GenerateMcqsPageProps> = ({
     setSavedSuccess(false);
 
     try {
+      const selectedChapterObj = chapters.find((c) => c.title.toLowerCase() === (chapter || '').toLowerCase());
+      const effectiveYear = academicYear !== 'All' ? academicYear : (selectedChapterObj?.classYear || '1st Year');
+
       const res = await api.generateAiMCQs({
         subject,
         chapter: chapter || (filteredChapters[0]?.title || 'Core Medical Syllabus'),
@@ -72,6 +87,7 @@ export const GenerateMcqsPage: React.FC<GenerateMcqsPageProps> = ({
         numberOfMCQs,
         difficulty,
         questionType,
+        classYear: effectiveYear,
       });
 
       setGeneratedList(res.mcqs);
@@ -167,7 +183,95 @@ export const GenerateMcqsPage: React.FC<GenerateMcqsPageProps> = ({
       </div>
 
       {/* Generator Configuration Form */}
-      <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs">
+      <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-4">
+        {/* Academic Year Level Switcher Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-slate-50 border border-slate-200/80">
+          <div className="flex items-center gap-2.5">
+            <span className="p-2 rounded-xl bg-purple-100 text-purple-700">
+              <GraduationCap className="w-4 h-4" />
+            </span>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-slate-900 leading-tight">
+                  Academic Year / Class Level:
+                </span>
+                <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded border ${
+                  academicYear === '2nd Year'
+                    ? 'bg-purple-100 text-purple-800 border-purple-200'
+                    : academicYear === '1st Year'
+                    ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
+                    : 'bg-cyan-100 text-cyan-800 border-cyan-200'
+                }`}>
+                  {academicYear === 'All' ? '1st & 2nd Year (Full MDCAT)' : academicYear}
+                </span>
+              </div>
+              <span className="text-[11px] text-slate-500">
+                1st Year (XI) aur 2nd Year (XII) ke mutabiq filter karein. Jaise hi naye chapter add honge, foran yahan show honge.
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1 p-1 bg-white rounded-xl border border-slate-200 text-xs font-bold shadow-2xs self-start sm:self-auto">
+            <button
+              type="button"
+              onClick={() => {
+                setAcademicYear('All');
+                setChapter('');
+              }}
+              className={`px-3 py-1.5 rounded-lg transition-all ${
+                academicYear === 'All'
+                  ? 'bg-slate-900 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              All MDCAT ({subjectChapters.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setAcademicYear('1st Year');
+                setChapter('');
+              }}
+              className={`px-3 py-1.5 rounded-lg transition-all ${
+                academicYear === '1st Year'
+                  ? 'bg-emerald-600 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-emerald-700'
+              }`}
+            >
+              1st Year (XI) ({firstYearChapters.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setAcademicYear('2nd Year');
+                setChapter('');
+              }}
+              className={`px-3 py-1.5 rounded-lg transition-all ${
+                academicYear === '2nd Year'
+                  ? 'bg-purple-600 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-purple-700'
+              }`}
+            >
+              2nd Year (XII) ({secondYearChapters.length > 0 ? secondYearChapters.length : '0 Ready'})
+            </button>
+          </div>
+        </div>
+
+        {/* Informational banner when 2nd Year has 0 chapters yet */}
+        {academicYear === '2nd Year' && secondYearChapters.length === 0 && (
+          <div className="p-3 rounded-xl bg-purple-50 border border-purple-200 text-xs text-purple-800 flex items-center justify-between gap-3 animate-fadeIn">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-purple-600 shrink-0" />
+              <span>
+                Second Year (Class XII) {subject} system active hai. Aap Syllabus section se ya chat me chapters bhej kar jaise hi add karenge, wo automatically yahan add ho jayenge.
+              </span>
+            </div>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-200 text-purple-900 shrink-0">
+              Auto Sync Active
+            </span>
+          </div>
+        )}
+
         <form onSubmit={handleGenerate} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {/* Subject */}
@@ -191,18 +295,46 @@ export const GenerateMcqsPage: React.FC<GenerateMcqsPageProps> = ({
 
             {/* Chapter */}
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Chapter</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-bold text-slate-700">Chapter</label>
+                <span className="text-[10px] font-bold text-slate-400">
+                  {filteredChapters.length} {academicYear === 'All' ? 'Chapters' : academicYear}
+                </span>
+              </div>
               <select
                 value={chapter}
                 onChange={(e) => setChapter(e.target.value)}
                 className="w-full px-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 bg-white font-medium focus:ring-2 focus:ring-purple-500 outline-none"
               >
                 <option value="">All / General Topics</option>
-                {filteredChapters.map((ch) => (
-                  <option key={ch.id} value={ch.title}>
-                    Ch {ch.chapterNumber}: {ch.title}
-                  </option>
-                ))}
+                {academicYear === 'All' ? (
+                  <>
+                    {firstYearChapters.length > 0 && (
+                      <optgroup label="1st Year (Class XI)">
+                        {firstYearChapters.map((ch) => (
+                          <option key={ch.id} value={ch.title}>
+                            Ch {ch.chapterNumber}: {ch.title}
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
+                    {secondYearChapters.length > 0 && (
+                      <optgroup label="2nd Year (Class XII)">
+                        {secondYearChapters.map((ch) => (
+                          <option key={ch.id} value={ch.title}>
+                            Ch {ch.chapterNumber}: {ch.title}
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
+                  </>
+                ) : (
+                  filteredChapters.map((ch) => (
+                    <option key={ch.id} value={ch.title}>
+                      [{ch.classYear || '1st Year'}] Ch {ch.chapterNumber}: {ch.title}
+                    </option>
+                  ))
+                )}
               </select>
             </div>
 
@@ -392,6 +524,13 @@ export const GenerateMcqsPage: React.FC<GenerateMcqsPageProps> = ({
                           <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-800 border border-cyan-200">
                             {mcq.subject}
                           </span>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${
+                            (mcq.classYear || academicYear) === '2nd Year'
+                              ? 'bg-purple-50 text-purple-700 border-purple-200'
+                              : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                          }`}>
+                            {mcq.classYear || (academicYear !== 'All' ? academicYear : '1st Year')}
+                          </span>
                           <span className="text-[10px] font-semibold text-slate-500">
                             {mcq.chapter}
                           </span>
@@ -400,7 +539,7 @@ export const GenerateMcqsPage: React.FC<GenerateMcqsPageProps> = ({
                               • {mcq.topic}
                             </span>
                           )}
-                          <span className="text-[10px] font-medium px-2 py-0.2 rounded bg-purple-50 text-purple-700">
+                          <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-purple-50 text-purple-700">
                             {mcq.difficulty}
                           </span>
                         </div>

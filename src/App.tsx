@@ -18,14 +18,17 @@ import { BookmarksPage } from './pages/BookmarksPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { MistakeBookPage } from './pages/MistakeBookPage';
 import { PastPapersPage } from './pages/PastPapersPage';
+import { LandingPage } from './pages/LandingPage';
 
 import { StudyTimerModal } from './components/StudyTimerModal';
 import { GlobalSearchModal } from './components/GlobalSearchModal';
 import { UploadMaterialModal } from './components/UploadMaterialModal';
 import { MobileBottomNav } from './components/MobileBottomNav';
+import { AuthModal } from './components/AuthModal';
+import { AccountModal } from './components/AccountModal';
 
-import { api } from './services/api';
-import { DatabaseSchema, DbStatus, SubjectName, StudyMaterial, MCQ, QuizAttempt, StudyNote, RevisionPlanItem, UserProfile } from './types';
+import { api, authStorage } from './services/api';
+import { DatabaseSchema, DbStatus, SubjectName, StudyMaterial, MCQ, QuizAttempt, StudyNote, RevisionPlanItem, UserProfile, AuthUser } from './types';
 import { Stethoscope, Heart, CheckCircle2, Sparkles, AlertCircle } from 'lucide-react';
 
 export default function App() {
@@ -35,6 +38,12 @@ export default function App() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [currentTab, setCurrentTab] = useState<NavTab>('dashboard');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Authentication State
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(() => api.getStoredUser());
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('login');
+  const [accountModalOpen, setAccountModalOpen] = useState(false);
 
   // Cross-page state transfers
   const [activeSubject, setActiveSubject] = useState<string | undefined>(undefined);
@@ -125,8 +134,47 @@ export default function App() {
   };
 
   useEffect(() => {
-    loadData();
+    const initApp = async () => {
+      const token = api.getToken();
+      if (token) {
+        try {
+          const me = await api.getMe();
+          if (me.user) {
+            setCurrentUser(me.user);
+            await loadData();
+            return;
+          }
+        } catch (_) {
+          console.warn('Stored session was invalid or expired');
+          api.logout();
+          setCurrentUser(null);
+        }
+      }
+      setLoading(false);
+    };
+    initApp();
   }, []);
+
+  const handleAuthSuccess = async (user: AuthUser, message: string) => {
+    setCurrentUser(user);
+    setAuthModalOpen(false);
+    showToast(`Welcome Dr. ${user.name}! ${message}`, 'doctor');
+    await loadData();
+  };
+
+  const handleLogout = async () => {
+    await api.logout();
+    setCurrentUser(null);
+    setData(null);
+    setAccountModalOpen(false);
+    showToast('Signed out of your study account.', 'info');
+  };
+
+  const handleProfileUpdated = (updatedUser: AuthUser) => {
+    setCurrentUser(updatedUser);
+    setData((prev) => (prev ? { ...prev, userProfile: { ...prev.userProfile, ...updatedUser } } : prev));
+    showToast('Account details updated successfully!', 'success');
+  };
 
   // Keyboard shortcut for Cmd+K Search
   useEffect(() => {
@@ -165,6 +213,17 @@ export default function App() {
     showToast('Material removed from library.', 'info');
   };
 
+  const handleRefreshMaterials = async () => {
+    try {
+      const refreshed = await api.getMaterials();
+      setData((prev) => (prev ? { ...prev, materials: refreshed } : prev));
+      showToast(`Cloud Synced: ${refreshed.length} study materials updated.`, 'doctor');
+    } catch (err: any) {
+      console.warn('Failed to refresh materials:', err);
+      showToast('Cloud sync notice: using latest cached materials.', 'info');
+    }
+  };
+
   const handleToggleChapter = async (
     chapterId: string,
     status?: 'not_started' | 'in_progress' | 'completed'
@@ -179,6 +238,34 @@ export default function App() {
     });
     if (updated.completed) {
       showToast('One chapter closer to your white coat! 🩺', 'doctor');
+    }
+  };
+
+  const handleAddChapter = async (payload: {
+    subject: SubjectName;
+    chapterNumber?: number;
+    title: string;
+    topics?: string[];
+    classYear?: '1st Year' | '2nd Year';
+  }) => {
+    try {
+      const newCh = await api.addChapter(payload);
+      setData((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          chapters: [...prev.chapters, newCh],
+          subjects: prev.subjects.map((s) =>
+            s.name.toLowerCase() === payload.subject.toLowerCase()
+              ? { ...s, chaptersCount: s.chaptersCount + 1 }
+              : s
+          ),
+        };
+      });
+      showToast(`Added Chapter ${newCh.chapterNumber}: "${newCh.title}" (${newCh.classYear || '2nd Year'})!`, 'doctor');
+    } catch (err: any) {
+      console.error(err);
+      showToast(err?.message || 'Could not add chapter', 'info');
     }
   };
 
@@ -224,7 +311,8 @@ export default function App() {
     try {
       const res = await api.recordMistake(payload);
       if (res.mistakes) {
-        setData((prev) => (prev ? { ...prev, mistakes: res.mistakes } : prev));
+        const updatedList = res.mistakes;
+        setData((prev) => (prev ? { ...prev, mistakes: updatedList } : prev));
       }
       showToast('Recorded to your Mistake Book!', 'info');
     } catch (err: any) {
@@ -319,6 +407,19 @@ export default function App() {
           userProfile: res.userProfile,
         };
       });
+
+      // Crucial: Update currentUser so Header pill, dropdown, and Sidebar reflect new name & photo immediately!
+      setCurrentUser((prev) => {
+        if (!prev) return prev;
+        const merged = {
+          ...prev,
+          ...res.userProfile,
+          ...(res.user ? res.user : {}),
+        };
+        authStorage.setUser(merged);
+        return merged;
+      });
+
       showToast(`Profile updated: ${res.userProfile.name} • ${res.userProfile.dreamMedicalCollege.split(' ')[0]}`, 'doctor');
     } catch (err: any) {
       showToast(err.message || 'Failed to update profile', 'info');
@@ -326,6 +427,50 @@ export default function App() {
     }
   };
 
+  // 1. If not logged in, render the public Landing Page
+  if (!currentUser) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-[#070F15] text-slate-900 dark:text-slate-100 font-['Plus_Jakarta_Sans',sans-serif]">
+        {/* Toast Notification Container */}
+        {toastMessage && (
+          <div className="fixed top-5 right-5 z-50 animate-in fade-in slide-in-from-top-4 duration-300">
+            <div
+              className={`flex items-center gap-2.5 px-4 py-3 rounded-2xl shadow-xl border text-xs sm:text-sm font-semibold ${
+                toastMessage.type === 'doctor'
+                  ? 'bg-slate-900 text-white border-cyan-500/40 ring-2 ring-cyan-500/20'
+                  : toastMessage.type === 'info'
+                  ? 'bg-white dark:bg-[#121E28] text-slate-800 dark:text-slate-100 border-slate-200 dark:border-slate-700 shadow-md'
+                  : 'bg-emerald-600 text-white border-emerald-500 shadow-emerald-600/30'
+              }`}
+            >
+              {toastMessage.type === 'doctor' ? (
+                <Stethoscope className="w-4 h-4 text-cyan-400 animate-pulse" />
+              ) : (
+                <CheckCircle2 className="w-4 h-4 text-emerald-300" />
+              )}
+              <span>{toastMessage.text}</span>
+            </div>
+          </div>
+        )}
+
+        <LandingPage
+          onAuthSuccess={handleAuthSuccess}
+          theme={theme}
+          onToggleTheme={toggleTheme}
+        />
+
+        <AuthModal
+          isOpen={authModalOpen}
+          onClose={() => setAuthModalOpen(false)}
+          onAuthSuccess={handleAuthSuccess}
+          initialMode={authModalMode}
+          canClose={true}
+        />
+      </div>
+    );
+  }
+
+  // 2. User is logged in, but data is loading
   if (loading || !data) {
     if (loadError && !loading) {
       return (
@@ -339,7 +484,7 @@ export default function App() {
           </div>
           <button
             onClick={loadData}
-            className="px-5 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl text-xs font-bold transition shadow-lg shadow-cyan-600/30"
+            className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition shadow-lg shadow-emerald-600/30 cursor-pointer"
           >
             Retry Connection
           </button>
@@ -348,18 +493,91 @@ export default function App() {
     }
 
     return (
-      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-white p-6 space-y-4">
-        <div className="h-16 w-16 rounded-2xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center ring-2 ring-cyan-400/30 animate-bounce">
-          <Stethoscope className="w-8 h-8" />
-        </div>
-        <div className="text-center space-y-1">
-          <h2 className="text-xl font-bold tracking-tight">MediPrep AI</h2>
-          <p className="text-xs text-cyan-300 font-medium">
-            Loading Sindh Board Medical Command Center...
-          </p>
-        </div>
-        <div className="w-48 h-1 bg-slate-800 rounded-full overflow-hidden">
-          <div className="h-full bg-cyan-400 animate-pulse w-3/4 rounded-full" />
+      <div className="min-h-screen bg-[#050E13] text-white flex flex-col items-center justify-center p-4 sm:p-6 relative overflow-hidden select-none font-['Plus_Jakarta_Sans',sans-serif]">
+        {/* Soft Ambient Radial Lighting */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] bg-emerald-600/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[320px] h-[320px] bg-teal-500/10 rounded-full blur-2xl pointer-events-none" />
+
+        {/* Central Clinical Workspace Card */}
+        <div className="w-full max-w-md bg-[#081822]/90 border border-emerald-500/25 rounded-3xl p-6 sm:p-8 backdrop-blur-xl shadow-2xl relative z-10 flex flex-col items-center text-center space-y-6 animate-fadeIn">
+          {/* Glowing Animated Brain/Medical Emblem */}
+          <div className="relative">
+            <div className="w-20 h-20 rounded-2xl bg-gradient-to-tr from-[#0B5E43] via-teal-600 to-emerald-400 p-0.5 shadow-xl shadow-emerald-950/50">
+              <div className="w-full h-full bg-[#051412] rounded-[14px] flex items-center justify-center relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-emerald-400/15 to-transparent animate-pulse" />
+                <svg
+                  className="w-10 h-10 text-emerald-400 relative z-10 animate-pulse"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-2.04z" />
+                  <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-2.04z" />
+                </svg>
+              </div>
+            </div>
+            {/* Spinning decorative ring */}
+            <div className="absolute -inset-2.5 rounded-3xl border border-emerald-500/20 border-t-emerald-400 animate-spin [animation-duration:3s] pointer-events-none" />
+          </div>
+
+          {/* Title & Category (NO USER NAME) */}
+          <div className="space-y-1.5">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/80 border border-emerald-500/30 text-emerald-300 text-[11px] font-bold">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+              <span>Sindh Textbook Board • MDCAT 2026</span>
+            </div>
+            <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight pt-1">
+              MDCAT PREP
+            </h2>
+            <p className="text-xs text-slate-400">
+              Launching your dedicated pre-medical workspace...
+            </p>
+          </div>
+
+          {/* Smooth Shimmer Progress Bar */}
+          <div className="w-full space-y-2">
+            <div className="w-full h-2 bg-slate-800/80 rounded-full overflow-hidden p-0.5 border border-slate-700/50">
+              <div className="h-full bg-gradient-to-r from-emerald-600 via-teal-400 to-emerald-300 rounded-full animate-pulse w-full shadow-sm" />
+            </div>
+            <div className="flex items-center justify-between text-[11px] text-slate-400 font-medium px-1">
+              <span className="text-emerald-400 font-semibold flex items-center gap-1">
+                <CheckCircle2 className="w-3.5 h-3.5" /> Synchronizing Workspace
+              </span>
+              <span>100% Private</span>
+            </div>
+          </div>
+
+          {/* Preparation Status Checklist */}
+          <div className="w-full bg-[#061118] border border-slate-800 rounded-2xl p-3.5 text-left space-y-2 text-xs">
+            <div className="flex items-center gap-2.5 text-slate-300">
+              <div className="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                <CheckCircle2 className="w-3 h-3" />
+              </div>
+              <span className="text-[11px] sm:text-xs font-medium">Verified isolated student storage</span>
+            </div>
+            <div className="flex items-center gap-2.5 text-slate-300">
+              <div className="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                <CheckCircle2 className="w-3 h-3" />
+              </div>
+              <span className="text-[11px] sm:text-xs font-medium">Loaded Class XI Jamshoro chapters</span>
+            </div>
+            <div className="flex items-center gap-2.5 text-slate-300">
+              <div className="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                <CheckCircle2 className="w-3 h-3" />
+              </div>
+              <span className="text-[11px] sm:text-xs font-medium">Ready: Biology, Chemistry, Physics & Past Papers</span>
+            </div>
+          </div>
+
+          {/* Inspirational Medical Motto */}
+          <div className="pt-1">
+            <p className="font-serif italic text-xs text-emerald-300/90 tracking-wide">
+              “Discipline Today → Doctor Tomorrow”
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -402,6 +620,12 @@ export default function App() {
         onClearSubject={() => setActiveSubject(undefined)}
         mistakesCount={data.mistakes ? data.mistakes.filter((m) => !m.mastered).length : 0}
         userProfile={data.userProfile}
+        currentUser={currentUser}
+        onOpenAuth={(mode?: 'login' | 'register') => {
+          setAuthModalMode(mode || 'login');
+          setAuthModalOpen(true);
+        }}
+        onOpenAccount={() => setAccountModalOpen(true)}
       />
 
       {/* Main Content Area */}
@@ -415,6 +639,13 @@ export default function App() {
           timerActive={false}
           studyMinutesToday={data.studyState.todayStudyMinutes}
           userProfile={data.userProfile}
+          currentUser={currentUser}
+          onOpenAuth={(mode) => {
+            setAuthModalMode(mode || 'login');
+            setAuthModalOpen(true);
+          }}
+          onOpenAccount={() => setAccountModalOpen(true)}
+          onLogout={handleLogout}
           theme={theme}
           onToggleTheme={toggleTheme}
           onSelectTheme={handleSetTheme}
@@ -478,6 +709,7 @@ export default function App() {
               onOpenUpload={() => setUploadModalOpen(true)}
               onDeleteMaterial={handleDeleteMaterial}
               onAskAboutMaterial={handleAskAboutMaterial}
+              onRefreshMaterials={handleRefreshMaterials}
             />
           )}
 
@@ -535,6 +767,7 @@ export default function App() {
               data={data}
               onToggleChapterStatus={handleToggleChapter}
               preselectedSubject={activeSubject}
+              onAddChapter={handleAddChapter}
             />
           )}
 
@@ -581,6 +814,14 @@ export default function App() {
               onUpdateUserProfile={handleUpdateUserProfile}
             />
           )}
+
+          {/* Footer Credit */}
+          <footer className="mt-12 pt-6 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
+            <p>© 2026 MDCAT PREP · All rights reserved.</p>
+            <p className="font-semibold text-slate-600 dark:text-slate-300">
+              Created by <span className="font-bold text-emerald-600 dark:text-emerald-400">Muhammad Uzair</span>
+            </p>
+          </footer>
         </main>
       </div>
 
@@ -606,6 +847,25 @@ export default function App() {
         chapters={data.chapters}
         onUploadSuccess={handleUploadSuccess}
       />
+
+      {/* Authentication Modal (Login / Register / Demo) */}
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        initialMode={authModalMode}
+        onAuthSuccess={handleAuthSuccess}
+      />
+
+      {/* Account Details & Security Modal */}
+      {currentUser && (
+        <AccountModal
+          isOpen={accountModalOpen}
+          onClose={() => setAccountModalOpen(false)}
+          currentUser={currentUser}
+          onProfileUpdated={handleProfileUpdated}
+          onLogout={handleLogout}
+        />
+      )}
 
       {/* Mobile Bottom Navigation Bar */}
       <MobileBottomNav

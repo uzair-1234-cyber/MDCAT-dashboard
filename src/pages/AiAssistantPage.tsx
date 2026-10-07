@@ -27,7 +27,7 @@ import {
   MessageSquare,
   Calendar,
   Clock,
-  History,
+  History as HistoryIcon,
   Search,
   Edit2,
 } from 'lucide-react';
@@ -637,13 +637,28 @@ Apna subject aur chapter select karein, ya neeche direct sawal likhein ya diagra
 
     if (!clean) return;
 
+    if (
+      typeof window === 'undefined' ||
+      !('speechSynthesis' in window) ||
+      typeof window.SpeechSynthesisUtterance !== 'function'
+    ) {
+      console.warn('Speech synthesis not supported in this environment');
+      return;
+    }
+
     try {
       if (window.speechSynthesis.paused) {
         window.speechSynthesis.resume();
       }
     } catch (_) {}
 
-    const utterance = new SpeechSynthesisUtterance(clean);
+    let utterance: SpeechSynthesisUtterance;
+    try {
+      utterance = new SpeechSynthesisUtterance(clean);
+    } catch (err) {
+      console.warn('Could not construct SpeechSynthesisUtterance:', err);
+      return;
+    }
     utterance.rate = 0.95;
     utterance.pitch = 1.0;
 
@@ -740,7 +755,7 @@ Apna subject aur chapter select karein, ya neeche direct sawal likhein ya diagra
               }`}
               title="Toggle Chat History Sidebar"
             >
-              <History className="w-3.5 h-3.5" />
+              <HistoryIcon className="w-3.5 h-3.5" />
               <span>History ({sessions.length})</span>
             </button>
 
@@ -817,7 +832,7 @@ Apna subject aur chapter select karein, ya neeche direct sawal likhein ya diagra
               {/* History Section Header */}
               <div className="flex items-center justify-between px-1 text-xs font-bold text-slate-700">
                 <span className="flex items-center gap-1.5">
-                  <History className="w-3.5 h-3.5 text-purple-600" />
+                  <HistoryIcon className="w-3.5 h-3.5 text-purple-600" />
                   <span>Chat History</span>
                 </span>
                 <span className="text-[10px] text-slate-500 font-semibold px-2 py-0.5 rounded-full bg-slate-100">
@@ -1033,7 +1048,7 @@ Apna subject aur chapter select karein, ya neeche direct sawal likhein ya diagra
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs border border-slate-200 transition-colors"
                 title="Toggle History Sidebar"
               >
-                <History className="w-3.5 h-3.5" />
+                <HistoryIcon className="w-3.5 h-3.5" />
                 <span>{isSidebarOpen ? 'Hide History' : `History (${sessions.length})`}</span>
               </button>
             </div>

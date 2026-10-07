@@ -41,7 +41,7 @@ export const HeroMotivation: React.FC<HeroMotivationProps> = ({
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 tracking-tight leading-tight">
               Welcome back,{' '}
               <span className="text-[#135A39]">
-                {studentName || 'Muhammad Uzair'}
+                {studentName || 'Future Doctor'}
               </span>
             </h1>
             <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-normal max-w-xl pt-1">

@@ -16,6 +16,7 @@ import {
   ChevronRight,
   Bot,
   BookOpen,
+  GraduationCap,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { MCQ, QuizAttempt, SubjectName, ChapterData } from '../types';
@@ -45,6 +46,7 @@ export const QuizzesPage: React.FC<QuizzesPageProps> = ({
 }) => {
   // Setup parameters
   const [subject, setSubject] = useState<SubjectName>('Biology');
+  const [academicYear, setAcademicYear] = useState<'All' | '1st Year' | '2nd Year'>('All');
   const [chapter, setChapter] = useState('');
   const [numQuestions, setNumQuestions] = useState(10);
   const [difficulty, setDifficulty] = useState('MDCAT Level');
@@ -93,7 +95,14 @@ export const QuizzesPage: React.FC<QuizzesPageProps> = ({
     };
   }, [isQuizActive, secondsRemaining]);
 
-  const filteredChapters = chapters.filter((c) => c.subject.toLowerCase() === subject.toLowerCase());
+  const subjectChapters = chapters.filter((c) => c.subject.toLowerCase() === subject.toLowerCase());
+  const firstYearChapters = subjectChapters.filter((c) => (c.classYear || '1st Year') === '1st Year');
+  const secondYearChapters = subjectChapters.filter((c) => c.classYear === '2nd Year');
+
+  const filteredChapters = subjectChapters.filter((c) => {
+    if (academicYear === 'All') return true;
+    return (c.classYear || '1st Year') === academicYear;
+  });
 
   const startQuizSession = (
     pool: MCQ[],
@@ -253,7 +262,7 @@ export const QuizzesPage: React.FC<QuizzesPageProps> = ({
             topic: q.topic || 'Core Concept',
             options: q.options,
             selectedOption: userChoice,
-            correctOption: correct,
+            correctOption: (['A', 'B', 'C', 'D'].includes(correct) ? (correct as 'A' | 'B' | 'C' | 'D') : 'A'),
             explanation: q.explanation,
           }).catch(() => {});
         }
@@ -700,7 +709,57 @@ export const QuizzesPage: React.FC<QuizzesPageProps> = ({
 
       {/* Start Quiz Configuration Card */}
       <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-4">
-        <h3 className="text-base font-bold text-slate-900">Launch New Diagnostic Test</h3>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h3 className="text-base font-bold text-slate-900">Launch New Diagnostic Test</h3>
+            <p className="text-xs text-slate-500">Test yourself on 1st Year (XI) or 2nd Year (XII) chapters.</p>
+          </div>
+
+          <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl text-xs font-bold">
+            <button
+              type="button"
+              onClick={() => {
+                setAcademicYear('All');
+                setChapter('');
+              }}
+              className={`px-3 py-1.5 rounded-lg transition-all ${
+                academicYear === 'All'
+                  ? 'bg-white text-slate-900 shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              All MDCAT ({subjectChapters.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setAcademicYear('1st Year');
+                setChapter('');
+              }}
+              className={`px-3 py-1.5 rounded-lg transition-all ${
+                academicYear === '1st Year'
+                  ? 'bg-white text-emerald-800 shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              1st Year (XI) ({firstYearChapters.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setAcademicYear('2nd Year');
+                setChapter('');
+              }}
+              className={`px-3 py-1.5 rounded-lg transition-all ${
+                academicYear === '2nd Year'
+                  ? 'bg-white text-purple-800 shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              2nd Year (XII) ({secondYearChapters.length > 0 ? secondYearChapters.length : '0 Ready'})
+            </button>
+          </div>
+        </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {/* Subject */}
@@ -723,18 +782,46 @@ export const QuizzesPage: React.FC<QuizzesPageProps> = ({
 
           {/* Chapter */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Chapter</label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-bold text-slate-700">Chapter</label>
+              <span className="text-[10px] font-bold text-slate-400">
+                {filteredChapters.length} {academicYear === 'All' ? 'Chapters' : academicYear}
+              </span>
+            </div>
             <select
               value={chapter}
               onChange={(e) => setChapter(e.target.value)}
               className="w-full px-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 bg-white font-medium focus:ring-2 focus:ring-cyan-500 outline-none"
             >
               <option value="">All Chapters (Full Syllabus Drill)</option>
-              {filteredChapters.map((ch) => (
-                <option key={ch.id} value={ch.title}>
-                  Ch {ch.chapterNumber}: {ch.title}
-                </option>
-              ))}
+              {academicYear === 'All' ? (
+                <>
+                  {firstYearChapters.length > 0 && (
+                    <optgroup label="1st Year (Class XI)">
+                      {firstYearChapters.map((ch) => (
+                        <option key={ch.id} value={ch.title}>
+                          Ch {ch.chapterNumber}: {ch.title}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
+                  {secondYearChapters.length > 0 && (
+                    <optgroup label="2nd Year (Class XII)">
+                      {secondYearChapters.map((ch) => (
+                        <option key={ch.id} value={ch.title}>
+                          Ch {ch.chapterNumber}: {ch.title}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
+                </>
+              ) : (
+                filteredChapters.map((ch) => (
+                  <option key={ch.id} value={ch.title}>
+                    [{ch.classYear || '1st Year'}] Ch {ch.chapterNumber}: {ch.title}
+                  </option>
+                ))
+              )}
             </select>
           </div>
 

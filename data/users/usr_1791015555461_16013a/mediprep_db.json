@@ -1,0 +1,742 @@
+{
+  "userProfile": {
+    "name": "Bilal Ahmed",
+    "aspirantType": "First-Year Sindh Board Medical Aspirant",
+    "targetExam": "MDCAT / NUMS",
+    "targetYear": "2026",
+    "dreamMedicalCollege": "Dow University of Health Sciences (DUHS)",
+    "personalMotto": "Discipline Today → Doctor Tomorrow."
+  },
+  "studyState": {
+    "dailyStreak": 0,
+    "todayStudyMinutes": 0,
+    "todayGoalMinutes": 180,
+    "lastStudyDate": "2026-10-03",
+    "weeklyMinutes": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "subjects": [
+    {
+      "id": "sub_bio",
+      "name": "Biology",
+      "chaptersCount": 14,
+      "description": "First-Year Sindh Textbook Board: Cellular structure, bioenergetics, diversity, and physiological mechanisms.",
+      "color": "emerald",
+      "badge": "High Yield (34% MDCAT Weightage)"
+    },
+    {
+      "id": "sub_chem",
+      "name": "Chemistry",
+      "chaptersCount": 12,
+      "description": "Physical & General Chemistry: Stoichiometry, atomic models, bonding theories, equilibrium & kinetics.",
+      "color": "blue",
+      "badge": "27% MDCAT Weightage"
+    },
+    {
+      "id": "sub_phys",
+      "name": "Physics",
+      "chaptersCount": 8,
+      "description": "Mechanics, vectors, rotational dynamics, work-energy, fluid flow, circular motion, and physical optics.",
+      "color": "teal",
+      "badge": "27% MDCAT Weightage"
+    },
+    {
+      "id": "sub_eng",
+      "name": "English",
+      "chaptersCount": 5,
+      "description": "Medical entry test English: Core grammar, vocabulary, sentence correction, reading comprehension, and error spotting.",
+      "color": "purple",
+      "badge": "12% MDCAT Weightage"
+    }
+  ],
+  "chapters": [
+    {
+      "id": "ch_bio_1",
+      "subject": "Biology",
+      "chapterNumber": 1,
+      "title": "Biological Molecules",
+      "topics": [
+        "Introduction to Biochemistry & Chemical Components",
+        "Carbohydrates (Monosaccharides, Oligosaccharides, Polysaccharides)",
+        "Lipids (Acylglycerols, Phospholipids, Terpenoids, Waxes)",
+        "Proteins (Amino Acids, Peptide Bonds, Primary to Quaternary Structure)",
+        "Nucleic Acids (DNA Structure & Replication, RNA Types: mRNA, tRNA, rRNA)",
+        "Conjugated Molecules (Glycoproteins, Glycolipids, Lipoproteins, Nucleoproteins)"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0
+    },
+    {
+      "id": "ch_bio_2",
+      "subject": "Biology",
+      "chapterNumber": 2,
+      "title": "Enzymes",
+      "topics": [
+        "Characteristics & Chemical Nature of Enzymes",
+        "Mechanism of Enzyme Action (Lock & Key vs Induced Fit Model)",
+        "Factors Affecting Enzyme Activity (Temperature, pH, Substrate Concentration)",
+        "Enzyme Inhibition (Competitive vs Non-Competitive Inhibitors)",
+        "Co-factors, Co-enzymes & Prosthetic Groups"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0
+    },
+    {
+      "id": "ch_bio_3",
+      "subject": "Biology",
+      "chapterNumber": 3,
+      "title": "Cell Structure and Functions",
+      "topics": [
+        "Cell Theory & Microscopy Techniques",
+        "Plasma Membrane Structure (Fluid Mosaic Model) & Transport (Osmosis, Active Transport)",
+        "Endomembrane System (Endoplasmic Reticulum, Golgi Complex, Lysosomes, Peroxisomes)",
+        "Mitochondria & Chloroplasts (Energy Transducing Organelles & Endosymbiotic Theory)",
+        "Nucleus & Chromosomes Structure",
+        "Cytoskeleton (Microtubules, Microfilaments, Intermediate Filaments)",
+        "Prokaryotic vs Eukaryotic Cell Comparison"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0
+    },
+    {
+      "id": "ch_bio_4",
+      "subject": "Biology",
+      "chapterNumber": 4,
+      "title": "Bioenergetics",
+      "topics": [
+        "Role of ATP as Energy Currency",
+        "Photosynthetic Pigments & Absorption Spectra",
+        "Light Reactions (Cyclic & Non-Cyclic Photophosphorylation, Chemiosmosis)",
+        "Dark Reactions / Calvin Cycle (Carbon Fixation & Synthesis)",
+        "Cellular Respiration (Glycolysis, Oxidation of Pyruvate, Krebs Cycle)",
+        "Electron Transport Chain & Oxidative Phosphorylation",
+        "Anaerobic Respiration (Lactic Acid & Alcoholic Fermentation)"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0
+    },
+    {
+      "id": "ch_bio_5",
+      "subject": "Biology",
+      "chapterNumber": 5,
+      "title": "Acellular Life",
+      "topics": [
+        "Nature and Discovery of Viruses",
+        "Structure & Classification of Viruses",
+        "Bacteriophages (Life Cycles: Lytic & Lysogenic)",
+        "Human Immunodeficiency Virus (HIV) & Acquired Immune Deficiency Syndrome (AIDS)",
+        "Viral Diseases (Hepatitis, Polio, Influenza, Herpes)",
+        "Sub-viral Particles: Viroids & Prions"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0
+    },
+    {
+      "id": "ch_bio_6",
+      "subject": "Biology",
+      "chapterNumber": 6,
+      "title": "Prokaryotes",
+      "topics": [
+        "Structure and Morphology of Bacteria",
+        "Bacterial Cell Envelope (Peptidoglycan, Gram-Positive vs Gram-Negative)",
+        "Bacterial Locomotion (Flagella Types & Pili)",
+        "Nutrition and Respiration in Bacteria",
+        "Bacterial Growth and Reproduction (Binary Fission & Genetic Recombination: Conjugation, Transduction, Transformation)",
+        "Cyanobacteria (Nostoc & Economic Importance)",
+        "Antibiotics & Bacterial Resistance"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0
+    },
+    {
+      "id": "ch_bio_7",
+      "subject": "Biology",
+      "chapterNumber": 7,
+      "title": "Protoctists and Fungi",
+      "topics": [
+        "Diversity and Characteristics of Protists (Protozoa, Algae, Slime Molds)",
+        "Plasmodium (Malaria Life Cycle in Man & Mosquito)",
+        "General Body Structure of Fungi (Hyphae & Mycelium)",
+        "Nutrition in Fungi (Saprophytes, Parasites, Mutualists)",
+        "Reproduction in Fungi (Asexual & Sexual Spores)",
+        "Ecological & Medical Importance of Fungi (Mycorrhizae, Lichens, Antibiotic Production)"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0
+    },
+    {
+      "id": "ch_bio_8",
+      "subject": "Biology",
+      "chapterNumber": 8,
+      "title": "Diversity among Plants",
+      "topics": [
+        "Evolutionary Trends in Plant Kingdom",
+        "Bryophytes: Non-vascular Land Plants (Mosses, Liverworts, Hornworts)",
+        "Tracheophytes: Seedless Vascular Plants (Ferns Life Cycle)",
+        "Gymnosperms: Naked-Seed Plants (Pinus Life Cycle)",
+        "Angiosperms: Flowering Plants (Flower Structure, Double Fertilization, Fruit Formation)",
+        "Alternation of Generations (Gametophyte vs Sporophyte Dominance)"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0
+    },
+    {
+      "id": "ch_bio_9",
+      "subject": "Biology",
+      "chapterNumber": 9,
+      "title": "Diversity among Animals",
+      "topics": [
+        "Criteria for Animal Classification (Symmetry, Germ Layers, Coelom Formation, Segmentation)",
+        "Invertebrate Phyla Characteristics: Porifera, Cnidaria, Platyhelminthes, Aschelminthes (Nematoda)",
+        "Annelida, Arthropoda, Mollusca, Echinodermata",
+        "Phylum Chordata: Diagnostic Characteristics & Sub-phyla",
+        "Vertebrate Classes: Fishes (Chondrichthyes, Osteichthyes), Amphibia, Reptilia, Aves, Mammalia",
+        "Amniotes vs Anamniotes Evolutionary Significance"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0
+    },
+    {
+      "id": "ch_bio_10",
+      "subject": "Biology",
+      "chapterNumber": 10,
+      "title": "Forms and Functions in Plants",
+      "topics": [
+        "Plant Tissues (Meristematic & Permanent Tissues: Parenchyma, Collenchyma, Sclerenchyma)",
+        "Xylem Structure & Mechanism of Water Ascent (Transpiration Pull, Cohesion-Tension Theory)",
+        "Phloem Structure & Mechanism of Translocation (Münch Pressure Flow Hypothesis)",
+        "Mineral Nutrition in Plants & Deficiency Symptoms",
+        "Plant Hormones / Growth Regulators (Auxins, Gibberellins, Cytokinins, Abscisic Acid, Ethylene)",
+        "Photoperiodism & Phytochrome Action"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0
+    },
+    {
+      "id": "ch_bio_11",
+      "subject": "Biology",
+      "chapterNumber": 11,
+      "title": "Holozoic Nutrition",
+      "topics": [
+        "Modes of Nutrition & Types of Digestion (Intracellular vs Extracellular)",
+        "Human Alimentary Canal Anatomy (Oral Cavity, Pharynx, Esophagus, Stomach, Small & Large Intestines)",
+        "Digestive Secretions & Enzymes (Salivary, Gastric, Pancreatic, Intestinal Juices & Bile)",
+        "Mechanism of Swallowing & Peristalsis",
+        "Digestion & Absorption of Carbohydrates, Proteins, and Lipids (Villi & Lacteals)",
+        "Liver Anatomy, Functions & Metabolic Roles",
+        "Common Digestive Disorders (Ulcer, Appendicitis, Dyspepsia, Constipation, Diarrhea)"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0
+    },
+    {
+      "id": "ch_bio_12",
+      "subject": "Biology",
+      "chapterNumber": 12,
+      "title": "Circulation",
+      "topics": [
+        "Open vs Closed Circulatory Systems in Animals",
+        "Human Circulatory System Overview & Blood Composition (Plasma, RBCs, WBCs, Platelets)",
+        "Anatomy of Human Heart & Cardiac Conduction System (SA Node, AV Node, Purkinje Fibers)",
+        "Cardiac Cycle & ECG (P-Q-R-S-T Waves Interpretation)",
+        "Blood Pressure Measurement & Regulation (Systolic vs Diastolic)",
+        "Blood Vessels Comparison (Arteries, Arterioles, Capillaries, Venules, Veins)",
+        "Lymphatic System Structure & Functions (Lymph, Lymph Nodes, Spleen)",
+        "Cardiovascular Disorders (Atherosclerosis, Arteriosclerosis, Myocardial Infarction, Hypertension)"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0
+    },
+    {
+      "id": "ch_bio_13",
+      "subject": "Biology",
+      "chapterNumber": 13,
+      "title": "Immunity",
+      "topics": [
+        "Concept of Defense & Immune System Components",
+        "Innate Immunity (First Line: Physical & Chemical Barriers; Second Line: Phagocytes, NK Cells, Inflammation, Fever)",
+        "Acquired / Adaptive Immunity (Humoral vs Cell-Mediated Immune Responses)",
+        "Lymphocytes: T-Cells (Helper, Cytotoxic, Regulatory) & B-Cells (Plasma Cells, Memory Cells)",
+        "Antibodies / Immunoglobulins (Structure: Heavy & Light Chains, Classes: IgG, IgA, IgM, IgE, IgD)",
+        "Antigen-Antibody Interactions (Agglutination, Neutralization, Opsonization)",
+        "Active vs Passive Immunity (Natural vs Artificial Immunization & Vaccines)",
+        "Immune System Disorders (Allergies, Autoimmune Diseases, Immunodeficiency)"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0
+    },
+    {
+      "id": "ch_bio_14",
+      "subject": "Biology",
+      "chapterNumber": 14,
+      "title": "Gaseous Exchange",
+      "topics": [
+        "Properties of Respiratory Surfaces & Respiratory Media (Air vs Water)",
+        "Human Respiratory System Anatomy (Nasal Cavity, Pharynx, Larynx, Trachea, Bronchi, Alveoli)",
+        "Mechanism of Breathing (Inspiration, Expiration & Diaphragm Movement)",
+        "Pulmonary Volumes and Capacities (Tidal Volume, Vital Capacity, Residual Volume)",
+        "Gas Exchange Across Alveolar-Capillary Membrane (Partial Pressures of O2 & CO2)",
+        "Transport of Respiratory Gases (Oxyhemoglobin Dissociation Curve, Carbon Dioxide Transport as Bicarbonate Ions & Carbaminohemoglobin)",
+        "Respiratory Disorders (Asthma, Emphysema, Bronchitis, Pneumonia, Lung Cancer)",
+        "Effects of Smoking on Respiratory Epithelium"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0
+    },
+    {
+      "id": "ch_chem_1",
+      "subject": "Chemistry",
+      "chapterNumber": 1,
+      "title": "Stoichiometry",
+      "topics": [
+        "Mole, Avogadro’s Number & Molar Volume",
+        "Percentage Composition & Empirical/Molecular Formulas",
+        "Stoichiometric Calculations & Limiting Reactant",
+        "Theoretical Yield, Actual Yield & Percentage Yield"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0
+    },
+    {
+      "id": "ch_chem_2",
+      "subject": "Chemistry",
+      "chapterNumber": 2,
+      "title": "Atomic Structure",
+      "topics": [
+        "Discharge Tube Experiments, Cathode Rays & Canal Rays",
+        "Rutherford’s Atomic Model & Bohr’s Atomic Theory with Postulates",
+        "Hydrogen Spectrum & Spectral Series (Lyman, Balmer, Paschen, Brackett, Pfund)",
+        "Planck’s Quantum Theory, Photoelectric Effect & Dual Nature of Matter",
+        "Quantum Numbers (Principal n, Azimuthal l, Magnetic m, Spin s)",
+        "Electronic Configuration (Aufbau Principle, Pauli’s Exclusion Principle, Hund’s Rule)"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0
+    },
+    {
+      "id": "ch_chem_3",
+      "subject": "Chemistry",
+      "chapterNumber": 3,
+      "title": "Theories of Covalent Bonding and Shape of Molecules",
+      "topics": [
+        "Valence Shell Electron Pair Repulsion (VSEPR) Theory & Geometries",
+        "Valence Bond Theory (VBT) & Types of Overlapping (Sigma & Pi Bonds)",
+        "Hybridization (sp3, sp2, sp) & Molecular Shapes",
+        "Molecular Orbital Theory (MOT) & Bond Order Calculation",
+        "Dipole Moment & Percentage Ionic Character",
+        "Bond Energy, Bond Length & Factors Affecting Bond Strength"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0
+    },
+    {
+      "id": "ch_chem_4",
+      "subject": "Chemistry",
+      "chapterNumber": 4,
+      "title": "State of Matter: Gas",
+      "topics": [
+        "Kinetic Molecular Theory of Gases & Gas Laws (Boyle’s, Charles’s, Avogadro’s)",
+        "General Gas Equation (Ideal Gas Equation PV = nRT)",
+        "Dalton’s Law of Partial Pressures & Graham’s Law of Diffusion/Effusion",
+        "Deviations from Ideal Gas Behavior & Real Gases",
+        "Van der Waals Equation of State",
+        "Liquefaction of Gases, Critical Temperature & Critical Pressure"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0
+    },
+    {
+      "id": "ch_chem_5",
+      "subject": "Chemistry",
+      "chapterNumber": 5,
+      "title": "State of Matter: Liquid",
+      "topics": [
+        "Kinetic Molecular Interpretation of Liquids & Intermolecular Forces",
+        "Dipole-Dipole Attractions, London Dispersion & Hydrogen Bonding",
+        "Evaporation, Vapor Pressure & Factors Influencing Vapor Pressure",
+        "Boiling Point & Effect of External Pressure on Boiling Point",
+        "Viscosity & Surface Tension (Capillary Action)",
+        "Liquid Crystals (Classification and Technological Applications)"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0
+    },
+    {
+      "id": "ch_chem_6",
+      "subject": "Chemistry",
+      "chapterNumber": 6,
+      "title": "State of Matter: Solid",
+      "topics": [
+        "Crystalline vs Amorphous Solids",
+        "Properties of Crystalline Solids (Anisotropy, Cleavage, Polymorphism, Isomorphism, Allotropy)",
+        "Crystal Lattice, Unit Cell & Lattice Energy",
+        "Classification of Solids (Ionic, Covalent, Molecular, and Metallic Solids)",
+        "X-ray Crystallography & Bragg’s Equation (nλ = 2d sinθ)"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0
+    },
+    {
+      "id": "ch_chem_7",
+      "subject": "Chemistry",
+      "chapterNumber": 7,
+      "title": "Chemical Equilibrium",
+      "topics": [
+        "Reversible Reactions & Dynamic Chemical Equilibrium",
+        "Law of Mass Action & Equilibrium Constants (Kc, Kp, Kx, Kn)",
+        "Relationship between Kp and Kc",
+        "Le Chatelier’s Principle (Effects of Concentration, Pressure, Volume, Temperature)",
+        "Applications of Equilibrium to Industrial Processes (Haber & Contact Processes)",
+        "Solubility Product (Ksp) & Common Ion Effect in Analytical Chemistry"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0
+    },
+    {
+      "id": "ch_chem_8",
+      "subject": "Chemistry",
+      "chapterNumber": 8,
+      "title": "Acids, Bases and Salts",
+      "topics": [
+        "Concepts of Acids & Bases (Arrhenius, Brønsted-Lowry, Lewis Concepts)",
+        "Auto-ionization of Water & pH / pOH Scale Calculations",
+        "Strength of Acids and Bases (Dissociation Constants Ka, Kb, pKa, pKb)",
+        "Buffer Solutions (Mechanism, Action & Henderson-Hasselbalch Equation)",
+        "Hydrolysis of Salts & Nature of Aqueous Salt Solutions",
+        "Acid-Base Titrations & Indicators (Action of Phenolphthalein & Methyl Orange)"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0
+    },
+    {
+      "id": "ch_chem_9",
+      "subject": "Chemistry",
+      "chapterNumber": 9,
+      "title": "Chemical Kinetics",
+      "topics": [
+        "Rate of Reaction (Instantaneous vs Average Rate)",
+        "Rate Law, Specific Rate Constant (k) & Order of Reaction",
+        "Methods of Determining Order of Reaction (Half-Life & Initial Rate Methods)",
+        "Collision Theory & Transition State / Activated Complex Theory",
+        "Arrhenius Equation & Activation Energy (Ea) Calculation",
+        "Catalysis (Homogeneous, Heterogeneous, and Enzyme Catalysis)"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0
+    },
+    {
+      "id": "ch_chem_10",
+      "subject": "Chemistry",
+      "chapterNumber": 10,
+      "title": "Solution and Colloids",
+      "topics": [
+        "Types of Solutions & Concentration Units (Molarity, Molality, Mole Fraction, ppm)",
+        "Raoult’s Law (Ideal and Non-Ideal Solutions, Positive & Negative Deviations)",
+        "Colligative Properties (Lowering of Vapor Pressure, Elevation of Boiling Point, Depression of Freezing Point)",
+        "Osmotic Pressure & Molar Mass Determination",
+        "Colloids and Suspensions (Classification, Tyndall Effect, Brownian Movement)"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0
+    },
+    {
+      "id": "ch_chem_11",
+      "subject": "Chemistry",
+      "chapterNumber": 11,
+      "title": "Thermochemistry",
+      "topics": [
+        "Spontaneous vs Non-Spontaneous Reactions",
+        "First Law of Thermodynamics & Internal Energy (ΔE = q + w)",
+        "Enthalpy (H) & Enthalpy of Reaction at Constant Pressure (ΔH = qp)",
+        "Standard Enthalpies of Formation, Combustion, Neutralization, Atomization",
+        "Hess’s Law of Constant Heat Summation & Practical Applications",
+        "Born-Haber Cycle for Lattice Energy Calculation",
+        "Measurement of Enthalpy of Reaction (Calorimetry)"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0
+    },
+    {
+      "id": "ch_chem_12",
+      "subject": "Chemistry",
+      "chapterNumber": 12,
+      "title": "Electrochemistry",
+      "topics": [
+        "Oxidation State Rules & Balancing Redox Reactions (Ion-Electron Method)",
+        "Electrolytic Conduction & Faraday’s Laws of Electrolysis",
+        "Galvanic / Voltaic Cells & Standard Hydrogen Electrode (SHE)",
+        "Electrochemical Series and Its Applications (Feasibility of Redox Reactions)",
+        "Standard Electrode Potential & Cell Potential (E°cell = E°cathode - E°anode)",
+        "Commercial Cells & Batteries (Lead Storage Battery, Fuel Cells)",
+        "Corrosion and Electrochemical Prevention (Cathodic Protection)"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0
+    },
+    {
+      "id": "ch_phys_1",
+      "subject": "Physics",
+      "chapterNumber": 1,
+      "title": "Physical Quantities & Measurement",
+      "topics": [
+        "Errors and Uncertainties",
+        "Significant Figures",
+        "Dimensional Analysis"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0
+    },
+    {
+      "id": "ch_phys_2",
+      "subject": "Physics",
+      "chapterNumber": 2,
+      "title": "Vectors and Equilibrium",
+      "topics": [
+        "Vector Addition by Rectangular Components",
+        "Scalar and Vector Products",
+        "Torque and Conditions of Equilibrium"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0
+    },
+    {
+      "id": "ch_phys_3",
+      "subject": "Physics",
+      "chapterNumber": 3,
+      "title": "Motion and Force",
+      "topics": [
+        "Newtons Laws of Motion",
+        "Momentum & Impulse",
+        "Elastic and Inelastic Collisions",
+        "Projectile Motion Formulas & Range"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0
+    },
+    {
+      "id": "ch_phys_4",
+      "subject": "Physics",
+      "chapterNumber": 4,
+      "title": "Work, Energy and Power",
+      "topics": [
+        "Work done by Constant & Variable Force",
+        "Work-Energy Theorem",
+        "Conservative vs Non-conservative forces",
+        "Power and Efficiency"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0
+    },
+    {
+      "id": "ch_phys_5",
+      "subject": "Physics",
+      "chapterNumber": 5,
+      "title": "Circular Motion and Gravitation",
+      "topics": [
+        "Centripetal Acceleration and Force",
+        "Angular Momentum & Moment of Inertia",
+        "Orbital Velocity & Geostationary Satellites"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0
+    },
+    {
+      "id": "ch_phys_6",
+      "subject": "Physics",
+      "chapterNumber": 6,
+      "title": "Fluid Dynamics",
+      "topics": [
+        "Viscosity & Stokes Law",
+        "Equation of Continuity",
+        "Bernoullis Principle & Venturi Meter Applications in Blood Flow"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0
+    },
+    {
+      "id": "ch_phys_7",
+      "subject": "Physics",
+      "chapterNumber": 7,
+      "title": "Oscillations & Simple Harmonic Motion",
+      "topics": [
+        "SHM Equations & Energy Conservation in SHM",
+        "Simple Pendulum & Mass-Spring System",
+        "Resonance and Damping"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0
+    },
+    {
+      "id": "ch_phys_8",
+      "subject": "Physics",
+      "chapterNumber": 8,
+      "title": "Waves and Physical Optics",
+      "topics": [
+        "Doppler Effect in Sound",
+        "Youngs Double Slit Experiment",
+        "Diffraction Grating & Polarization"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0
+    },
+    {
+      "id": "ch_eng_1",
+      "subject": "English",
+      "chapterNumber": 1,
+      "title": "Essential Grammar & Subject-Verb Agreement",
+      "topics": [
+        "Rules of Concordance",
+        "Pronoun-Antecedent Agreement",
+        "Tense Consistency"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0
+    },
+    {
+      "id": "ch_eng_2",
+      "subject": "English",
+      "chapterNumber": 2,
+      "title": "Sentence Correction & Structural Errors",
+      "topics": [
+        "Dangling and Misplaced Modifiers",
+        "Parallelism in Medical/Scientific Texts",
+        "Run-on Sentences and Comma Splices"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0
+    },
+    {
+      "id": "ch_eng_3",
+      "subject": "English",
+      "chapterNumber": 3,
+      "title": "High-Yield Vocabulary & Root Words",
+      "topics": [
+        "Latin & Greek Medical Roots",
+        "Synonyms and Antonyms in MDCAT",
+        "Context Clues and Connotations"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0
+    },
+    {
+      "id": "ch_eng_4",
+      "subject": "English",
+      "chapterNumber": 4,
+      "title": "Prepositions and Phrasal Verbs",
+      "topics": [
+        "Fixed Prepositions in Scientific English",
+        "Common Prepositional Errors",
+        "High-frequency Phrasal Verbs"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0
+    },
+    {
+      "id": "ch_eng_5",
+      "subject": "English",
+      "chapterNumber": 5,
+      "title": "Reading Comprehension for MDCAT",
+      "topics": [
+        "Identifying Central Ideas & Inference",
+        "Scientific Tone and Author Purpose",
+        "Speed Reading & Elimination Strategies"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0
+    }
+  ],
+  "materials": [],
+  "mcqs": [],
+  "quizAttempts": [],
+  "mistakes": [],
+  "notes": [],
+  "revisionPlans": [],
+  "activities": [],
+  "pastPapers": [],
+  "aiSessions": []
+}
