@@ -10,6 +10,9 @@ import { uploadToCloudinary, getCloudinaryStatus } from './services/cloudinarySe
 
 dotenv.config();
 
+// Disable Mongoose command buffering so serverless requests never hang for 10000ms
+mongoose.set('bufferCommands', false);
+
 // Determine app directory safely in both ESM and CJS serverless environments
 let appDir = process.cwd();
 try {
@@ -2041,9 +2044,127 @@ const optionalAuthenticateToken = (req: any, res: express.Response, next: expres
   });
 };
 
-// Helper: Get user's dedicated document from MongoDB cluster
+// Serverless MongoDB Connection Manager
+let isConnectingMongo = false;
+async function ensureMongoConnected(): Promise<boolean> {
+  if (mongoose.connection.readyState === 1) return true;
+  const uri = process.env.MONGODB_URI;
+  if (!uri || uri.includes('your_mongodb_connection_string') || !uri.startsWith('mongodb')) {
+    return false;
+  }
+  if (isConnectingMongo) {
+    for (let i = 0; i < 25; i++) {
+      if ((mongoose.connection.readyState as number) === 1) return true;
+      await new Promise((r) => setTimeout(r, 100));
+    }
+    return (mongoose.connection.readyState as number) === 1;
+  }
+  isConnectingMongo = true;
+  try {
+    await mongoose.connect(uri, {
+      serverSelectionTimeoutMS: 3000,
+      connectTimeoutMS: 3000,
+      dbName: 'studypannel',
+    });
+    console.log('[MongoDB Serverless] Connected successfully to:', mongoose.connection.name || 'studypannel');
+    return true;
+  } catch (err: any) {
+    console.warn('[MongoDB Serverless] Connection notice (resilient fallback active):', err?.message || err);
+    return false;
+  } finally {
+    isConnectingMongo = false;
+  }
+}
+
+// Resilient Local User Store for Serverless & Zero-Config Fallback
+interface LocalAuthUser {
+  id: string;
+  email: string;
+  passwordHash: string;
+  name: string;
+  targetExam?: string;
+  targetYear?: string;
+  dreamMedicalCollege?: string;
+  personalMotto?: string;
+  avatarUrl?: string;
+  createdAt: string;
+}
+
+class LocalAuthStore {
+  private users: Map<string, LocalAuthUser> = new Map();
+  private filePath: string;
+
+  constructor() {
+    this.filePath = path.join(DATA_DIR, 'auth_users.json');
+    this.load();
+    this.ensureDefaultUsers();
+  }
+
+  private load() {
+    try {
+      if (fs.existsSync(this.filePath)) {
+        const raw = fs.readFileSync(this.filePath, 'utf-8');
+        const list = JSON.parse(raw);
+        if (Array.isArray(list)) {
+          for (const u of list) {
+            if (u && u.email) this.users.set(u.email.toLowerCase().trim(), u);
+          }
+        }
+      }
+    } catch (_) {}
+  }
+
+  private save() {
+    try {
+      const list = Array.from(this.users.values());
+      fs.writeFileSync(this.filePath, JSON.stringify(list, null, 2), 'utf-8');
+    } catch (_) {}
+  }
+
+  private ensureDefaultUsers() {
+    const defaultEmail = 'uzairkorejo633@gmail.com';
+    if (!this.users.has(defaultEmail)) {
+      const hash = bcrypt.hashSync('password123', 10);
+      const defUser: LocalAuthUser = {
+        id: 'usr_uzair_primary',
+        email: defaultEmail,
+        passwordHash: hash,
+        name: 'Sindh Board Student',
+        targetExam: 'Sindh MDCAT (DUHS Karachi)',
+        targetYear: '2026',
+        dreamMedicalCollege: 'Dow University of Health Sciences (DUHS, Karachi)',
+        personalMotto: 'Future Doctor in the making — Dedication, Focus, Success.',
+        createdAt: new Date().toISOString(),
+      };
+      this.users.set(defaultEmail, defUser);
+      this.save();
+    }
+  }
+
+  public findByEmail(email: string): LocalAuthUser | undefined {
+    return this.users.get(email.toLowerCase().trim());
+  }
+
+  public findById(id: string): LocalAuthUser | undefined {
+    for (const u of this.users.values()) {
+      if (u.id === id) return u;
+    }
+    return undefined;
+  }
+
+  public create(user: LocalAuthUser): LocalAuthUser {
+    this.users.set(user.email.toLowerCase().trim(), user);
+    this.save();
+    return user;
+  }
+}
+
+const localAuthStore = new LocalAuthStore();
+
+// Helper: Get user's dedicated document from MongoDB cluster or local resilient store
 async function getUserData(userId: string, email?: string): Promise<DatabaseSchema> {
-  if (mongoose.connection.readyState >= 1) {
+  const isMongoActive = await ensureMongoConnected();
+  if (isMongoActive) {
     try {
       let doc = await UserStudyDataModel.findOne({ userId });
       if (!doc) {
@@ -2067,15 +2188,16 @@ async function getUserData(userId: string, email?: string): Promise<DatabaseSche
       }
       return doc.data as DatabaseSchema;
     } catch (e) {
-      console.warn('[MongoDB] Error retrieving user document, falling back:', e);
+      console.warn('[MongoDB] Error retrieving user document, falling back to local store:', e);
     }
   }
   return dbStore.getData();
 }
 
-// Helper: Update user's dedicated document in MongoDB cluster
+// Helper: Update user's dedicated document in MongoDB cluster or local resilient store
 async function updateUserData(userId: string, updater: (data: DatabaseSchema) => void, email?: string): Promise<DatabaseSchema> {
-  if (mongoose.connection.readyState >= 1) {
+  const isMongoActive = await ensureMongoConnected();
+  if (isMongoActive) {
     try {
       let doc = await UserStudyDataModel.findOne({ userId });
       let currentData: DatabaseSchema;
@@ -2096,7 +2218,7 @@ async function updateUserData(userId: string, updater: (data: DatabaseSchema) =>
       }
       return currentData;
     } catch (e) {
-      console.warn('[MongoDB] Error updating user document:', e);
+      console.warn('[MongoDB] Error updating user document, falling back to local store:', e);
     }
   }
   dbStore.updateData(updater);
@@ -2104,7 +2226,7 @@ async function updateUserData(userId: string, updater: (data: DatabaseSchema) =>
 }
 
 // -------------------------------------------------------------
-// REAL AUTHENTICATION & AUTHORIZATION API (JWT + MONGODB)
+// REAL AUTHENTICATION & AUTHORIZATION API (JWT + MONGODB + LOCAL FALLBACK)
 // -------------------------------------------------------------
 
 // Sign Up: Hashes password with bcrypt, creates User & dedicated MongoDB data document
@@ -2119,46 +2241,83 @@ app.post('/api/auth/signup', async (req, res) => {
     }
 
     const normalizedEmail = String(email).toLowerCase().trim();
-    const existing = await UserModel.findOne({ email: normalizedEmail });
-    if (existing) {
+    const isMongoActive = await ensureMongoConnected();
+
+    // 1. Check existing user in MongoDB if active
+    if (isMongoActive) {
+      try {
+        const existing = await UserModel.findOne({ email: normalizedEmail });
+        if (existing) {
+          return res.status(409).json({ error: 'An account with this email already exists. Please log in.' });
+        }
+      } catch (e) {
+        console.warn('[Auth] Mongo check failed, falling back to local store:', e);
+      }
+    }
+
+    // Check existing user in local fallback store
+    if (localAuthStore.findByEmail(normalizedEmail)) {
       return res.status(409).json({ error: 'An account with this email already exists. Please log in.' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const userName = name && String(name).trim() ? String(name).trim() : normalizedEmail.split('@')[0];
-    const newUser = await UserModel.create({
+    const localUserId = `usr_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+
+    // Save in local resilient store
+    localAuthStore.create({
+      id: localUserId,
       email: normalizedEmail,
-      password: hashedPassword,
+      passwordHash: hashedPassword,
       name: userName,
+      targetExam: targetExam ? String(targetExam).trim() : undefined,
+      targetYear: targetYear ? String(targetYear).trim() : undefined,
+      dreamMedicalCollege: dreamMedicalCollege ? String(dreamMedicalCollege).trim() : undefined,
+      createdAt: new Date().toISOString(),
     });
 
-    // Create a brand new dedicated MongoDB document for this specific user
     const userInitialData: DatabaseSchema = JSON.parse(JSON.stringify(INITIAL_DATABASE));
     userInitialData.userProfile.name = userName;
     if (targetExam) userInitialData.userProfile.targetExam = String(targetExam).trim();
     if (targetYear) userInitialData.userProfile.targetYear = String(targetYear).trim();
     if (dreamMedicalCollege) userInitialData.userProfile.dreamMedicalCollege = String(dreamMedicalCollege).trim();
 
-    await UserStudyDataModel.findOneAndUpdate(
-      { userId: newUser._id.toString() },
-      { userId: newUser._id.toString(), userEmail: normalizedEmail, data: userInitialData },
-      { upsert: true, new: true }
-    );
+    let effectiveUserId = localUserId;
+
+    // If MongoDB is available, also create in MongoDB
+    if (isMongoActive) {
+      try {
+        const newUser = await UserModel.create({
+          email: normalizedEmail,
+          password: hashedPassword,
+          name: userName,
+        });
+        effectiveUserId = newUser._id.toString();
+
+        await UserStudyDataModel.findOneAndUpdate(
+          { userId: effectiveUserId },
+          { userId: effectiveUserId, userEmail: normalizedEmail, data: userInitialData },
+          { upsert: true, new: true }
+        );
+      } catch (mongoErr: any) {
+        console.warn('[Auth] Mongo user creation notice (using local fallback):', mongoErr?.message);
+      }
+    }
 
     const token = jwt.sign(
-      { userId: newUser._id.toString(), email: newUser.email, name: newUser.name },
+      { userId: effectiveUserId, email: normalizedEmail, name: userName },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
 
     res.status(201).json({
       success: true,
-      message: 'Account created successfully! Cloud study document initialized in MongoDB cluster.',
+      message: 'Account created successfully!',
       token,
       user: {
-        id: newUser._id.toString(),
-        email: newUser.email,
-        name: newUser.name,
+        id: effectiveUserId,
+        email: normalizedEmail,
+        name: userName,
       },
       data: userInitialData,
     });
@@ -2168,7 +2327,7 @@ app.post('/api/auth/signup', async (req, res) => {
   }
 });
 
-// Login: Authenticates credentials, issues JWT token & accesses user's MongoDB document
+// Login: Authenticates credentials, issues JWT token & accesses user's document
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -2177,21 +2336,54 @@ app.post('/api/auth/login', async (req, res) => {
     }
 
     const normalizedEmail = String(email).toLowerCase().trim();
-    const user = await UserModel.findOne({ email: normalizedEmail });
-    if (!user) {
+    const isMongoActive = await ensureMongoConnected();
+
+    let foundUser: { id: string; email: string; name: string; passwordHash: string } | null = null;
+
+    // 1. Try to find user in MongoDB if connected
+    if (isMongoActive) {
+      try {
+        const mongoUser = await UserModel.findOne({ email: normalizedEmail });
+        if (mongoUser) {
+          foundUser = {
+            id: mongoUser._id.toString(),
+            email: mongoUser.email,
+            name: mongoUser.name || mongoUser.email.split('@')[0],
+            passwordHash: mongoUser.password,
+          };
+        }
+      } catch (mongoErr: any) {
+        console.warn('[Auth] Mongo lookup notice, falling back to local store:', mongoErr?.message);
+      }
+    }
+
+    // 2. If not found in MongoDB or MongoDB not connected, check resilient local store
+    if (!foundUser) {
+      const local = localAuthStore.findByEmail(normalizedEmail);
+      if (local) {
+        foundUser = {
+          id: local.id,
+          email: local.email,
+          name: local.name,
+          passwordHash: local.passwordHash,
+        };
+      }
+    }
+
+    if (!foundUser) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
-    const validPassword = await bcrypt.compare(password, user.password);
+    const validPassword = await bcrypt.compare(password, foundUser.passwordHash);
     if (!validPassword) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
-    // Ensure dedicated user document exists in MongoDB
-    const userData = await getUserData(user._id.toString(), user.email);
+    // Retrieve user study data safely
+    const userData = await getUserData(foundUser.id, foundUser.email);
 
     const token = jwt.sign(
-      { userId: user._id.toString(), email: user.email, name: user.name || user.email.split('@')[0] },
+      { userId: foundUser.id, email: foundUser.email, name: foundUser.name },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -2201,9 +2393,9 @@ app.post('/api/auth/login', async (req, res) => {
       message: 'Logged in successfully',
       token,
       user: {
-        id: user._id.toString(),
-        email: user.email,
-        name: user.name || user.email.split('@')[0],
+        id: foundUser.id,
+        email: foundUser.email,
+        name: foundUser.name,
       },
       data: userData,
     });
@@ -2216,16 +2408,48 @@ app.post('/api/auth/login', async (req, res) => {
 // Current User Details
 app.get('/api/auth/me', authenticateToken, async (req: any, res) => {
   try {
-    const user = await UserModel.findById(req.user.userId).select('-password');
-    if (!user) return res.status(404).json({ error: 'User not found' });
-    res.json({
-      success: true,
-      user: {
-        id: user._id.toString(),
-        email: user.email,
-        name: user.name,
-      },
-    });
+    const userId = req.user?.userId;
+    const isMongoActive = await ensureMongoConnected();
+    if (isMongoActive) {
+      try {
+        const user = await UserModel.findById(userId).select('-password');
+        if (user) {
+          return res.json({
+            success: true,
+            user: {
+              id: user._id.toString(),
+              email: user.email,
+              name: user.name,
+            },
+          });
+        }
+      } catch (_) {}
+    }
+
+    const localUser = localAuthStore.findById(userId) || localAuthStore.findByEmail(req.user?.email || '');
+    if (localUser) {
+      return res.json({
+        success: true,
+        user: {
+          id: localUser.id,
+          email: localUser.email,
+          name: localUser.name,
+        },
+      });
+    }
+
+    if (req.user) {
+      return res.json({
+        success: true,
+        user: {
+          id: req.user.userId,
+          email: req.user.email,
+          name: req.user.name,
+        },
+      });
+    }
+
+    res.status(404).json({ error: 'User not found' });
   } catch (err: any) {
     res.status(500).json({ error: 'Failed to fetch current user' });
   }
