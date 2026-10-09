@@ -1480,10 +1480,10 @@ const MistakeMongoSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 const UserSchema = new mongoose.Schema({
-  email: { type: String, required: true, unique: true },
+  email: { type: String, required: true, unique: true, lowercase: true, trim: true },
   password: { type: String, required: true },
   name: { type: String, default: '' },
-}, { timestamps: true });
+}, { timestamps: true, bufferCommands: false });
 const UserModel = mongoose.models.User || mongoose.model('User', UserSchema);
 
 const MaterialModel = mongoose.models.Material || mongoose.model('Material', MaterialMongoSchema);
@@ -1500,7 +1500,7 @@ const UserStudyDataSchema = new mongoose.Schema({
   userId: { type: String, required: true, unique: true, index: true },
   userEmail: { type: String, default: '' },
   data: mongoose.Schema.Types.Mixed,
-}, { timestamps: true });
+}, { timestamps: true, bufferCommands: false });
 const UserStudyDataModel = mongoose.models.UserStudyData || mongoose.model('UserStudyData', UserStudyDataSchema);
 
 // Helper: Sync standard 1st Year Biology (14), Chemistry (12), Physics (14) & English chapters while preserving user progress & 2nd Year chapters
@@ -2045,35 +2045,40 @@ const optionalAuthenticateToken = (req: any, res: express.Response, next: expres
 };
 
 // Serverless MongoDB Connection Manager
-let isConnectingMongo = false;
+let cachedMongoPromise: Promise<boolean> | null = null;
 async function ensureMongoConnected(): Promise<boolean> {
   if (mongoose.connection.readyState === 1) return true;
   const uri = process.env.MONGODB_URI;
-  if (!uri || uri.includes('your_mongodb_connection_string') || !uri.startsWith('mongodb')) {
+  if (!uri || uri.includes('your_mongodb_connection_string') || (!uri.startsWith('mongodb://') && !uri.startsWith('mongodb+srv://'))) {
     return false;
   }
-  if (isConnectingMongo) {
-    for (let i = 0; i < 25; i++) {
-      if ((mongoose.connection.readyState as number) === 1) return true;
-      await new Promise((r) => setTimeout(r, 100));
+  if (cachedMongoPromise) {
+    return cachedMongoPromise;
+  }
+  cachedMongoPromise = (async () => {
+    try {
+      await mongoose.connect(uri, {
+        serverSelectionTimeoutMS: 4000,
+        connectTimeoutMS: 4000,
+        socketTimeoutMS: 30000,
+        bufferCommands: false,
+        maxPoolSize: 10,
+        dbName: 'studypannel',
+      });
+      console.log('[MongoDB Serverless] Connected successfully to:', mongoose.connection.name || 'studypannel');
+      return true;
+    } catch (err: any) {
+      console.warn('[MongoDB Serverless] Connection notice (resilient fallback active):', err?.message || err);
+      return false;
+    } finally {
+      setTimeout(() => {
+        if (mongoose.connection.readyState !== 1) {
+          cachedMongoPromise = null;
+        }
+      }, 10000);
     }
-    return (mongoose.connection.readyState as number) === 1;
-  }
-  isConnectingMongo = true;
-  try {
-    await mongoose.connect(uri, {
-      serverSelectionTimeoutMS: 3000,
-      connectTimeoutMS: 3000,
-      dbName: 'studypannel',
-    });
-    console.log('[MongoDB Serverless] Connected successfully to:', mongoose.connection.name || 'studypannel');
-    return true;
-  } catch (err: any) {
-    console.warn('[MongoDB Serverless] Connection notice (resilient fallback active):', err?.message || err);
-    return false;
-  } finally {
-    isConnectingMongo = false;
-  }
+  })();
+  return cachedMongoPromise;
 }
 
 // Resilient Local User Store for Serverless & Zero-Config Fallback
@@ -2142,10 +2147,12 @@ class LocalAuthStore {
   }
 
   public findByEmail(email: string): LocalAuthUser | undefined {
+    this.load();
     return this.users.get(email.toLowerCase().trim());
   }
 
   public findById(id: string): LocalAuthUser | undefined {
+    this.load();
     for (const u of this.users.values()) {
       if (u.id === id) return u;
     }
@@ -2153,9 +2160,34 @@ class LocalAuthStore {
   }
 
   public create(user: LocalAuthUser): LocalAuthUser {
+    this.load();
     this.users.set(user.email.toLowerCase().trim(), user);
     this.save();
     return user;
+  }
+
+  public updatePassword(email: string, newHash: string): boolean {
+    this.load();
+    const user = this.users.get(email.toLowerCase().trim());
+    if (user) {
+      user.passwordHash = newHash;
+      this.save();
+      return true;
+    }
+    return false;
+  }
+
+  public updateProfile(id: string, updates: Partial<LocalAuthUser>): LocalAuthUser | null {
+    this.load();
+    for (const [email, user] of this.users.entries()) {
+      if (user.id === id) {
+        const updated = { ...user, ...updates };
+        this.users.set(email, updated);
+        this.save();
+        return updated;
+      }
+    }
+    return null;
   }
 }
 
@@ -2164,7 +2196,7 @@ const localAuthStore = new LocalAuthStore();
 // Helper: Get user's dedicated document from MongoDB cluster or local resilient store
 async function getUserData(userId: string, email?: string): Promise<DatabaseSchema> {
   const isMongoActive = await ensureMongoConnected();
-  if (isMongoActive) {
+  if (isMongoActive && mongoose.connection.readyState === 1) {
     try {
       let doc = await UserStudyDataModel.findOne({ userId });
       if (!doc) {
@@ -2197,7 +2229,7 @@ async function getUserData(userId: string, email?: string): Promise<DatabaseSche
 // Helper: Update user's dedicated document in MongoDB cluster or local resilient store
 async function updateUserData(userId: string, updater: (data: DatabaseSchema) => void, email?: string): Promise<DatabaseSchema> {
   const isMongoActive = await ensureMongoConnected();
-  if (isMongoActive) {
+  if (isMongoActive && mongoose.connection.readyState === 1) {
     try {
       let doc = await UserStudyDataModel.findOne({ userId });
       let currentData: DatabaseSchema;
@@ -2229,26 +2261,38 @@ async function updateUserData(userId: string, updater: (data: DatabaseSchema) =>
 // REAL AUTHENTICATION & AUTHORIZATION API (JWT + MONGODB + LOCAL FALLBACK)
 // -------------------------------------------------------------
 
-// Sign Up: Hashes password with bcrypt, creates User & dedicated MongoDB data document
-app.post('/api/auth/signup', async (req, res) => {
+// Sign Up / Register: Hashes password with bcrypt, creates User & dedicated MongoDB data document
+app.post(['/api/auth/signup', '/api/auth/register'], async (req, res) => {
   try {
     const { email, password, name, targetExam, targetYear, dreamMedicalCollege } = req.body;
     if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required' });
+      return res.status(400).json({
+        success: false,
+        message: 'Email and password are required',
+        error: 'Email and password are required',
+      });
     }
     if (typeof password !== 'string' || password.length < 6) {
-      return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+      return res.status(400).json({
+        success: false,
+        message: 'Password must be at least 6 characters long',
+        error: 'Password must be at least 6 characters long',
+      });
     }
 
     const normalizedEmail = String(email).toLowerCase().trim();
     const isMongoActive = await ensureMongoConnected();
 
     // 1. Check existing user in MongoDB if active
-    if (isMongoActive) {
+    if (isMongoActive && mongoose.connection.readyState === 1) {
       try {
-        const existing = await UserModel.findOne({ email: normalizedEmail });
+        const existing = await UserModel.findOne({ email: normalizedEmail }).lean();
         if (existing) {
-          return res.status(409).json({ error: 'An account with this email already exists. Please log in.' });
+          return res.status(409).json({
+            success: false,
+            message: 'An account with this email already exists. Please log in.',
+            error: 'User already exists',
+          });
         }
       } catch (e) {
         console.warn('[Auth] Mongo check failed, falling back to local store:', e);
@@ -2257,15 +2301,19 @@ app.post('/api/auth/signup', async (req, res) => {
 
     // Check existing user in local fallback store
     if (localAuthStore.findByEmail(normalizedEmail)) {
-      return res.status(409).json({ error: 'An account with this email already exists. Please log in.' });
+      return res.status(409).json({
+        success: false,
+        message: 'An account with this email already exists. Please log in.',
+        error: 'User already exists',
+      });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const userName = name && String(name).trim() ? String(name).trim() : normalizedEmail.split('@')[0];
     const localUserId = `usr_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
 
-    // Save in local resilient store
-    localAuthStore.create({
+    // Save in local resilient store first
+    const createdLocal = localAuthStore.create({
       id: localUserId,
       email: normalizedEmail,
       passwordHash: hashedPassword,
@@ -2285,7 +2333,7 @@ app.post('/api/auth/signup', async (req, res) => {
     let effectiveUserId = localUserId;
 
     // If MongoDB is available, also create in MongoDB
-    if (isMongoActive) {
+    if (isMongoActive && mongoose.connection.readyState === 1) {
       try {
         const newUser = await UserModel.create({
           email: normalizedEmail,
@@ -2294,20 +2342,27 @@ app.post('/api/auth/signup', async (req, res) => {
         });
         effectiveUserId = newUser._id.toString();
 
+        // Update local store with MongoDB ID for consistency
+        createdLocal.id = effectiveUserId;
+        localAuthStore.create(createdLocal);
+
         await UserStudyDataModel.findOneAndUpdate(
           { userId: effectiveUserId },
           { userId: effectiveUserId, userEmail: normalizedEmail, data: userInitialData },
           { upsert: true, new: true }
         );
+        console.log(`[Auth] Registered new user ${normalizedEmail} in MongoDB cluster!`);
       } catch (mongoErr: any) {
-        console.warn('[Auth] Mongo user creation notice (using local fallback):', mongoErr?.message);
+        console.warn('[Auth] Mongo user creation notice (saved in local resilient store):', mongoErr?.message);
       }
+    } else {
+      console.log(`[Auth] Registered new user ${normalizedEmail} in resilient store!`);
     }
 
     const token = jwt.sign(
       { userId: effectiveUserId, email: normalizedEmail, name: userName },
       JWT_SECRET,
-      { expiresIn: '7d' }
+      { expiresIn: '30d' }
     );
 
     res.status(201).json({
@@ -2323,7 +2378,11 @@ app.post('/api/auth/signup', async (req, res) => {
     });
   } catch (err: any) {
     console.error('Signup failed:', err);
-    res.status(500).json({ error: 'Signup failed', details: err?.message || String(err) });
+    res.status(500).json({
+      success: false,
+      message: 'Signup failed. Please try again.',
+      error: err?.message || String(err),
+    });
   }
 });
 
@@ -2332,7 +2391,11 @@ app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required' });
+      return res.status(400).json({
+        success: false,
+        message: 'Email and password are required',
+        error: 'Email and password are required',
+      });
     }
 
     const normalizedEmail = String(email).toLowerCase().trim();
@@ -2341,9 +2404,9 @@ app.post('/api/auth/login', async (req, res) => {
     let foundUser: { id: string; email: string; name: string; passwordHash: string } | null = null;
 
     // 1. Try to find user in MongoDB if connected
-    if (isMongoActive) {
+    if (isMongoActive && mongoose.connection.readyState === 1) {
       try {
-        const mongoUser = await UserModel.findOne({ email: normalizedEmail });
+        const mongoUser = await UserModel.findOne({ email: normalizedEmail }).lean();
         if (mongoUser) {
           foundUser = {
             id: mongoUser._id.toString(),
@@ -2371,12 +2434,20 @@ app.post('/api/auth/login', async (req, res) => {
     }
 
     if (!foundUser) {
-      return res.status(401).json({ error: 'Invalid email or password' });
+      return res.status(401).json({
+        success: false,
+        message: 'No account found with this email. Please check your spelling or sign up.',
+        error: 'Invalid email or password',
+      });
     }
 
     const validPassword = await bcrypt.compare(password, foundUser.passwordHash);
     if (!validPassword) {
-      return res.status(401).json({ error: 'Invalid email or password' });
+      return res.status(401).json({
+        success: false,
+        message: 'Incorrect password. Please verify and try again.',
+        error: 'Invalid password',
+      });
     }
 
     // Retrieve user study data safely
@@ -2385,7 +2456,7 @@ app.post('/api/auth/login', async (req, res) => {
     const token = jwt.sign(
       { userId: foundUser.id, email: foundUser.email, name: foundUser.name },
       JWT_SECRET,
-      { expiresIn: '7d' }
+      { expiresIn: '30d' }
     );
 
     res.json({
@@ -2401,7 +2472,11 @@ app.post('/api/auth/login', async (req, res) => {
     });
   } catch (err: any) {
     console.error('Login failed:', err);
-    res.status(500).json({ error: 'Login failed', details: err?.message || String(err) });
+    res.status(500).json({
+      success: false,
+      message: 'Login failed. Please try again.',
+      error: err?.message || String(err),
+    });
   }
 });
 
@@ -2410,9 +2485,9 @@ app.get('/api/auth/me', authenticateToken, async (req: any, res) => {
   try {
     const userId = req.user?.userId;
     const isMongoActive = await ensureMongoConnected();
-    if (isMongoActive) {
+    if (isMongoActive && mongoose.connection.readyState === 1) {
       try {
-        const user = await UserModel.findById(userId).select('-password');
+        const user = await UserModel.findById(userId).select('-password').lean();
         if (user) {
           return res.json({
             success: true,
@@ -2449,10 +2524,118 @@ app.get('/api/auth/me', authenticateToken, async (req: any, res) => {
       });
     }
 
-    res.status(404).json({ error: 'User not found' });
+    res.status(404).json({ success: false, message: 'User not found', error: 'User not found' });
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to fetch current user' });
+    res.status(500).json({ success: false, message: 'Failed to fetch current user', error: err?.message || String(err) });
   }
+});
+
+// Profile Updates
+app.put('/api/auth/profile', authenticateToken, async (req: any, res) => {
+  try {
+    const userId = req.user?.userId;
+    const { name, targetExam, targetYear, dreamMedicalCollege, personalMotto, avatarUrl } = req.body;
+    const isMongoActive = await ensureMongoConnected();
+
+    if (isMongoActive && mongoose.connection.readyState === 1) {
+      try {
+        await UserModel.findByIdAndUpdate(userId, {
+          ...(name && { name: String(name).trim() }),
+        });
+      } catch (_) {}
+    }
+
+    const updatedLocal = localAuthStore.updateProfile(userId, {
+      ...(name && { name: String(name).trim() }),
+      ...(targetExam && { targetExam: String(targetExam).trim() }),
+      ...(targetYear && { targetYear: String(targetYear).trim() }),
+      ...(dreamMedicalCollege && { dreamMedicalCollege: String(dreamMedicalCollege).trim() }),
+      ...(personalMotto && { personalMotto: String(personalMotto).trim() }),
+      ...(avatarUrl && { avatarUrl: String(avatarUrl).trim() }),
+    });
+
+    // Also update user study data
+    await updateUserData(userId, (db) => {
+      if (name) db.userProfile.name = String(name).trim();
+      if (targetExam) db.userProfile.targetExam = String(targetExam).trim();
+      if (targetYear) db.userProfile.targetYear = String(targetYear).trim();
+      if (dreamMedicalCollege) db.userProfile.dreamMedicalCollege = String(dreamMedicalCollege).trim();
+      if (personalMotto) db.userProfile.personalMotto = String(personalMotto).trim();
+      if (avatarUrl) db.userProfile.avatarUrl = String(avatarUrl).trim();
+    }, req.user?.email);
+
+    res.json({
+      success: true,
+      message: 'Profile updated successfully!',
+      user: {
+        id: userId,
+        email: req.user?.email,
+        name: name || updatedLocal?.name || req.user?.name,
+      },
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: 'Failed to update profile', error: err?.message || String(err) });
+  }
+});
+
+// Change Password
+app.post('/api/auth/change-password', authenticateToken, async (req: any, res) => {
+  try {
+    const userId = req.user?.userId;
+    const userEmail = req.user?.email;
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ success: false, message: 'Current and new password are required' });
+    }
+    if (typeof newPassword !== 'string' || newPassword.length < 6) {
+      return res.status(400).json({ success: false, message: 'New password must be at least 6 characters long' });
+    }
+
+    const isMongoActive = await ensureMongoConnected();
+    let userFound = false;
+
+    if (isMongoActive && mongoose.connection.readyState === 1) {
+      try {
+        const mongoUser = await UserModel.findById(userId);
+        if (mongoUser) {
+          const match = await bcrypt.compare(currentPassword, mongoUser.password);
+          if (!match) {
+            return res.status(400).json({ success: false, message: 'Current password does not match.' });
+          }
+          mongoUser.password = await bcrypt.hash(newPassword, 10);
+          await mongoUser.save();
+          userFound = true;
+        }
+      } catch (_) {}
+    }
+
+    if (!userFound) {
+      const local = localAuthStore.findById(userId) || localAuthStore.findByEmail(userEmail || '');
+      if (local) {
+        const match = await bcrypt.compare(currentPassword, local.passwordHash);
+        if (!match) {
+          return res.status(400).json({ success: false, message: 'Current password does not match.' });
+        }
+        const newHash = await bcrypt.hash(newPassword, 10);
+        localAuthStore.updatePassword(local.email, newHash);
+        userFound = true;
+      }
+    }
+
+    if (!userFound) {
+      return res.status(404).json({ success: false, message: 'User account not found' });
+    }
+
+    res.json({ success: true, message: 'Password changed successfully!' });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: 'Failed to change password', error: err?.message || String(err) });
+  }
+});
+
+// Logout
+app.post('/api/auth/logout', (req, res) => {
+  res.json({ success: true, message: 'Logged out successfully' });
 });
 
 // Health Check for Vercel & Monitoring

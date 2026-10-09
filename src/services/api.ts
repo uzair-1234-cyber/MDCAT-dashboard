@@ -83,13 +83,37 @@ async function authFetch(input: RequestInfo | URL, init?: RequestInit): Promise<
 export const api = {
   // Authentication & User Account Methods
   async register(payload: RegisterCredentials): Promise<AuthResponse> {
-    const res = await fetch('/api/auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Registration failed');
+    let res: Response;
+    try {
+      res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      // Fallback if older backend route /api/auth/signup is active
+      if (res.status === 404) {
+        res = await fetch('/api/auth/signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+      }
+    } catch (netErr: any) {
+      throw new Error('Network connection error. Please check your internet connection.');
+    }
+
+    let data: any = {};
+    try {
+      data = await res.json();
+    } catch {
+      data = {};
+    }
+
+    if (!res.ok) {
+      const errorMsg = data.message || data.error || (res.status === 409 ? 'An account with this email already exists.' : 'Registration failed. Please try again.');
+      throw new Error(errorMsg);
+    }
+
     if (data.token) {
       authStorage.setToken(data.token);
       authStorage.setUser(data.user);
@@ -98,13 +122,29 @@ export const api = {
   },
 
   async login(payload: LoginCredentials): Promise<AuthResponse> {
-    const res = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Login failed');
+    let res: Response;
+    try {
+      res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+    } catch (netErr: any) {
+      throw new Error('Network connection error. Please check your internet connection.');
+    }
+
+    let data: any = {};
+    try {
+      data = await res.json();
+    } catch {
+      data = {};
+    }
+
+    if (!res.ok) {
+      const errorMsg = data.message || data.error || 'Invalid email or password. Please verify your credentials.';
+      throw new Error(errorMsg);
+    }
+
     if (data.token) {
       authStorage.setToken(data.token);
       authStorage.setUser(data.user);
