@@ -23,8 +23,9 @@ import {
   ArrowLeft,
   RotateCw,
   Move,
+  GraduationCap,
 } from 'lucide-react';
-import { StudyMaterial, SubjectName, MaterialType, ChapterData, isMaterialImage } from '../types';
+import { StudyMaterial, SubjectName, MaterialType, ChapterData, isMaterialImage, AcademicYear } from '../types';
 
 interface StudyMaterialPageProps {
   materials: StudyMaterial[];
@@ -252,6 +253,8 @@ export const StudyMaterialPage: React.FC<StudyMaterialPageProps> = ({
   const [deleteTarget, setDeleteTarget] = useState<StudyMaterial | null>(null);
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
 
+  const [academicYear, setAcademicYear] = useState<'All' | '1st Year' | '2nd Year'>('All');
+
   const filteredMaterials = materials.filter((m) => {
     const matchesSubject = subjectFilter === 'All' || m.subject.toLowerCase() === subjectFilter.toLowerCase();
     const isImg = isMaterialImage(m);
@@ -263,6 +266,9 @@ export const StudyMaterialPage: React.FC<StudyMaterialPageProps> = ({
         matchesType = m.type.toLowerCase() === typeFilter.toLowerCase();
       }
     }
+    const matYear = (m as any).classYear || '1st Year';
+    const matchesYear = academicYear === 'All' || matYear === academicYear;
+
     const q = searchQuery.toLowerCase().trim();
     const matchesSearch =
       !q ||
@@ -273,8 +279,11 @@ export const StudyMaterialPage: React.FC<StudyMaterialPageProps> = ({
       (m.fileName && m.fileName.toLowerCase().includes(q)) ||
       m.tags.some((t) => t.toLowerCase().includes(q));
 
-    return matchesSubject && matchesType && matchesSearch;
+    return matchesSubject && matchesType && matchesYear && matchesSearch;
   });
+
+  const firstYearMatCount = materials.filter((m) => ((m as any).classYear || '1st Year') === '1st Year').length;
+  const secondYearMatCount = materials.filter((m) => (m as any).classYear === '2nd Year').length;
 
   const handleOpenPreview = (mat: StudyMaterial) => {
     setPreviewMaterial(mat);
@@ -351,6 +360,70 @@ export const StudyMaterialPage: React.FC<StudyMaterialPageProps> = ({
           >
             <Upload className="w-4 h-4" />
             <span>Upload Image / PDF</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Academic Year Switcher Bar */}
+      <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <span className="p-2 rounded-xl bg-purple-50 text-purple-700 border border-purple-200">
+            <GraduationCap className="w-4 h-4" />
+          </span>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-slate-900">Academic Year / Syllabus Level:</span>
+              <span
+                className={`text-[10px] font-extrabold px-2 py-0.5 rounded border ${
+                  academicYear === '2nd Year'
+                    ? 'bg-purple-100 text-purple-800 border-purple-200'
+                    : academicYear === '1st Year'
+                    ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
+                    : 'bg-cyan-100 text-cyan-800 border-cyan-200'
+                }`}
+              >
+                {academicYear === 'All' ? 'All MDCAT Materials' : academicYear}
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-500">
+              Filter study materials by 1st Year (XI) or 2nd Year (XII).
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl border border-slate-200 text-xs font-bold self-start sm:self-auto">
+          <button
+            type="button"
+            onClick={() => setAcademicYear('All')}
+            className={`px-3 py-1.5 rounded-lg transition-all ${
+              academicYear === 'All'
+                ? 'bg-white text-slate-900 shadow-2xs font-extrabold'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            All Materials ({materials.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setAcademicYear('1st Year')}
+            className={`px-3 py-1.5 rounded-lg transition-all ${
+              academicYear === '1st Year'
+                ? 'bg-emerald-600 text-white shadow-xs font-extrabold'
+                : 'text-slate-600 hover:text-emerald-700'
+            }`}
+          >
+            1st Year (XI) ({firstYearMatCount})
+          </button>
+          <button
+            type="button"
+            onClick={() => setAcademicYear('2nd Year')}
+            className={`px-3 py-1.5 rounded-lg transition-all ${
+              academicYear === '2nd Year'
+                ? 'bg-purple-600 text-white shadow-xs font-extrabold'
+                : 'text-slate-600 hover:text-purple-700'
+            }`}
+          >
+            2nd Year (XII) ({secondYearMatCount})
           </button>
         </div>
       </div>

@@ -43,6 +43,7 @@ export interface StudyMaterial {
   tags: string[];
   bookmarked?: boolean;
   userId?: string;
+  classYear?: AcademicYear;
 }
 
 export const isMaterialImage = (mat: Partial<StudyMaterial>): boolean => {
@@ -123,6 +124,7 @@ export interface StudyNote {
   bookmarked: boolean;
   createdAt: string;
   updatedAt: string;
+  classYear?: AcademicYear;
 }
 
 export interface RevisionPlanItem {
@@ -135,6 +137,7 @@ export interface RevisionPlanItem {
   priority: 'High' | 'Medium' | 'Low';
   status: 'Not Started' | 'In Progress' | 'Completed';
   notes?: string;
+  classYear?: AcademicYear;
 }
 
 export interface ActivityItem {
@@ -225,6 +228,7 @@ export interface PastPaper {
   rawContentSnippet?: string;
   uploadedAt: string;
   isCurated?: boolean;
+  classYear?: AcademicYear;
 }
 
 export interface ExtractedPastPaperQuestion {
@@ -245,6 +249,7 @@ export interface ExtractedPastPaperQuestion {
   correctAnswer: 'A' | 'B' | 'C' | 'D';
   explanation: string;
   examAppearance: string;
+  classYear?: AcademicYear;
 }
 
 export interface GeneratedMockPaper {
@@ -257,6 +262,7 @@ export interface GeneratedMockPaper {
   basedOnPapers: string[];
   questions: MCQ[];
   createdAt: string;
+  classYear?: AcademicYear;
 }
 
 export interface ChatMessage {

@@ -27,9 +27,11 @@ import {
   FileCheck,
   Award,
   Trash2,
+  GraduationCap,
 } from 'lucide-react';
-import { ChapterData, SubjectName, PastPaper, ExtractedPastPaperQuestion, GeneratedMockPaper, MCQ } from '../types';
+import { ChapterData, SubjectName, PastPaper, ExtractedPastPaperQuestion, GeneratedMockPaper, MCQ, AcademicYear } from '../types';
 import { api } from '../services/api';
+import { STANDARD_SECOND_YEAR_CHAPTERS } from '../data/standardSecondYearChapters';
 
 interface PastPapersPageProps {
   chapters: ChapterData[];
@@ -50,6 +52,9 @@ export const PastPapersPage: React.FC<PastPapersPageProps> = ({
   // Past Papers Vault State
   const [pastPapers, setPastPapers] = useState<PastPaper[]>([]);
   const [loadingPapers, setLoadingPapers] = useState(false);
+
+  // Academic Year State (All | 1st Year | 2nd Year)
+  const [academicYear, setAcademicYear] = useState<'All' | '1st Year' | '2nd Year'>('All');
 
   // Extractor State
   const [extractSubject, setExtractSubject] = useState<SubjectName>(preselectedSubject);
@@ -139,8 +144,62 @@ export const PastPapersPage: React.FC<PastPapersPageProps> = ({
     return () => clearInterval(interval);
   }, [paperTestMode, testSubmitted]);
 
-  // Available chapters for the selected subject
-  const currentSubjectChapters = chapters.filter((c) => c.subject === extractSubject);
+  // Ensure all 2nd Year chapters are present in the list
+  const allChapters = React.useMemo(() => {
+    const combined = [...chapters];
+    STANDARD_SECOND_YEAR_CHAPTERS.forEach((stdCh) => {
+      if (
+        !combined.some(
+          (c) =>
+            c.subject.toLowerCase() === stdCh.subject.toLowerCase() &&
+            c.title.toLowerCase() === stdCh.title.toLowerCase()
+        )
+      ) {
+        combined.push({
+          id: `ch_std_${stdCh.subject.toLowerCase()}_${stdCh.chapterNumber}`,
+          subject: stdCh.subject,
+          chapterNumber: stdCh.chapterNumber,
+          title: stdCh.title,
+          topics: stdCh.topics,
+          completed: false,
+          status: 'not_started',
+          notesCount: 0,
+          mcqsCount: 0,
+          classYear: '2nd Year',
+        });
+      }
+    });
+    return combined;
+  }, [chapters]);
+
+  // Available chapters for the selected subject filtered by academic year
+  const allSubjectChapters = allChapters.filter((c) => c.subject === extractSubject);
+  const currentSubjectChapters = allChapters.filter((c) => {
+    if (c.subject !== extractSubject) return false;
+    if (academicYear !== 'All') return (c.classYear || '1st Year') === academicYear;
+    return true;
+  });
+  const firstYearSubjectChapters = allSubjectChapters.filter((c) => (c.classYear || '1st Year') === '1st Year');
+  const secondYearSubjectChapters = allSubjectChapters.filter((c) => c.classYear === '2nd Year');
+
+  // Auto-switch selected chapter when academicYear changes
+  useEffect(() => {
+    if (academicYear === '2nd Year') {
+      const first2ndCh = secondYearSubjectChapters[0];
+      if (first2ndCh && !secondYearSubjectChapters.some((c) => c.title === extractChapter)) {
+        setExtractChapter(first2ndCh.title);
+      }
+      const secondChs = secondYearSubjectChapters.slice(0, 2).map((c) => c.title);
+      if (secondChs.length > 0 && !selectedChapters.some((t) => secondYearSubjectChapters.some((c) => c.title === t))) {
+        setSelectedChapters(secondChs);
+      }
+    } else if (academicYear === '1st Year') {
+      const first1stCh = firstYearSubjectChapters[0];
+      if (first1stCh && !firstYearSubjectChapters.some((c) => c.title === extractChapter)) {
+        setExtractChapter(first1stCh.title);
+      }
+    }
+  }, [academicYear, extractSubject, secondYearSubjectChapters, firstYearSubjectChapters]);
 
   // Handle Scan & Extract
   const handleExtractQuestions = async () => {
@@ -174,14 +233,25 @@ export const PastPapersPage: React.FC<PastPapersPageProps> = ({
       setTestAnswers({});
       setTestSubmitted(false);
 
+      const focusLabel =
+        academicYear === '2nd Year'
+          ? 'Sindh Board Second-Year (Class XII) Past Paper Weightage'
+          : academicYear === '1st Year'
+          ? 'Sindh Board First-Year (Class XI) Past Paper Weightage'
+          : 'Sindh Board Comprehensive MDCAT (1st & 2nd Year) Past Paper Weightage';
+
       const paper = await api.generateMockPaper({
         subject: genSubject,
         chapters: selectedChapters.length > 0 ? selectedChapters : undefined,
         numberOfQuestions: genCount,
         difficulty: genDifficulty,
-        paperTitle: `MDCAT ${genSubject} Official Practice Exam 2026`,
-        focusArea: 'Sindh Board First-Year Past Paper Weightage',
+        paperTitle: `MDCAT ${genSubject} (${academicYear}) Official Practice Exam 2026`,
+        focusArea: focusLabel,
       });
+
+      if (paper && academicYear !== 'All') {
+        paper.classYear = academicYear;
+      }
 
       setGeneratedPaper(paper);
       setTimeLeftSeconds(paper.durationMinutes * 60);
@@ -445,6 +515,70 @@ export const PastPapersPage: React.FC<PastPapersPageProps> = ({
         </div>
       </div>
 
+      {/* Academic Year Selector Bar */}
+      <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <span className="p-2 rounded-xl bg-purple-50 text-purple-700 border border-purple-200">
+            <GraduationCap className="w-4 h-4" />
+          </span>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-slate-900">Academic Year / Syllabus Level:</span>
+              <span
+                className={`text-[10px] font-extrabold px-2 py-0.5 rounded border ${
+                  academicYear === '2nd Year'
+                    ? 'bg-purple-100 text-purple-800 border-purple-200'
+                    : academicYear === '1st Year'
+                    ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
+                    : 'bg-cyan-100 text-cyan-800 border-cyan-200'
+                }`}
+              >
+                {academicYear === 'All' ? 'Full MDCAT (1st + 2nd Year)' : academicYear}
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-500">
+              Filter past paper questions and mock tests for 1st Year (XI) or 2nd Year (XII).
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl border border-slate-200 text-xs font-bold self-start sm:self-auto">
+          <button
+            type="button"
+            onClick={() => setAcademicYear('All')}
+            className={`px-3 py-1.5 rounded-lg transition-all ${
+              academicYear === 'All'
+                ? 'bg-white text-slate-900 shadow-2xs font-extrabold'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            All MDCAT ({allSubjectChapters.length} Ch)
+          </button>
+          <button
+            type="button"
+            onClick={() => setAcademicYear('1st Year')}
+            className={`px-3 py-1.5 rounded-lg transition-all ${
+              academicYear === '1st Year'
+                ? 'bg-emerald-600 text-white shadow-xs font-extrabold'
+                : 'text-slate-600 hover:text-emerald-700'
+            }`}
+          >
+            1st Year (XI) ({firstYearSubjectChapters.length} Ch)
+          </button>
+          <button
+            type="button"
+            onClick={() => setAcademicYear('2nd Year')}
+            className={`px-3 py-1.5 rounded-lg transition-all ${
+              academicYear === '2nd Year'
+                ? 'bg-purple-600 text-white shadow-xs font-extrabold'
+                : 'text-slate-600 hover:text-purple-700'
+            }`}
+          >
+            2nd Year (XII) ({secondYearSubjectChapters.length} Ch)
+          </button>
+        </div>
+      </div>
+
       {/* ======================================================== */}
       {/* MODE 1: CHAPTER & TOPIC QUESTION EXTRACTOR */}
       {/* ======================================================== */}
@@ -462,7 +596,7 @@ export const PastPapersPage: React.FC<PastPapersPageProps> = ({
                     Find & Extract Questions by Chapter
                   </h2>
                   <p className="text-xs text-slate-500">
-                    Select your target First-Year chapter to scan all official MDCAT papers and retrieve real exam questions.
+                    Select your target chapter (1st Year XI or 2nd Year XII) to scan all official MDCAT papers and retrieve real exam questions.
                   </p>
                 </div>
               </div>
@@ -522,14 +656,37 @@ export const PastPapersPage: React.FC<PastPapersPageProps> = ({
                   onChange={(e) => setExtractChapter(e.target.value)}
                   className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 bg-white font-semibold text-slate-800 focus:ring-2 focus:ring-teal-500 outline-none"
                 >
-                  {currentSubjectChapters.map((ch) => (
-                    <option key={ch.id} value={ch.title}>
-                      Ch {ch.chapterNumber}: {ch.title}
-                    </option>
-                  ))}
+                  {academicYear === 'All' ? (
+                    <>
+                      {firstYearSubjectChapters.length > 0 && (
+                        <optgroup label="1st Year (Class XI)">
+                          {firstYearSubjectChapters.map((ch) => (
+                            <option key={ch.id} value={ch.title}>
+                              Ch {ch.chapterNumber}: {ch.title}
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
+                      {secondYearSubjectChapters.length > 0 && (
+                        <optgroup label="2nd Year (Class XII)">
+                          {secondYearSubjectChapters.map((ch) => (
+                            <option key={ch.id} value={ch.title}>
+                              Ch {ch.chapterNumber}: {ch.title}
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
+                    </>
+                  ) : (
+                    currentSubjectChapters.map((ch) => (
+                      <option key={ch.id} value={ch.title}>
+                        [{ch.classYear || '1st Year'}] Ch {ch.chapterNumber}: {ch.title}
+                      </option>
+                    ))
+                  )}
                 </select>
                 <span className="block text-[11px] text-teal-700 font-medium mt-1">
-                  Selected: {extractChapter}
+                  Selected: {extractChapter} ({allChapters.find(c => c.title === extractChapter)?.classYear || '1st Year'})
                 </span>
               </div>
 
@@ -880,14 +1037,25 @@ export const PastPapersPage: React.FC<PastPapersPageProps> = ({
 
             {/* Chapters Focus */}
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-2">
-                Included Chapters Focus (Select one or more):
-              </label>
-              <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto pr-1">
-                {chapters
-                  .filter((c) => genSubject === 'Full MDCAT Combo' || c.subject === genSubject)
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-xs font-bold text-slate-700">
+                  Included Chapters Focus (Select one or more):
+                </label>
+                <span className="text-[11px] font-semibold text-purple-700">
+                  Filtering by: {academicYear === 'All' ? '1st & 2nd Year Chapters' : academicYear}
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto pr-1">
+                {allChapters
+                  .filter((c) => {
+                    const matchSub = genSubject === 'Full MDCAT Combo' || c.subject === genSubject;
+                    if (!matchSub) return false;
+                    if (academicYear !== 'All') return (c.classYear || '1st Year') === academicYear;
+                    return true;
+                  })
                   .map((ch) => {
                     const isChecked = selectedChapters.includes(ch.title);
+                    const chYear = ch.classYear || '1st Year';
                     return (
                       <button
                         key={ch.id}
@@ -897,13 +1065,22 @@ export const PastPapersPage: React.FC<PastPapersPageProps> = ({
                             isChecked ? prev.filter((t) => t !== ch.title) : [...prev, ch.title]
                           );
                         }}
-                        className={`text-xs font-semibold px-3 py-1.5 rounded-xl border transition-all ${
+                        className={`text-xs font-semibold px-3 py-1.5 rounded-xl border transition-all flex items-center gap-1.5 ${
                           isChecked
-                            ? 'bg-purple-50 text-purple-900 border-purple-300 font-bold'
+                            ? 'bg-purple-50 text-purple-900 border-purple-300 font-bold ring-1 ring-purple-400'
                             : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
                         }`}
                       >
-                        {isChecked && '✓ '} {ch.subject}: {ch.title}
+                        <span
+                          className={`text-[9px] font-extrabold px-1.5 py-0.2 rounded ${
+                            chYear === '2nd Year'
+                              ? 'bg-purple-200 text-purple-800'
+                              : 'bg-emerald-100 text-emerald-800'
+                          }`}
+                        >
+                          {chYear === '2nd Year' ? 'XII' : 'XI'}
+                        </span>
+                        <span>{isChecked && '✓ '}{ch.subject}: {ch.title}</span>
                       </button>
                     );
                   })}

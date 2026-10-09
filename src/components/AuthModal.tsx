@@ -15,6 +15,8 @@ import {
 } from 'lucide-react';
 import { api } from '../services/api';
 import { AuthUser, LoginCredentials, RegisterCredentials } from '../types';
+import { MedicalLogo } from './MedicalLogo';
+import booksPlantMintImg from '../assets/images/books_plant_mint_1791015405961.jpg';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -144,14 +146,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         {/* ----------------------------------------------- */}
         <div className="md:col-span-5 bg-[#EDF7F2] dark:bg-[#071C17] p-4 sm:p-6 md:p-8 flex flex-col justify-between border-b md:border-b-0 md:border-r border-[#D2EBDD] dark:border-emerald-950 shrink-0">
           <div className="space-y-3 sm:space-y-4 md:space-y-6">
-            {/* Brand Logo */}
+            {/* Brand Logo: Official Medical Logo */}
             <div className="flex items-center gap-2">
-              <div className="text-[#0B5E43] dark:text-emerald-400">
-                <SindhBrainIcon className="w-5 h-5 sm:w-6 sm:h-6" />
-              </div>
-              <span className="font-extrabold text-sm sm:text-base tracking-tight text-[#0F172A] dark:text-white">
-                MDCAT PREP
-              </span>
+              <MedicalLogo size="sm" textTone="auto" />
             </div>
 
             {/* Heading & Subtitle */}
@@ -233,7 +230,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           <div className="hidden md:block pt-6 mt-4 relative">
             <div className="rounded-2xl overflow-hidden aspect-[4/3] bg-white/60 dark:bg-black/20 border border-white/60 shadow-xs">
               <img
-                src="/src/assets/images/books_plant_mint_1791015405961.jpg"
+                src={booksPlantMintImg || '/images/books_plant_mint.jpg'}
                 alt="Sindh Medical Textbooks and Succulent Plant"
                 className="w-full h-full object-cover object-center"
               />

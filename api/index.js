@@ -7,6 +7,81 @@ import { fileURLToPath } from "url";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 import { GoogleGenAI, Type } from "@google/genai";
+
+// src/services/cloudinaryService.ts
+import { v2 as cloudinary } from "cloudinary";
+function isCloudinaryConfigured() {
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+  const apiKey = process.env.CLOUDINARY_API_KEY;
+  const apiSecret = process.env.CLOUDINARY_API_SECRET;
+  const cloudinaryUrl = process.env.CLOUDINARY_URL;
+  return Boolean(cloudName && apiKey && apiSecret || cloudinaryUrl);
+}
+function initCloudinary() {
+  if (!isCloudinaryConfigured()) {
+    return false;
+  }
+  try {
+    if (process.env.CLOUDINARY_URL) {
+      cloudinary.config();
+    } else {
+      cloudinary.config({
+        cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+        api_key: process.env.CLOUDINARY_API_KEY,
+        api_secret: process.env.CLOUDINARY_API_SECRET,
+        secure: true
+      });
+    }
+    return true;
+  } catch (err) {
+    console.error("[Cloudinary] Failed to initialize config:", err);
+    return false;
+  }
+}
+async function uploadToCloudinary(fileData, options = {}) {
+  if (!isCloudinaryConfigured()) {
+    return null;
+  }
+  initCloudinary();
+  try {
+    const isPdf = fileData.startsWith("data:application/pdf") || options.resourceType === "raw";
+    let uploadPayload = fileData;
+    if (!uploadPayload.startsWith("data:") && !uploadPayload.startsWith("http")) {
+      uploadPayload = `data:image/jpeg;base64,${fileData}`;
+    }
+    const uploadOptions = {
+      folder: options.folder || "mediprep_uploads",
+      resource_type: isPdf ? "auto" : options.resourceType || "auto"
+    };
+    if (options.publicId) {
+      uploadOptions.public_id = options.publicId;
+    }
+    const result = await cloudinary.uploader.upload(uploadPayload, uploadOptions);
+    return {
+      url: result.secure_url || result.url,
+      publicId: result.public_id,
+      format: result.format,
+      bytes: result.bytes,
+      isCloudinary: true
+    };
+  } catch (err) {
+    console.error("[Cloudinary] Upload failed, falling back to local storage:", err?.message || err);
+    return null;
+  }
+}
+function getCloudinaryStatus() {
+  const configured = isCloudinaryConfigured();
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME || (process.env.CLOUDINARY_URL ? "From CLOUDINARY_URL" : "");
+  return {
+    configured,
+    cloudName: cloudName ? `${cloudName.substring(0, 3)}***` : "Not configured",
+    hasApiKey: Boolean(process.env.CLOUDINARY_API_KEY || process.env.CLOUDINARY_URL),
+    hasApiSecret: Boolean(process.env.CLOUDINARY_API_SECRET || process.env.CLOUDINARY_URL),
+    statusText: configured ? "Cloudinary Connected & Active (Permanent Cloud CDN)" : "Cloudinary Not Configured (Using Local Fallback)"
+  };
+}
+
+// src/api-handler.ts
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 dotenv.config();
@@ -1219,24 +1294,37 @@ var UserStudyDataSchema = new mongoose.Schema({
 }, { timestamps: true });
 var UserStudyDataModel = mongoose.models.UserStudyData || mongoose.model("UserStudyData", UserStudyDataSchema);
 function syncStandardChapters(existingChapters) {
-  const standardBioChapters = INITIAL_DATABASE.chapters.filter((c) => c.subject === "Biology");
-  const nonBioChapters = (existingChapters || []).filter((c) => c.subject !== "Biology");
+  const standard1stBio = INITIAL_DATABASE.chapters.filter((c) => c.subject === "Biology" && (c.classYear === "1st Year" || !c.classYear));
+  const standard1stChem = INITIAL_DATABASE.chapters.filter((c) => c.subject === "Chemistry" && (c.classYear === "1st Year" || !c.classYear));
+  const standard1stPhys = INITIAL_DATABASE.chapters.filter((c) => c.subject === "Physics" && (c.classYear === "1st Year" || !c.classYear));
+  const standardEng = INITIAL_DATABASE.chapters.filter((c) => c.subject === "English");
+  const secondYearChapters = (existingChapters || []).filter((c) => c.classYear === "2nd Year");
+  const otherCustomChapters = (existingChapters || []).filter(
+    (c) => !["Biology", "Chemistry", "Physics", "English"].includes(c.subject) && c.classYear !== "2nd Year"
+  );
   const existingStatusMap = /* @__PURE__ */ new Map();
   (existingChapters || []).forEach((c) => {
-    if (c.subject === "Biology") {
-      existingStatusMap.set(c.title.toLowerCase().trim(), { completed: c.completed, status: c.status });
-      existingStatusMap.set(c.id, { completed: c.completed, status: c.status });
-    }
+    existingStatusMap.set(`${c.subject.toLowerCase()}:${c.title.toLowerCase().trim()}`, { completed: c.completed, status: c.status });
+    existingStatusMap.set(`${c.subject.toLowerCase()}:${c.classYear || "1st Year"}:${c.chapterNumber}`, { completed: c.completed, status: c.status });
+    existingStatusMap.set(c.id, { completed: c.completed, status: c.status });
   });
-  const updatedBioChapters = standardBioChapters.map((stdCh) => {
-    const existing = existingStatusMap.get(stdCh.title.toLowerCase().trim()) || existingStatusMap.get(stdCh.id);
+  const mapWithStatus = (stdList) => stdList.map((stdCh) => {
+    const existing = existingStatusMap.get(`${stdCh.subject.toLowerCase()}:${stdCh.title.toLowerCase().trim()}`) || existingStatusMap.get(`${stdCh.subject.toLowerCase()}:${stdCh.classYear || "1st Year"}:${stdCh.chapterNumber}`) || existingStatusMap.get(stdCh.id);
     return {
       ...stdCh,
+      classYear: stdCh.classYear || "1st Year",
       completed: existing ? existing.completed : false,
       status: existing ? existing.status : "not_started"
     };
   });
-  return [...updatedBioChapters, ...nonBioChapters];
+  return [
+    ...mapWithStatus(standard1stBio),
+    ...mapWithStatus(standard1stChem),
+    ...mapWithStatus(standard1stPhys),
+    ...mapWithStatus(standardEng),
+    ...secondYearChapters,
+    ...otherCustomChapters
+  ];
 }
 var DatabaseStore = class {
   constructor() {
@@ -1937,6 +2025,90 @@ app.get("/api/chapters", optionalAuthenticateToken, async (req, res) => {
   }
   res.json(allChapters);
 });
+app.post("/api/chapters", optionalAuthenticateToken, async (req, res) => {
+  try {
+    const { subject, chapterNumber, title, topics, classYear } = req.body;
+    if (!subject || !title) {
+      return res.status(400).json({ error: "Subject and title are required" });
+    }
+    let newChapter = null;
+    const addLogic = (data) => {
+      const targetYear = classYear || "2nd Year";
+      const existingInYear = data.chapters.filter((c) => c.subject.toLowerCase() === subject.toLowerCase() && (c.classYear || "1st Year") === targetYear);
+      const nextNum = chapterNumber || existingInYear.length + 1;
+      const id = "ch_" + subject.toLowerCase().slice(0, 4) + "_" + targetYear.replace(/\s+/g, "").toLowerCase() + "_" + Date.now();
+      newChapter = {
+        id,
+        subject,
+        chapterNumber: nextNum,
+        title: title.trim(),
+        topics: Array.isArray(topics) && topics.length > 0 ? topics : ["Core Syllabus Topic", "MDCAT High Yield Concept"],
+        completed: false,
+        status: "not_started",
+        notesCount: 0,
+        mcqsCount: 0,
+        classYear: targetYear
+      };
+      data.chapters.push(newChapter);
+      const sub = data.subjects.find((s) => s.name.toLowerCase() === subject.toLowerCase());
+      if (sub) {
+        sub.chaptersCount = data.chapters.filter((c) => c.subject.toLowerCase() === subject.toLowerCase()).length;
+      }
+    };
+    if (req.user && req.user.userId) {
+      await updateUserData(req.user.userId, addLogic, req.user.email);
+    } else {
+      dbStore.updateData(addLogic);
+    }
+    res.status(201).json(newChapter);
+  } catch (err) {
+    res.status(500).json({ error: err.message || "Failed to add chapter" });
+  }
+});
+app.post("/api/chapters/batch", optionalAuthenticateToken, async (req, res) => {
+  try {
+    const { chapters } = req.body;
+    if (!Array.isArray(chapters) || chapters.length === 0) {
+      return res.status(400).json({ error: "chapters array is required" });
+    }
+    const addedChapters = [];
+    const batchLogic = (data) => {
+      chapters.forEach((item, idx) => {
+        const { subject, chapterNumber, title, topics, classYear } = item;
+        if (!subject || !title) return;
+        const targetYear = classYear || "2nd Year";
+        const existingInYear = data.chapters.filter((c) => c.subject.toLowerCase() === subject.toLowerCase() && (c.classYear || "1st Year") === targetYear);
+        const nextNum = chapterNumber || existingInYear.length + 1;
+        const id = "ch_" + subject.toLowerCase().slice(0, 4) + "_" + targetYear.replace(/\s+/g, "").toLowerCase() + "_" + Date.now() + "_" + idx;
+        const created = {
+          id,
+          subject,
+          chapterNumber: nextNum,
+          title: title.trim(),
+          topics: Array.isArray(topics) && topics.length > 0 ? topics : ["Core Syllabus Topic", "MDCAT High Yield Concept"],
+          completed: false,
+          status: "not_started",
+          notesCount: 0,
+          mcqsCount: 0,
+          classYear: targetYear
+        };
+        data.chapters.push(created);
+        addedChapters.push(created);
+      });
+      data.subjects.forEach((sub) => {
+        sub.chaptersCount = data.chapters.filter((c) => c.subject.toLowerCase() === sub.name.toLowerCase()).length;
+      });
+    };
+    if (req.user && req.user.userId) {
+      await updateUserData(req.user.userId, batchLogic, req.user.email);
+    } else {
+      dbStore.updateData(batchLogic);
+    }
+    res.status(201).json(addedChapters);
+  } catch (err) {
+    res.status(500).json({ error: err.message || "Failed to add batch chapters" });
+  }
+});
 app.post("/api/chapters/:id/toggle", optionalAuthenticateToken, async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
@@ -1993,12 +2165,21 @@ app.post("/api/materials", async (req, res) => {
   let savedFileUrl = "";
   if (fileBase64 && fileName) {
     try {
-      const sanitizedName = Date.now() + "_" + fileName.replace(/[^a-zA-Z0-9.-]/g, "_");
-      const filePath = path.join(UPLOADS_DIR, sanitizedName);
-      const base64Data = fileBase64.replace(/^data:([A-Za-z-+/]+);base64,/, "");
-      fs.writeFileSync(filePath, Buffer.from(base64Data, "base64"));
-      savedFileName = fileName;
-      savedFileUrl = `/uploads/${sanitizedName}`;
+      const cloudResult = await uploadToCloudinary(fileBase64, {
+        folder: "mediprep/study_materials"
+      });
+      if (cloudResult && cloudResult.url) {
+        savedFileName = fileName;
+        savedFileUrl = cloudResult.url;
+        console.log("[Materials] File permanently uploaded to Cloudinary:", savedFileUrl);
+      } else {
+        const sanitizedName = Date.now() + "_" + fileName.replace(/[^a-zA-Z0-9.-]/g, "_");
+        const filePath = path.join(UPLOADS_DIR, sanitizedName);
+        const base64Data = fileBase64.replace(/^data:([A-Za-z-+/]+);base64,/, "");
+        fs.writeFileSync(filePath, Buffer.from(base64Data, "base64"));
+        savedFileName = fileName;
+        savedFileUrl = `/uploads/${sanitizedName}`;
+      }
     } catch (err) {
       console.error("Error saving uploaded file:", err);
     }
@@ -3352,10 +3533,28 @@ app.get("/api/pastpapers", (req, res) => {
   const papers = data.pastPapers && data.pastPapers.length > 0 ? data.pastPapers : INITIAL_PAST_PAPERS;
   res.json(papers);
 });
-app.post("/api/pastpapers", (req, res) => {
+app.get("/api/cloudinary/status", (req, res) => {
+  res.json(getCloudinaryStatus());
+});
+app.post("/api/pastpapers", async (req, res) => {
   const { title, year, conductingBody, subjectsCovered, fileName, fileBase64, rawContentSnippet } = req.body;
   if (!title || !year) {
     return res.status(400).json({ error: "Title and Year are required for past papers." });
+  }
+  let fileUrl = "";
+  if (fileBase64) {
+    try {
+      const cloudResult = await uploadToCloudinary(fileBase64, {
+        folder: "mediprep/past_papers",
+        resourceType: "auto"
+      });
+      if (cloudResult && cloudResult.url) {
+        fileUrl = cloudResult.url;
+        console.log("[PastPapers] File permanently uploaded to Cloudinary:", fileUrl);
+      }
+    } catch (err) {
+      console.warn("[PastPapers] Cloudinary upload notice:", err);
+    }
   }
   const newPaper = {
     id: "paper_" + Date.now(),
@@ -3366,6 +3565,7 @@ app.post("/api/pastpapers", (req, res) => {
     questionsCount: rawContentSnippet ? Math.max((rawContentSnippet.match(/Q\d+/g) || []).length, 25) : 50,
     fileName,
     fileBase64,
+    fileUrl: fileUrl || void 0,
     rawContentSnippet: rawContentSnippet || `MDCAT Past Paper: ${title} (${year})
 Uploaded study material content available for AI extraction.`,
     uploadedAt: (/* @__PURE__ */ new Date()).toISOString().split("T")[0],

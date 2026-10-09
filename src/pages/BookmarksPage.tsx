@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Bookmark,
   AlertTriangle,
@@ -10,8 +10,11 @@ import {
   Trash2,
   Eye,
   EyeOff,
+  GraduationCap,
+  Pin,
 } from 'lucide-react';
-import { MCQ, StudyNote, StudyMaterial, SubjectName } from '../types';
+import { MCQ, StudyNote, StudyMaterial, SubjectName, AcademicYear } from '../types';
+import { STANDARD_MDCAT_MCQS } from '../data/standardMcqs';
 
 interface BookmarksPageProps {
   mcqs: MCQ[];
@@ -32,22 +35,43 @@ export const BookmarksPage: React.FC<BookmarksPageProps> = ({
 }) => {
   const [activeCategory, setActiveCategory] = useState<'difficult' | 'mcqs' | 'notes' | 'materials'>('difficult');
   const [subjectFilter, setSubjectFilter] = useState<string>('All');
+  const [academicYear, setAcademicYear] = useState<'All' | '1st Year' | '2nd Year'>('All');
   const [revealedMCQs, setRevealedMCQs] = useState<Record<string, boolean>>({});
 
-  const difficultMCQs = mcqs.filter((m) => m.isDifficult);
-  const bookmarkedMCQs = mcqs.filter((m) => m.isBookmarked);
+  // Merge with standard MCQs if needed so difficult / bookmarked pools are rich
+  const combinedMCQs = useMemo(() => {
+    const list = [...mcqs];
+    STANDARD_MDCAT_MCQS.forEach((std) => {
+      if (!list.some((m) => m.id === std.id)) {
+        list.push(std);
+      }
+    });
+    return list;
+  }, [mcqs]);
+
+  const difficultMCQs = combinedMCQs.filter((m) => m.isDifficult);
+  const bookmarkedMCQs = combinedMCQs.filter((m) => m.isBookmarked);
   const bookmarkedNotes = notes.filter((n) => n.bookmarked);
   const bookmarkedMaterials = materials.filter((m) => m.bookmarked);
 
-  const filterBySubject = <T extends { subject: string }>(list: T[]) => {
-    if (subjectFilter === 'All') return list;
-    return list.filter((i) => i.subject.toLowerCase() === subjectFilter.toLowerCase());
+  const filterBySubjectAndYear = <T extends { subject: string; classYear?: AcademicYear }>(list: T[]) => {
+    return list.filter((i) => {
+      const matchSubject = subjectFilter === 'All' || i.subject.toLowerCase() === subjectFilter.toLowerCase();
+      const itemYear = i.classYear || '1st Year';
+      const matchYear = academicYear === 'All' || itemYear === academicYear;
+      return matchSubject && matchYear;
+    });
   };
 
-  const currentDifficult = filterBySubject(difficultMCQs);
-  const currentMCQs = filterBySubject(bookmarkedMCQs);
-  const currentNotes = filterBySubject(bookmarkedNotes);
-  const currentMaterials = filterBySubject(bookmarkedMaterials);
+  const currentDifficult = filterBySubjectAndYear(difficultMCQs);
+  const currentMCQs = filterBySubjectAndYear(bookmarkedMCQs);
+  const currentNotes = filterBySubjectAndYear(bookmarkedNotes);
+  const currentMaterials = filterBySubjectAndYear(bookmarkedMaterials);
+
+  const firstYearDifficultCount = difficultMCQs.filter((m) => (m.classYear || '1st Year') === '1st Year').length;
+  const secondYearDifficultCount = difficultMCQs.filter((m) => m.classYear === '2nd Year').length;
+  const firstYearSavedMcqCount = bookmarkedMCQs.filter((m) => (m.classYear || '1st Year') === '1st Year').length;
+  const secondYearSavedMcqCount = bookmarkedMCQs.filter((m) => m.classYear === '2nd Year').length;
 
   const toggleReveal = (id: string) => {
     setRevealedMCQs((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -74,6 +98,70 @@ export const BookmarksPage: React.FC<BookmarksPageProps> = ({
             <AlertTriangle className="w-3.5 h-3.5 text-rose-600" />
             {difficultMCQs.length} Difficult Questions
           </span>
+        </div>
+      </div>
+
+      {/* Academic Year Switcher Bar */}
+      <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <span className="p-2 rounded-xl bg-purple-50 text-purple-700 border border-purple-200">
+            <GraduationCap className="w-4 h-4" />
+          </span>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-slate-900">Academic Year / Syllabus Level:</span>
+              <span
+                className={`text-[10px] font-extrabold px-2 py-0.5 rounded border ${
+                  academicYear === '2nd Year'
+                    ? 'bg-purple-100 text-purple-800 border-purple-200'
+                    : academicYear === '1st Year'
+                    ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
+                    : 'bg-cyan-100 text-cyan-800 border-cyan-200'
+                }`}
+              >
+                {academicYear === 'All' ? 'All MDCAT Bookmarks' : academicYear}
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-500">
+              Filter saved questions, difficult items, and notes by 1st Year (XI) or 2nd Year (XII).
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl border border-slate-200 text-xs font-bold self-start sm:self-auto">
+          <button
+            type="button"
+            onClick={() => setAcademicYear('All')}
+            className={`px-3 py-1.5 rounded-lg transition-all ${
+              academicYear === 'All'
+                ? 'bg-white text-slate-900 shadow-2xs font-extrabold'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            All MDCAT
+          </button>
+          <button
+            type="button"
+            onClick={() => setAcademicYear('1st Year')}
+            className={`px-3 py-1.5 rounded-lg transition-all ${
+              academicYear === '1st Year'
+                ? 'bg-emerald-600 text-white shadow-xs font-extrabold'
+                : 'text-slate-600 hover:text-emerald-700'
+            }`}
+          >
+            1st Year (XI) ({firstYearDifficultCount + firstYearSavedMcqCount})
+          </button>
+          <button
+            type="button"
+            onClick={() => setAcademicYear('2nd Year')}
+            className={`px-3 py-1.5 rounded-lg transition-all ${
+              academicYear === '2nd Year'
+                ? 'bg-purple-600 text-white shadow-xs font-extrabold'
+                : 'text-slate-600 hover:text-purple-700'
+            }`}
+          >
+            2nd Year (XII) ({secondYearDifficultCount + secondYearSavedMcqCount})
+          </button>
         </div>
       </div>
 
@@ -160,9 +248,18 @@ export const BookmarksPage: React.FC<BookmarksPageProps> = ({
                 className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-3"
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-800 border border-cyan-200">
                       {mcq.subject}
+                    </span>
+                    <span
+                      className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded border ${
+                        (mcq.classYear || '1st Year') === '2nd Year'
+                          ? 'bg-purple-100 text-purple-800 border-purple-200'
+                          : 'bg-emerald-100 text-emerald-800 border-emerald-200'
+                      }`}
+                    >
+                      {(mcq.classYear || '1st Year') === '2nd Year' ? '2nd Year (XII)' : '1st Year (XI)'}
                     </span>
                     <span className="text-xs font-semibold text-slate-500">{mcq.chapter}</span>
                     <span className="text-[10px] font-medium px-2 py-0.2 rounded bg-rose-50 text-rose-700">
@@ -253,9 +350,20 @@ export const BookmarksPage: React.FC<BookmarksPageProps> = ({
             >
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-800 border border-cyan-200">
-                    {note.subject}
-                  </span>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-800 border border-cyan-200">
+                      {note.subject}
+                    </span>
+                    <span
+                      className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded border ${
+                        (note.classYear || '1st Year') === '2nd Year'
+                          ? 'bg-purple-100 text-purple-800 border-purple-200'
+                          : 'bg-emerald-100 text-emerald-800 border-emerald-200'
+                      }`}
+                    >
+                      {(note.classYear || '1st Year') === '2nd Year' ? '2nd Year (XII)' : '1st Year (XI)'}
+                    </span>
+                  </div>
                   <button
                     onClick={() => onToggleNoteBookmark(note)}
                     className="p-1 text-amber-500 hover:text-slate-400"

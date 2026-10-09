@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   CalendarCheck2,
   Plus,
@@ -11,9 +11,11 @@ import {
   Flag,
   ArrowRight,
   X,
+  GraduationCap,
 } from 'lucide-react';
-import { RevisionPlanItem, SubjectName, ChapterData } from '../types';
+import { RevisionPlanItem, SubjectName, ChapterData, AcademicYear } from '../types';
 import { api } from '../services/api';
+import { STANDARD_SECOND_YEAR_CHAPTERS } from '../data/standardSecondYearChapters';
 
 interface RevisionPlanPageProps {
   revisionPlans: RevisionPlanItem[];
@@ -32,12 +34,14 @@ export const RevisionPlanPage: React.FC<RevisionPlanPageProps> = ({
 }) => {
   const [viewMode, setViewMode] = useState<'daily' | 'weekly' | 'monthly'>('weekly');
   const [subjectFilter, setSubjectFilter] = useState<string>('All');
+  const [academicYear, setAcademicYear] = useState<'All' | '1st Year' | '2nd Year'>('All');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [aiSuggestions, setAiSuggestions] = useState<any[]>([]);
   const [loadingAi, setLoadingAi] = useState(false);
   const [aiModalOpen, setAiModalOpen] = useState(false);
 
   // New Plan Form State
+  const [newYear, setNewYear] = useState<AcademicYear>('1st Year');
   const [newSubject, setNewSubject] = useState<SubjectName>('Biology');
   const [newChapter, setNewChapter] = useState('');
   const [newTopic, setNewTopic] = useState('');
@@ -47,9 +51,41 @@ export const RevisionPlanPage: React.FC<RevisionPlanPageProps> = ({
   const [newNotes, setNewNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Ensure all 2nd Year chapters are present in the list
+  const allChapters = useMemo(() => {
+    const combined = [...chapters];
+    STANDARD_SECOND_YEAR_CHAPTERS.forEach((stdCh) => {
+      if (
+        !combined.some(
+          (c) =>
+            c.subject.toLowerCase() === stdCh.subject.toLowerCase() &&
+            c.title.toLowerCase() === stdCh.title.toLowerCase()
+        )
+      ) {
+        combined.push({
+          id: `ch_std_${stdCh.subject.toLowerCase()}_${stdCh.chapterNumber}`,
+          subject: stdCh.subject,
+          chapterNumber: stdCh.chapterNumber,
+          title: stdCh.title,
+          topics: stdCh.topics,
+          completed: false,
+          status: 'not_started',
+          notesCount: 0,
+          mcqsCount: 0,
+          classYear: '2nd Year',
+        });
+      }
+    });
+    return combined;
+  }, [chapters]);
+
   const filteredPlans = revisionPlans.filter((p) => {
     if (subjectFilter !== 'All' && p.subject.toLowerCase() !== subjectFilter.toLowerCase()) {
       return false;
+    }
+    if (academicYear !== 'All') {
+      const planYear = p.classYear || '1st Year';
+      if (planYear !== academicYear) return false;
     }
     return true;
   });
@@ -67,6 +103,7 @@ export const RevisionPlanPage: React.FC<RevisionPlanPageProps> = ({
         priority: newPriority,
         status: 'Not Started',
         notes: newNotes,
+        classYear: newYear,
       });
       setIsModalOpen(false);
       setNewNotes('');
@@ -102,6 +139,7 @@ export const RevisionPlanPage: React.FC<RevisionPlanPageProps> = ({
         priority: sug.priority as any,
         status: 'Not Started',
         notes: `AI Target Strategy: ${sug.strategyNote}`,
+        classYear: sug.classYear || '2nd Year',
       });
       setAiSuggestions((prev) => prev.filter((s) => s.topic !== sug.topic));
     } catch (err) {
@@ -119,7 +157,80 @@ export const RevisionPlanPage: React.FC<RevisionPlanPageProps> = ({
     onUpdatePlan(plan.id, { status: nextStatus });
   };
 
-  const subjectChapters = chapters.filter((c) => c.subject.toLowerCase() === newSubject.toLowerCase());
+  const handleLoadSecondYearSchedule = async () => {
+    const today = new Date();
+    const plansToSeed: Partial<RevisionPlanItem>[] = [
+      {
+        subject: 'Biology',
+        chapter: 'Homeostasis',
+        topic: 'Osmoregulation & Nephron Dynamics',
+        date: new Date(today.getTime() + 1 * 86400000).toISOString().split('T')[0],
+        time: '17:00 - 18:30',
+        priority: 'High',
+        status: 'Not Started',
+        notes: 'Review countercurrent multiplier in Loop of Henle and ADH feedback loop.',
+        classYear: '2nd Year',
+      },
+      {
+        subject: 'Chemistry',
+        chapter: 'Hydrocarbons',
+        topic: 'Aromatic Hydrocarbons & Benzene Reactions',
+        date: new Date(today.getTime() + 2 * 86400000).toISOString().split('T')[0],
+        time: '18:30 - 20:00',
+        priority: 'High',
+        status: 'Not Started',
+        notes: 'Master electrophilic aromatic substitution mechanisms: Nitration, Halogenation, Friedel-Crafts.',
+        classYear: '2nd Year',
+      },
+      {
+        subject: 'Physics',
+        chapter: 'Electromagnetism',
+        topic: 'Magnetic Induction & Faraday’s Laws',
+        date: new Date(today.getTime() + 3 * 86400000).toISOString().split('T')[0],
+        time: '19:00 - 20:30',
+        priority: 'High',
+        status: 'Not Started',
+        notes: 'Practice numericals on Induced EMF, Lenz’s Law, and Self-Inductance.',
+        classYear: '2nd Year',
+      },
+      {
+        subject: 'Biology',
+        chapter: 'Reproduction',
+        topic: 'Gametogenesis & Hormonal Cycles',
+        date: new Date(today.getTime() + 4 * 86400000).toISOString().split('T')[0],
+        time: '17:00 - 18:30',
+        priority: 'Medium',
+        status: 'Not Started',
+        notes: 'Spermatogenesis vs Oogenesis stages; LH & FSH hormonal surge in human reproduction.',
+        classYear: '2nd Year',
+      },
+      {
+        subject: 'Chemistry',
+        chapter: 'Alkyl Halides',
+        topic: 'SN1, SN2, E1, E2 Reaction Mechanisms',
+        date: new Date(today.getTime() + 5 * 86400000).toISOString().split('T')[0],
+        time: '18:00 - 19:30',
+        priority: 'Medium',
+        status: 'Not Started',
+        notes: 'Stereochemistry and reaction kinetics differences between primary and tertiary alkyl halides.',
+        classYear: '2nd Year',
+      },
+    ];
+
+    for (const plan of plansToSeed) {
+      if (!revisionPlans.some((p) => p.chapter === plan.chapter && p.topic === plan.topic)) {
+        await onAddPlan(plan);
+      }
+    }
+    setAcademicYear('2nd Year');
+  };
+
+  const subjectChapters = allChapters.filter(
+    (c) => c.subject.toLowerCase() === newSubject.toLowerCase() && (c.classYear || '1st Year') === newYear
+  );
+
+  const firstYearPlansCount = revisionPlans.filter((p) => (p.classYear || '1st Year') === '1st Year').length;
+  const secondYearPlansCount = revisionPlans.filter((p) => p.classYear === '2nd Year').length;
 
   return (
     <div className="space-y-6 animate-fadeIn pb-12 max-w-5xl mx-auto">
@@ -133,18 +244,27 @@ export const RevisionPlanPage: React.FC<RevisionPlanPageProps> = ({
             <h2 className="text-xl sm:text-2xl font-bold text-slate-900">Smart Revision Planner</h2>
           </div>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Build discipline today for doctor tomorrow. Organize daily, weekly, and monthly revision targets.
+            Build discipline today for doctor tomorrow. Organize daily, weekly, and monthly revision targets for 1st Year (XI) & 2nd Year (XII).
           </p>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
           <button
-            onClick={handleFetchAiSuggestions}
-            disabled={loadingAi}
-            className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 text-xs font-bold transition-all disabled:opacity-50 whitespace-nowrap shadow-2xs"
+            onClick={handleLoadSecondYearSchedule}
+            className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 text-xs font-bold transition-all shadow-2xs whitespace-nowrap active:scale-95"
+            title="Pre-load a comprehensive 2nd Year (Class XII) revision target schedule"
           >
             <Sparkles className="w-4 h-4 text-purple-600 shrink-0" />
-            <span>{loadingAi ? 'Analyzing Diagnostics...' : 'AI Revision Suggestions'}</span>
+            <span>Load 2nd Year Schedule</span>
+          </button>
+
+          <button
+            onClick={handleFetchAiSuggestions}
+            disabled={loadingAi}
+            className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 text-xs font-bold transition-all disabled:opacity-50 whitespace-nowrap shadow-2xs"
+          >
+            <Sparkles className="w-4 h-4 text-purple-600 shrink-0" />
+            <span>{loadingAi ? 'Analyzing Diagnostics...' : 'AI Suggestions'}</span>
           </button>
 
           <button
@@ -153,6 +273,70 @@ export const RevisionPlanPage: React.FC<RevisionPlanPageProps> = ({
           >
             <Plus className="w-4 h-4 shrink-0" />
             <span>New Task</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Academic Year Switcher Bar */}
+      <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <span className="p-2 rounded-xl bg-purple-50 text-purple-700 border border-purple-200">
+            <GraduationCap className="w-4 h-4" />
+          </span>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-slate-900">Academic Year / Syllabus Level:</span>
+              <span
+                className={`text-[10px] font-extrabold px-2 py-0.5 rounded border ${
+                  academicYear === '2nd Year'
+                    ? 'bg-purple-100 text-purple-800 border-purple-200'
+                    : academicYear === '1st Year'
+                    ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
+                    : 'bg-cyan-100 text-cyan-800 border-cyan-200'
+                }`}
+              >
+                {academicYear === 'All' ? 'All MDCAT Targets' : academicYear}
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-500">
+              Filter revision schedule by 1st Year (XI) or 2nd Year (XII).
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl border border-slate-200 text-xs font-bold self-start sm:self-auto">
+          <button
+            type="button"
+            onClick={() => setAcademicYear('All')}
+            className={`px-3 py-1.5 rounded-lg transition-all ${
+              academicYear === 'All'
+                ? 'bg-white text-slate-900 shadow-2xs font-extrabold'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            All Plans ({revisionPlans.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setAcademicYear('1st Year')}
+            className={`px-3 py-1.5 rounded-lg transition-all ${
+              academicYear === '1st Year'
+                ? 'bg-emerald-600 text-white shadow-xs font-extrabold'
+                : 'text-slate-600 hover:text-emerald-700'
+            }`}
+          >
+            1st Year (XI) ({firstYearPlansCount})
+          </button>
+          <button
+            type="button"
+            onClick={() => setAcademicYear('2nd Year')}
+            className={`px-3 py-1.5 rounded-lg transition-all ${
+              academicYear === '2nd Year'
+                ? 'bg-purple-600 text-white shadow-xs font-extrabold'
+                : 'text-slate-600 hover:text-purple-700'
+            }`}
+          >
+            2nd Year (XII) ({secondYearPlansCount})
           </button>
         </div>
       </div>
@@ -248,6 +432,15 @@ export const RevisionPlanPage: React.FC<RevisionPlanPageProps> = ({
                   <div className="flex flex-wrap items-center gap-2 mb-1">
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-800 border border-cyan-200">
                       {plan.subject}
+                    </span>
+                    <span
+                      className={`text-[10px] font-extrabold px-2 py-0.5 rounded border ${
+                        (plan.classYear || '1st Year') === '2nd Year'
+                          ? 'bg-purple-100 text-purple-800 border-purple-200'
+                          : 'bg-emerald-100 text-emerald-800 border-emerald-200'
+                      }`}
+                    >
+                      {plan.classYear || '1st Year'}
                     </span>
                     <span
                       className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
@@ -413,21 +606,38 @@ export const RevisionPlanPage: React.FC<RevisionPlanPageProps> = ({
             <form onSubmit={handleCreatePlan} className="flex flex-col flex-1 overflow-hidden min-h-0">
               {/* Scrollable Form Body */}
               <div className="overflow-y-auto pr-1 py-3 space-y-2.5 sm:space-y-3 flex-1 scrollbar-thin">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Subject</label>
-                  <select
-                    value={newSubject}
-                    onChange={(e) => {
-                      setNewSubject(e.target.value as SubjectName);
-                      setNewChapter('');
-                    }}
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white font-medium focus:ring-2 focus:ring-purple-500 outline-none"
-                  >
-                    <option value="Biology">Biology</option>
-                    <option value="Chemistry">Chemistry</option>
-                    <option value="Physics">Physics</option>
-                    <option value="English">English</option>
-                  </select>
+                <div className="grid grid-cols-2 gap-2.5">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Academic Year</label>
+                    <select
+                      value={newYear}
+                      onChange={(e) => {
+                        setNewYear(e.target.value as AcademicYear);
+                        setNewChapter('');
+                      }}
+                      className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white font-bold focus:ring-2 focus:ring-purple-500 outline-none"
+                    >
+                      <option value="1st Year">1st Year (Class XI)</option>
+                      <option value="2nd Year">2nd Year (Class XII)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Subject</label>
+                    <select
+                      value={newSubject}
+                      onChange={(e) => {
+                        setNewSubject(e.target.value as SubjectName);
+                        setNewChapter('');
+                      }}
+                      className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white font-medium focus:ring-2 focus:ring-purple-500 outline-none"
+                    >
+                      <option value="Biology">Biology</option>
+                      <option value="Chemistry">Chemistry</option>
+                      <option value="Physics">Physics</option>
+                      <option value="English">English</option>
+                    </select>
+                  </div>
                 </div>
 
                 <div>

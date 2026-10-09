@@ -22,6 +22,7 @@ import confetti from 'canvas-confetti';
 import { MCQ, QuizAttempt, SubjectName, ChapterData } from '../types';
 import { api } from '../services/api';
 import { FormattedMarkdown } from '../components/FormattedMarkdown';
+import { STANDARD_MDCAT_MCQS } from '../data/standardMcqs';
 
 interface QuizzesPageProps {
   mcqs: MCQ[];
@@ -131,16 +132,30 @@ export const QuizzesPage: React.FC<QuizzesPageProps> = ({
   const [launchError, setLaunchError] = useState('');
 
   const handleStartFromConfig = () => {
-    let pool = mcqs.filter((m) => m.subject.toLowerCase() === subject.toLowerCase());
+    // Combine props mcqs with standard questions
+    const allAvailable = [...mcqs];
+    STANDARD_MDCAT_MCQS.forEach((std) => {
+      if (!allAvailable.some((m) => m.id === std.id)) {
+        allAvailable.push(std);
+      }
+    });
+
+    let pool = allAvailable.filter((m) => m.subject.toLowerCase() === subject.toLowerCase());
+    if (academicYear !== 'All') {
+      pool = pool.filter((m) => (m.classYear || '1st Year') === academicYear);
+    }
     if (chapter) {
       pool = pool.filter((m) => m.chapter.toLowerCase() === chapter.toLowerCase());
     }
     if (pool.length === 0) {
-      pool = mcqs.filter((m) => m.subject.toLowerCase() === subject.toLowerCase());
+      pool = allAvailable.filter((m) => m.subject.toLowerCase() === subject.toLowerCase());
+      if (academicYear !== 'All') {
+        pool = pool.filter((m) => (m.classYear || '1st Year') === academicYear);
+      }
     }
     if (pool.length === 0) {
       setLaunchError(
-        `Your question bank currently has 0 MCQs for ${subject}. Go to the "Generate MCQs" tab to create your first set of AI questions, or upload study material!`
+        `Your question bank currently has 0 MCQs for ${subject} (${academicYear}). Go to the "MCQs" section to generate your first questions or add chapters!`
       );
       return;
     }

@@ -34,6 +34,7 @@ import {
 import { ChapterData, StudyMaterial, SubjectName, isMaterialImage } from '../types';
 import { api } from '../services/api';
 import { FormattedMarkdown } from '../components/FormattedMarkdown';
+import { STANDARD_SECOND_YEAR_CHAPTERS } from '../data/standardSecondYearChapters';
 
 export interface ChatSession {
   id: string;
@@ -422,7 +423,35 @@ Apna subject aur chapter select karein, ya neeche direct sawal likhein ya diagra
     'Summarize this chapter for quick revision before exam.',
   ];
 
-  const filteredChapters = chapters.filter((c) => c.subject.toLowerCase() === subject.toLowerCase());
+  // Ensure all 2nd Year chapters are available for the AI Tutor
+  const allChapters = React.useMemo(() => {
+    const combined = [...chapters];
+    STANDARD_SECOND_YEAR_CHAPTERS.forEach((stdCh) => {
+      if (
+        !combined.some(
+          (c) =>
+            c.subject.toLowerCase() === stdCh.subject.toLowerCase() &&
+            c.title.toLowerCase() === stdCh.title.toLowerCase()
+        )
+      ) {
+        combined.push({
+          id: `ch_std_${stdCh.subject.toLowerCase()}_${stdCh.chapterNumber}`,
+          subject: stdCh.subject,
+          chapterNumber: stdCh.chapterNumber,
+          title: stdCh.title,
+          topics: stdCh.topics,
+          completed: false,
+          status: 'not_started',
+          notesCount: 0,
+          mcqsCount: 0,
+          classYear: '2nd Year',
+        });
+      }
+    });
+    return combined;
+  }, [chapters]);
+
+  const filteredChapters = allChapters.filter((c) => c.subject.toLowerCase() === subject.toLowerCase());
   const filteredMaterials = materials.filter((m) => m.subject.toLowerCase() === subject.toLowerCase());
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1091,7 +1120,7 @@ Apna subject aur chapter select karein, ya neeche direct sawal likhein ya diagra
           <option value="">All {subject} Chapters</option>
           {filteredChapters.map((c) => (
             <option key={c.id} value={c.title}>
-              Ch {c.chapterNumber}: {c.title}
+              [{c.classYear || '1st Year'}] Ch {c.chapterNumber}: {c.title}
             </option>
           ))}
         </select>

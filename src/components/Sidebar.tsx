@@ -132,7 +132,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Top Header: Simple Official Medical Logo */}
         <div className="px-4 pt-5 pb-3.5 flex items-center justify-between border-b border-[#13352D]/60">
           <div className="flex items-center gap-2 min-w-0">
-            <MedicalLogo size="md" />
+            <MedicalLogo size="md" textTone="light" />
           </div>
 
           {/* Mobile Close Button */}

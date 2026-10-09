@@ -25,15 +25,20 @@ import {
   Instagram,
   FileText,
   Menu,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { api } from '../services/api';
 import { AuthUser, LoginCredentials, RegisterCredentials } from '../types';
 import { MedicalLogo } from '../components/MedicalLogo';
+import dashboardHeroDeskImg from '../assets/images/dashboard_hero_desk_1790761688566.jpg';
+import studentStudyLaptopImg from '../assets/images/student_study_laptop_1791015387328.jpg';
+import booksPlantMintImg from '../assets/images/books_plant_mint_1791015405961.jpg';
 
 interface LandingPageProps {
   onAuthSuccess: (user: AuthUser, message: string) => void;
-  theme: 'light' | 'dark';
-  onToggleTheme: () => void;
+  theme?: 'light' | 'dark';
+  onToggleTheme?: () => void;
 }
 
 // Brand Icon: Stylized Brain Hemispheres from mockup
@@ -61,6 +66,8 @@ const DiscordIcon = ({ className = 'w-4 h-4' }: { className?: string }) => (
 
 export const LandingPage: React.FC<LandingPageProps> = ({
   onAuthSuccess,
+  theme = 'light',
+  onToggleTheme,
 }) => {
   // Modal state: null | 'login' | 'register'
   const [authModal, setAuthModal] = useState<'login' | 'register' | null>(null);
@@ -192,6 +199,85 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
           {/* Right Action Buttons */}
           <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+            {/* Desktop / Tablet Prominent Theme Switcher (Day ☀️ / Night 🌙) */}
+            <div
+              onClick={onToggleTheme}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onToggleTheme?.();
+                }
+              }}
+              title={
+                theme === 'dark'
+                  ? 'Currently Night Study Mode — Click to switch to Day Light Mode'
+                  : 'Currently Day Light Mode — Click to switch to Night Study Mode'
+              }
+              aria-label="Toggle Day and Night theme"
+              className="hidden sm:inline-flex items-center gap-1 p-0.5 bg-slate-100 dark:bg-[#12221C] rounded-full border border-slate-200 dark:border-emerald-800/80 shadow-2xs cursor-pointer hover:border-emerald-500 transition-all select-none active:scale-95 shrink-0"
+            >
+              {/* Sun Button (Day Mode) */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (theme === 'dark') onToggleTheme?.();
+                }}
+                title="Switch to Day Light Mode"
+                aria-label="Day Light Mode"
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer ${
+                  theme === 'light'
+                    ? 'bg-amber-400 text-slate-950 shadow-xs ring-1 ring-amber-300 font-extrabold'
+                    : 'text-slate-500 dark:text-emerald-300/70 hover:text-slate-800 dark:hover:text-white'
+                }`}
+              >
+                <Sun className="w-3.5 h-3.5" />
+                <span>Day</span>
+              </button>
+
+              {/* Moon Button (Night Mode) */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (theme === 'light') onToggleTheme?.();
+                }}
+                title="Switch to Night Study Mode"
+                aria-label="Night Study Mode"
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer ${
+                  theme === 'dark'
+                    ? 'bg-emerald-500 text-slate-950 shadow-xs ring-1 ring-emerald-300 font-extrabold'
+                    : 'text-slate-500 dark:text-emerald-300/70 hover:text-slate-800 dark:hover:text-white'
+                }`}
+              >
+                <Moon className="w-3.5 h-3.5" />
+                <span>Night</span>
+              </button>
+            </div>
+
+            {/* Mobile Prominent 1-Tap Theme Toggle (< 640px) */}
+            <button
+              type="button"
+              onClick={onToggleTheme}
+              className="sm:hidden flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 dark:bg-[#12221C] border border-slate-200 dark:border-emerald-800 text-slate-800 dark:text-emerald-300 text-xs font-bold active:scale-95 transition-all shadow-2xs shrink-0"
+              title={theme === 'dark' ? 'Switch to Day Light Mode' : 'Switch to Night Study Mode'}
+              aria-label="Toggle theme"
+            >
+              {theme === 'dark' ? (
+                <>
+                  <Sun className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Day</span>
+                </>
+              ) : (
+                <>
+                  <Moon className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Night</span>
+                </>
+              )}
+            </button>
+
             <button
               onClick={() => openAuth('login')}
               className="hidden sm:flex p-2 rounded-full text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
@@ -258,6 +344,48 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             >
               About
             </a>
+
+            {/* Mobile Theme Selector Card */}
+            <div className="pt-3 mt-2 border-t border-slate-200/80 dark:border-slate-800">
+              <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2 px-1">
+                Display Theme / Study Mode
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (theme === 'dark') onToggleTheme?.();
+                    setMobileMenuOpen(false);
+                  }}
+                  className={`flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-bold transition-all border ${
+                    theme === 'light'
+                      ? 'bg-amber-400 text-slate-950 border-amber-300 shadow-xs ring-1 ring-amber-300'
+                      : 'bg-slate-100 dark:bg-[#12221C] text-slate-700 dark:text-slate-200 border-slate-200 dark:border-emerald-900/60'
+                  }`}
+                >
+                  <Sun className="w-4 h-4 text-amber-500" />
+                  <span>Day Mode</span>
+                  {theme === 'light' && <Check className="w-3.5 h-3.5 stroke-[3] ml-0.5" />}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (theme === 'light') onToggleTheme?.();
+                    setMobileMenuOpen(false);
+                  }}
+                  className={`flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-bold transition-all border ${
+                    theme === 'dark'
+                      ? 'bg-emerald-500 text-slate-950 border-emerald-400 shadow-xs ring-1 ring-emerald-300'
+                      : 'bg-slate-100 dark:bg-[#12221C] text-slate-700 dark:text-slate-200 border-slate-200 dark:border-emerald-900/60'
+                  }`}
+                >
+                  <Moon className="w-4 h-4 text-emerald-400" />
+                  <span>Night Mode</span>
+                  {theme === 'dark' && <Check className="w-3.5 h-3.5 stroke-[3] ml-0.5" />}
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </header>
@@ -270,10 +398,42 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center">
             {/* Left Column: Heading, Subtitle, CTA buttons, 4 icons */}
             <div className="lg:col-span-7 space-y-6 text-left">
-              {/* Badge: MDCAT / NUMS • 2026 */}
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E6F4EA] dark:bg-emerald-950/70 border border-[#CEE9D9] dark:border-emerald-800/60 text-[#0B5E43] dark:text-emerald-300 text-xs font-bold shadow-2xs">
-                <Calendar className="w-3.5 h-3.5" />
-                <span>MDCAT / NUMS • 2026</span>
+              {/* Hero Badges Row: Exam Target & Interactive Theme Mode Switcher */}
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#E6F4EA] dark:bg-emerald-950/70 border border-[#CEE9D9] dark:border-emerald-800/60 text-[#0B5E43] dark:text-emerald-300 text-xs font-bold shadow-2xs">
+                  <Calendar className="w-3.5 h-3.5" />
+                  <span>MDCAT / NUMS • 2026</span>
+                </div>
+
+                {/* Prominent Quick Theme Changer in Hero */}
+                <button
+                  type="button"
+                  onClick={onToggleTheme}
+                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white dark:bg-[#0E1F1A] border border-slate-200/90 dark:border-emerald-800/80 hover:border-emerald-500 text-slate-800 dark:text-slate-100 text-xs font-bold shadow-xs hover:shadow transition-all cursor-pointer select-none active:scale-95 group"
+                  title={
+                    theme === 'dark'
+                      ? 'Currently in Night Study Mode — Click to switch to Day Light Mode'
+                      : 'Currently in Day Light Mode — Click to switch to Night Study Mode'
+                  }
+                >
+                  {theme === 'dark' ? (
+                    <>
+                      <Sun className="w-3.5 h-3.5 text-amber-400 group-hover:rotate-45 transition-transform" />
+                      <span>Theme: <strong className="text-emerald-300">Night Study</strong></span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30">
+                        Switch to Day ☀️
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <Moon className="w-3.5 h-3.5 text-emerald-600 group-hover:-rotate-12 transition-transform" />
+                      <span>Theme: <strong className="text-[#0B5E43]">Day Mode</strong></span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        Switch to Night 🌙
+                      </span>
+                    </>
+                  )}
+                </button>
               </div>
 
               {/* Main Headline */}
@@ -366,7 +526,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 {/* Stethoscope & Tablet Study Photo */}
                 <div className="relative rounded-2xl overflow-hidden shadow-lg border border-white/80 dark:border-slate-800 aspect-[4/3] bg-white">
                   <img
-                    src="/src/assets/images/dashboard_hero_desk_1790761688566.jpg"
+                    src={dashboardHeroDeskImg || '/images/dashboard_hero_desk.jpg'}
                     alt="Sindh Medical College Dashboard and Study Desk"
                     className="w-full h-full object-cover object-center transform hover:scale-102 transition-transform duration-500"
                   />
@@ -528,7 +688,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <div className="lg:col-span-6 relative">
               <div className="relative rounded-3xl overflow-hidden shadow-xl border border-slate-200 dark:border-slate-800 aspect-[16/10] bg-white">
                 <img
-                  src="/src/assets/images/student_study_laptop_1791015387328.jpg"
+                  src={studentStudyLaptopImg || '/images/student_study_laptop.jpg'}
                   alt="Student Studying with Laptop"
                   className="w-full h-full object-cover object-center transform hover:scale-102 transition-transform duration-500"
                 />
@@ -601,7 +761,16 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 Created by <span className="font-bold text-[#0B5E43] dark:text-emerald-400">Muhammad Uzair</span>
               </p>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 flex-wrap">
+              <button
+                type="button"
+                onClick={onToggleTheme}
+                className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all font-semibold border border-slate-200 dark:border-slate-700 shadow-2xs cursor-pointer"
+                title="Toggle Day / Night theme"
+              >
+                {theme === 'dark' ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5 text-emerald-600" />}
+                <span>{theme === 'dark' ? '☀️ Day Mode' : '🌙 Night Mode'}</span>
+              </button>
               <button onClick={() => openAuth('login')} className="hover:underline">Privacy Policy</button>
               <span>·</span>
               <button onClick={() => openAuth('register')} className="hover:underline">Terms of Service</button>
@@ -609,6 +778,31 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </div>
         </div>
       </footer>
+
+      {/* Floating Quick Theme Toggle (Bottom-Right, Always Accessible) */}
+      <button
+        type="button"
+        onClick={onToggleTheme}
+        className="fixed bottom-5 right-5 z-50 px-3.5 py-2.5 rounded-full bg-white dark:bg-[#0E1E19] text-slate-800 dark:text-slate-100 shadow-2xl border border-slate-300 dark:border-emerald-700/80 hover:border-emerald-500 hover:scale-105 active:scale-95 transition-all group flex items-center gap-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500/50 backdrop-blur-xs select-none"
+        title={
+          theme === 'dark'
+            ? 'Currently Night Study Mode — Click to switch to Day Light Mode'
+            : 'Currently Day Light Mode — Click to switch to Night Study Mode'
+        }
+        aria-label="Toggle Day and Night theme"
+      >
+        {theme === 'dark' ? (
+          <>
+            <Sun className="w-4 h-4 text-amber-400 group-hover:rotate-45 transition-transform" />
+            <span className="text-xs font-extrabold text-slate-100">Day Mode</span>
+          </>
+        ) : (
+          <>
+            <Moon className="w-4 h-4 text-emerald-600 group-hover:-rotate-12 transition-transform" />
+            <span className="text-xs font-extrabold text-slate-800">Night Study</span>
+          </>
+        )}
+      </button>
 
       {/* ---------------------------------------------------- */}
       {/* 6. PIXEL-PERFECT SPLIT AUTH MODAL (Sign Up & Login) */}
@@ -636,14 +830,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             {/* ----------------------------------------------- */}
             <div className="md:col-span-5 bg-[#EDF7F2] dark:bg-[#071C17] p-4 sm:p-6 md:p-8 flex flex-col justify-between border-b md:border-b-0 md:border-r border-[#D2EBDD] dark:border-emerald-950 shrink-0">
               <div className="space-y-3 sm:space-y-4 md:space-y-6">
-                {/* Brand Logo */}
+                {/* Brand Logo: Official Medical Logo */}
                 <div className="flex items-center gap-2">
-                  <div className="text-[#0B5E43] dark:text-emerald-400">
-                    <SindhBrainIcon className="w-5 h-5 sm:w-6 sm:h-6" />
-                  </div>
-                  <span className="font-extrabold text-sm sm:text-base tracking-tight text-[#0F172A] dark:text-white">
-                    MDCAT PREP
-                  </span>
+                  <MedicalLogo size="sm" textTone="auto" />
                 </div>
 
                 {/* Heading & Subtitle */}
@@ -725,7 +914,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               <div className="hidden md:block pt-6 mt-4 relative">
                 <div className="rounded-2xl overflow-hidden aspect-[4/3] bg-white/60 dark:bg-black/20 border border-white/60 shadow-xs">
                   <img
-                    src="/src/assets/images/books_plant_mint_1791015405961.jpg"
+                    src={booksPlantMintImg || '/images/books_plant_mint.jpg'}
                     alt="Sindh Medical Textbooks and Succulent Plant"
                     className="w-full h-full object-cover object-center"
                   />

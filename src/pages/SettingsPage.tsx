@@ -1011,22 +1011,25 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
             </div>
 
             {/* Live Showcase Banner */}
-            <div className="p-8 rounded-2xl bg-gradient-to-r from-slate-900 via-[#0B1E19] to-slate-900 border border-slate-800 text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl">
-              <div className="space-y-1.5 text-center md:text-left">
-                <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-emerald-400 block">
-                  Official Identity
+            <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-slate-900 via-[#0A201B] to-slate-900 border border-slate-800 text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl">
+              <div className="space-y-2 text-center md:text-left">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-teal-400 block">
+                  Official Medical Education Identity
                 </span>
-                <h4 className="text-xl font-black text-white">
-                  MediPrep · <span className="text-emerald-400">MDCAT Preparation</span>
+                <h4 className="text-xl sm:text-2xl font-black text-white">
+                  MDCAT <span className="text-teal-400">— PREP —</span>
                 </h4>
-                <p className="text-xs text-slate-300 max-w-md">
-                  Clean medical emblem with emerald styling, high-contrast readability, and seamless dark & light mode support.
+                <p className="text-xs text-slate-300 max-w-md leading-relaxed">
+                  Official MDCAT Prep medical education emblem featuring the layered open textbook, clinical stethoscope, and heartbeat pulse cross.
                 </p>
+                <div className="pt-2">
+                  <MedicalLogo size="lg" />
+                </div>
               </div>
 
-              {/* Live Preview Display */}
-              <div className="p-5 rounded-2xl bg-black/40 border border-white/10 backdrop-blur-md flex items-center gap-4 shrink-0 shadow-inner">
-                <MedicalLogo size="xl" />
+              {/* Live Preview Display: Full Official Card */}
+              <div className="shrink-0 flex items-center justify-center">
+                <MedicalLogo variant="card" />
               </div>
             </div>
           </div>

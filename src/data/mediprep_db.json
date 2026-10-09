@@ -26,7 +26,7 @@
     {
       "id": "sub_bio",
       "name": "Biology",
-      "chaptersCount": 14,
+      "chaptersCount": 24,
       "description": "First-Year Sindh Textbook Board: Cellular structure, bioenergetics, diversity, and physiological mechanisms.",
       "color": "emerald",
       "badge": "High Yield (34% MDCAT Weightage)"
@@ -34,7 +34,7 @@
     {
       "id": "sub_chem",
       "name": "Chemistry",
-      "chaptersCount": 12,
+      "chaptersCount": 20,
       "description": "Physical & General Chemistry: Stoichiometry, atomic models, bonding theories, equilibrium & kinetics.",
       "color": "blue",
       "badge": "27% MDCAT Weightage"
@@ -42,7 +42,7 @@
     {
       "id": "sub_phys",
       "name": "Physics",
-      "chaptersCount": 8,
+      "chaptersCount": 24,
       "description": "Mechanics, vectors, rotational dynamics, work-energy, fluid flow, circular motion, and physical optics.",
       "color": "teal",
       "badge": "27% MDCAT Weightage"
@@ -73,7 +73,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 2,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_bio_2",
@@ -90,7 +91,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 1,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_bio_3",
@@ -109,7 +111,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 1,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_bio_4",
@@ -128,7 +131,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 1,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_bio_5",
@@ -146,7 +150,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_bio_6",
@@ -165,7 +170,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_bio_7",
@@ -183,7 +189,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_bio_8",
@@ -201,7 +208,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_bio_9",
@@ -219,7 +227,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_bio_10",
@@ -237,7 +246,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_bio_11",
@@ -256,7 +266,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_bio_12",
@@ -276,7 +287,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_bio_13",
@@ -296,7 +308,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_bio_14",
@@ -316,7 +329,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_chem_1",
@@ -332,7 +346,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 1,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_chem_2",
@@ -350,7 +365,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 1,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_chem_3",
@@ -368,7 +384,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_chem_4",
@@ -386,7 +403,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_chem_5",
@@ -404,7 +422,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_chem_6",
@@ -421,7 +440,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_chem_7",
@@ -439,7 +459,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 1,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_chem_8",
@@ -457,7 +478,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_chem_9",
@@ -475,7 +497,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_chem_10",
@@ -492,7 +515,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_chem_11",
@@ -511,7 +535,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_chem_12",
@@ -530,129 +555,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
-    },
-    {
-      "id": "ch_phys_1",
-      "subject": "Physics",
-      "chapterNumber": 1,
-      "title": "Physical Quantities & Measurement",
-      "topics": [
-        "Errors and Uncertainties",
-        "Significant Figures",
-        "Dimensional Analysis"
-      ],
-      "completed": false,
-      "status": "not_started",
-      "notesCount": 0,
-      "mcqsCount": 0
-    },
-    {
-      "id": "ch_phys_2",
-      "subject": "Physics",
-      "chapterNumber": 2,
-      "title": "Vectors and Equilibrium",
-      "topics": [
-        "Vector Addition by Rectangular Components",
-        "Scalar and Vector Products",
-        "Torque and Conditions of Equilibrium"
-      ],
-      "completed": false,
-      "status": "not_started",
-      "notesCount": 0,
-      "mcqsCount": 0
-    },
-    {
-      "id": "ch_phys_3",
-      "subject": "Physics",
-      "chapterNumber": 3,
-      "title": "Motion and Force",
-      "topics": [
-        "Newtons Laws of Motion",
-        "Momentum & Impulse",
-        "Elastic and Inelastic Collisions",
-        "Projectile Motion Formulas & Range"
-      ],
-      "completed": false,
-      "status": "not_started",
-      "notesCount": 0,
-      "mcqsCount": 0
-    },
-    {
-      "id": "ch_phys_4",
-      "subject": "Physics",
-      "chapterNumber": 4,
-      "title": "Work, Energy and Power",
-      "topics": [
-        "Work done by Constant & Variable Force",
-        "Work-Energy Theorem",
-        "Conservative vs Non-conservative forces",
-        "Power and Efficiency"
-      ],
-      "completed": false,
-      "status": "not_started",
-      "notesCount": 0,
-      "mcqsCount": 0
-    },
-    {
-      "id": "ch_phys_5",
-      "subject": "Physics",
-      "chapterNumber": 5,
-      "title": "Circular Motion and Gravitation",
-      "topics": [
-        "Centripetal Acceleration and Force",
-        "Angular Momentum & Moment of Inertia",
-        "Orbital Velocity & Geostationary Satellites"
-      ],
-      "completed": false,
-      "status": "not_started",
-      "notesCount": 0,
-      "mcqsCount": 0
-    },
-    {
-      "id": "ch_phys_6",
-      "subject": "Physics",
-      "chapterNumber": 6,
-      "title": "Fluid Dynamics",
-      "topics": [
-        "Viscosity & Stokes Law",
-        "Equation of Continuity",
-        "Bernoullis Principle & Venturi Meter Applications in Blood Flow"
-      ],
-      "completed": false,
-      "status": "not_started",
-      "notesCount": 0,
-      "mcqsCount": 0
-    },
-    {
-      "id": "ch_phys_7",
-      "subject": "Physics",
-      "chapterNumber": 7,
-      "title": "Oscillations & Simple Harmonic Motion",
-      "topics": [
-        "SHM Equations & Energy Conservation in SHM",
-        "Simple Pendulum & Mass-Spring System",
-        "Resonance and Damping"
-      ],
-      "completed": false,
-      "status": "not_started",
-      "notesCount": 0,
-      "mcqsCount": 0
-    },
-    {
-      "id": "ch_phys_8",
-      "subject": "Physics",
-      "chapterNumber": 8,
-      "title": "Waves and Physical Optics",
-      "topics": [
-        "Doppler Effect in Sound",
-        "Youngs Double Slit Experiment",
-        "Diffraction Grating & Polarization"
-      ],
-      "completed": false,
-      "status": "not_started",
-      "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_eng_1",
@@ -667,7 +571,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 1,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_eng_2",
@@ -682,7 +587,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_eng_3",
@@ -697,7 +603,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 1,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_eng_4",
@@ -712,7 +619,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_eng_5",
@@ -727,7 +635,734 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
+    },
+    {
+      "id": "ch_phys_1",
+      "subject": "Physics",
+      "chapterNumber": 1,
+      "title": "Measurements",
+      "topics": [
+        "Errors and Uncertainties",
+        "Precision and Accuracy",
+        "Significant Figures & Rounding Off",
+        "Dimensions of Physical Quantities",
+        "Dimensional Analysis & Verification of Equations"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 1,
+      "classYear": "1st Year"
+    },
+    {
+      "id": "ch_phys_2",
+      "subject": "Physics",
+      "chapterNumber": 2,
+      "title": "Kinematics",
+      "topics": [
+        "Displacement, Velocity & Acceleration Graphs",
+        "Equations of Uniformly Accelerated Motion",
+        "Motion Under Gravity & Free Fall",
+        "Relative Velocity in One & Two Dimensions"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0,
+      "classYear": "1st Year"
+    },
+    {
+      "id": "ch_phys_3",
+      "subject": "Physics",
+      "chapterNumber": 3,
+      "title": "Dynamics",
+      "topics": [
+        "Newton’s Laws of Motion & Inertial Frames",
+        "Linear Momentum and Impulse",
+        "Law of Conservation of Linear Momentum",
+        "Elastic and Inelastic Collisions in One & Two Dimensions",
+        "Friction & Coefficient of Friction"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0,
+      "classYear": "1st Year"
+    },
+    {
+      "id": "ch_phys_4",
+      "subject": "Physics",
+      "chapterNumber": 4,
+      "title": "Rotational and Circular Motion",
+      "topics": [
+        "Angular Displacement, Angular Velocity & Angular Acceleration",
+        "Centripetal Force & Centripetal Acceleration",
+        "Banking of Roads & Centrifuge",
+        "Moment of Inertia & Rotational Kinetic Energy",
+        "Law of Conservation of Angular Momentum"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0,
+      "classYear": "1st Year"
+    },
+    {
+      "id": "ch_phys_5",
+      "subject": "Physics",
+      "chapterNumber": 5,
+      "title": "Work, Energy and Power",
+      "topics": [
+        "Work Done by Constant and Variable Forces",
+        "Work-Energy Theorem",
+        "Gravitational Potential Energy & Escape Velocity",
+        "Conservative vs Non-Conservative Forces",
+        "Power, Energy Transformations & Efficiency"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0,
+      "classYear": "1st Year"
+    },
+    {
+      "id": "ch_phys_6",
+      "subject": "Physics",
+      "chapterNumber": 6,
+      "title": "Fluid Statics",
+      "topics": [
+        "Density and Fluid Pressure",
+        "Hydrostatic Pressure & Pascal’s Principle",
+        "Hydraulic Lift and Brakes",
+        "Archimedes’ Principle & Buoyant Force",
+        "Surface Tension & Capillary Action"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0,
+      "classYear": "1st Year"
+    },
+    {
+      "id": "ch_phys_7",
+      "subject": "Physics",
+      "chapterNumber": 7,
+      "title": "Fluid Dynamics",
+      "topics": [
+        "Streamline vs Turbulent Flow",
+        "Viscosity & Stokes’ Law (Terminal Velocity)",
+        "Equation of Continuity (Volume Flow Rate)",
+        "Bernoulli’s Principle and Its Applications",
+        "Torricelli’s Theorem & Venturi Effect in Blood Flow"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0,
+      "classYear": "1st Year"
+    },
+    {
+      "id": "ch_phys_8",
+      "subject": "Physics",
+      "chapterNumber": 8,
+      "title": "Electric Fields",
+      "topics": [
+        "Coulomb’s Law in Vector Form & Permittivity",
+        "Electric Field Intensity & Electric Field Lines",
+        "Electric Flux and Gauss’s Law Applications",
+        "Electric Potential & Potential Difference",
+        "Equipotential Surfaces & Electron Volt (eV)"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0,
+      "classYear": "1st Year"
+    },
+    {
+      "id": "ch_phys_9",
+      "subject": "Physics",
+      "chapterNumber": 9,
+      "title": "Capacitors",
+      "topics": [
+        "Capacitance of a Parallel Plate Capacitor",
+        "Dielectrics and Polarization",
+        "Series and Parallel Combination of Capacitors",
+        "Energy Stored in a Charged Capacitor & Energy Density",
+        "Charging and Discharging of a Capacitor"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0,
+      "classYear": "1st Year"
+    },
+    {
+      "id": "ch_phys_10",
+      "subject": "Physics",
+      "chapterNumber": 10,
+      "title": "D.C Circuits",
+      "topics": [
+        "Electric Current, Drift Velocity & Ohm’s Law",
+        "Resistance, Resistivity & Temperature Coefficient",
+        "Electromotive Force (EMF) vs Terminal Potential Difference",
+        "Kirchhoff’s Current Law (KCL) & Voltage Law (KVL)",
+        "Wheatstone Bridge & Potentiometer Principle"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0,
+      "classYear": "1st Year"
+    },
+    {
+      "id": "ch_phys_11",
+      "subject": "Physics",
+      "chapterNumber": 11,
+      "title": "Oscillations",
+      "topics": [
+        "Simple Harmonic Motion (SHM) Characteristics & Equations",
+        "Mass-Spring System & Simple Pendulum",
+        "Energy Conservation in SHM (Kinetic & Potential)",
+        "Free, Forced and Damped Oscillations",
+        "Resonance and Practical Applications"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0,
+      "classYear": "1st Year"
+    },
+    {
+      "id": "ch_phys_12",
+      "subject": "Physics",
+      "chapterNumber": 12,
+      "title": "Acoustics",
+      "topics": [
+        "Speed of Sound (Newton’s Formula & Laplace’s Correction)",
+        "Factors Affecting Speed of Sound (Temperature, Pressure, Humidity)",
+        "Superposition of Waves & Beats Formation",
+        "Stationary Longitudinal Waves in Pipes (Organ Pipes)",
+        "Doppler Effect in Sound and Acoustic Applications"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0,
+      "classYear": "1st Year"
+    },
+    {
+      "id": "ch_phys_13",
+      "subject": "Physics",
+      "chapterNumber": 13,
+      "title": "Physical Optics",
+      "topics": [
+        "Wave Nature of Light & Huygens’ Principle",
+        "Interference of Light (Constructive vs Destructive)",
+        "Young’s Double Slit Experiment & Fringe Width",
+        "Newton’s Rings & Thin Film Interference",
+        "Diffraction of Light (Diffraction Grating) & Polarization"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0,
+      "classYear": "1st Year"
+    },
+    {
+      "id": "ch_phys_14",
+      "subject": "Physics",
+      "chapterNumber": 14,
+      "title": "Communication",
+      "topics": [
+        "Electromagnetic Waves Spectrum and Properties",
+        "Modulation Principles (Amplitude Modulation AM vs Frequency Modulation FM)",
+        "Optical Fiber Communication & Total Internal Reflection",
+        "Communication Satellites & Bandwidth Concepts",
+        "Digital vs Analog Signals in Modern Transmission"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0,
+      "classYear": "1st Year"
+    },
+    {
+      "id": "ch_bio_xii_1",
+      "subject": "Biology",
+      "chapterNumber": 1,
+      "title": "Homeostasis",
+      "topics": [
+        "Osmoregulation in Plants and Animals",
+        "Excretion in Humans & Nephron Structure",
+        "Countercurrent Mechanism",
+        "Thermoregulation & Fevers"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 1,
+      "classYear": "2nd Year"
+    },
+    {
+      "id": "ch_bio_xii_2",
+      "subject": "Biology",
+      "chapterNumber": 2,
+      "title": "Support and Movement",
+      "topics": [
+        "Human Skeletal Framework & Bone Histology",
+        "Joints and Disorders (Arthritis)",
+        "Skeletal Muscle Ultrastructure & Sarcomere",
+        "Sliding Filament Mechanism & Rigor Mortis"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 1,
+      "classYear": "2nd Year"
+    },
+    {
+      "id": "ch_bio_xii_3",
+      "subject": "Biology",
+      "chapterNumber": 3,
+      "title": "Coordination and Control",
+      "topics": [
+        "Nerve Impulse, Resting Potential & Action Potential",
+        "Synaptic Transmission & Neurotransmitters",
+        "Human Brain, Spinal Cord & Autonomic Nervous System",
+        "Endocrine Glands, Hormonal Feedback & Disorders"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 1,
+      "classYear": "2nd Year"
+    },
+    {
+      "id": "ch_bio_xii_4",
+      "subject": "Biology",
+      "chapterNumber": 4,
+      "title": "Reproduction",
+      "topics": [
+        "Male & Female Human Reproductive Systems",
+        "Gametogenesis (Spermatogenesis & Oogenesis)",
+        "Menstrual Cycle & Hormonal Feedback Loops",
+        "Sexually Transmitted Infections & Infertility Treatments"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 1,
+      "classYear": "2nd Year"
+    },
+    {
+      "id": "ch_bio_xii_5",
+      "subject": "Biology",
+      "chapterNumber": 5,
+      "title": "Growth and Development",
+      "topics": [
+        "Embryonic Development in Chick",
+        "Role of Cytoplasm in Development",
+        "Aging, Regeneration and Abnormal Development"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0,
+      "classYear": "2nd Year"
+    },
+    {
+      "id": "ch_bio_xii_6",
+      "subject": "Biology",
+      "chapterNumber": 6,
+      "title": "Chromosomes and DNA",
+      "topics": [
+        "Chromatin Structure & Nucleosomes",
+        "DNA as Hereditary Material (Griffith, Hershey-Chase)",
+        "Meselson-Stahl Experiment & DNA Replication",
+        "Transcription, Genetic Code & Translation"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0,
+      "classYear": "2nd Year"
+    },
+    {
+      "id": "ch_bio_xii_7",
+      "subject": "Biology",
+      "chapterNumber": 7,
+      "title": "Cell Cycle",
+      "topics": [
+        "Phases of Cell Cycle (Interphase G1, S, G2)",
+        "Mitosis Phases & Cytokinesis",
+        "Meiosis I & Meiosis II Crossing Over",
+        "Apoptosis vs Necrosis and Cancer Genesis"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0,
+      "classYear": "2nd Year"
+    },
+    {
+      "id": "ch_bio_xii_8",
+      "subject": "Biology",
+      "chapterNumber": 8,
+      "title": "Variation and Genetics",
+      "topics": [
+        "Mendel’s Laws of Inheritance",
+        "Incomplete Dominance, Codominance & Multiple Alleles",
+        "Epistasis and Polygenic Inheritance",
+        "Gene Linkage and Crossing Over in Humans"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 1,
+      "classYear": "2nd Year"
+    },
+    {
+      "id": "ch_bio_xii_9",
+      "subject": "Biology",
+      "chapterNumber": 9,
+      "title": "Biotechnology",
+      "topics": [
+        "Recombinant DNA Technology & Restriction Enzymes",
+        "Polymerase Chain Reaction (PCR) & Gel Electrophoresis",
+        "Transgenic Microbes, Plants and Animals",
+        "Human Genome Project & Gene Therapy Approaches"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0,
+      "classYear": "2nd Year"
+    },
+    {
+      "id": "ch_bio_xii_10",
+      "subject": "Biology",
+      "chapterNumber": 10,
+      "title": "Evolution",
+      "topics": [
+        "Lamarckism vs Darwinism",
+        "Evidences for Evolution (Anatomy, Paleontology, Molecular)",
+        "Hardy-Weinberg Equilibrium & Population Genetics",
+        "Mechanisms of Speciation"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0,
+      "classYear": "2nd Year"
+    },
+    {
+      "id": "ch_che_xii_1",
+      "subject": "Chemistry",
+      "chapterNumber": 1,
+      "title": "Periodic Classification & s-Block Elements",
+      "topics": [
+        "Periodic Trends across Period 3",
+        "Alkali & Alkaline Earth Metals Properties",
+        "Diagonal Relationships & Anomalous Behavior of Li/Be",
+        "Industrial Manufacture of Sodium & Caustic Soda"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0,
+      "classYear": "2nd Year"
+    },
+    {
+      "id": "ch_che_xii_2",
+      "subject": "Chemistry",
+      "chapterNumber": 2,
+      "title": "d and f Block Transition Elements",
+      "topics": [
+        "General Characteristics & Variable Oxidation States",
+        "Crystal Field Theory & Color in Transition Complexes",
+        "Coordination Compounds, IUPAC Nomenclature & Ligands",
+        "Industrial Catalysts & Metallurgy of Copper"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 1,
+      "classYear": "2nd Year"
+    },
+    {
+      "id": "ch_che_xii_3",
+      "subject": "Chemistry",
+      "chapterNumber": 3,
+      "title": "Fundamental Principles of Organic Chemistry",
+      "topics": [
+        "Classification & Nomenclature of Organic Molecules",
+        "Isomerism: Structural, Geometrical & Optical",
+        "Hybridization of Carbon (sp3, sp2, sp)",
+        "Resonance & Inductive Effects in Reactivity"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0,
+      "classYear": "2nd Year"
+    },
+    {
+      "id": "ch_che_xii_4",
+      "subject": "Chemistry",
+      "chapterNumber": 4,
+      "title": "Hydrocarbons",
+      "topics": [
+        "Alkanes: Free Radical Substitution Mechanism",
+        "Alkenes: Electrophilic Addition & Markownikoff’s Rule",
+        "Alkynes: Acidity of Terminal Alkynes & Polymerization",
+        "Benzene: Aromaticity, Resonance & Electrophilic Aromatic Substitution"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0,
+      "classYear": "2nd Year"
+    },
+    {
+      "id": "ch_che_xii_5",
+      "subject": "Chemistry",
+      "chapterNumber": 5,
+      "title": "Alkyl Halides and Amines",
+      "topics": [
+        "SN1 vs SN2 Nucleophilic Substitution Mechanisms",
+        "E1 vs E2 Elimination Reactions",
+        "Grignard Reagents Preparation and Reactions",
+        "Classification and Basicity of Amines"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0,
+      "classYear": "2nd Year"
+    },
+    {
+      "id": "ch_che_xii_6",
+      "subject": "Chemistry",
+      "chapterNumber": 6,
+      "title": "Alcohols, Phenols and Ethers",
+      "topics": [
+        "Classification of Alcohols & Lucas Test Distinction",
+        "Acidity of Phenol vs Ethanol & Resonance Stabilization",
+        "Electrophilic Substitution of Phenol (Nitration, Bromination)",
+        "Preparation and Cleavage of Ethers by HI"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 1,
+      "classYear": "2nd Year"
+    },
+    {
+      "id": "ch_che_xii_7",
+      "subject": "Chemistry",
+      "chapterNumber": 7,
+      "title": "Aldehydes and Ketones",
+      "topics": [
+        "Nucleophilic Addition Mechanisms (HCN, NaHSO3)",
+        "Tollens’, Fehling’s and Benedict’s Tests",
+        "Aldol Condensation & Cannizzaro Reaction",
+        "Haloform / Iodoform Reaction for Methyl Ketones"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0,
+      "classYear": "2nd Year"
+    },
+    {
+      "id": "ch_che_xii_8",
+      "subject": "Chemistry",
+      "chapterNumber": 8,
+      "title": "Carboxylic Acids & Macromolecules",
+      "topics": [
+        "Acidity of Carboxylic Acids & Inductive Substituent Effects",
+        "Nucleophilic Acyl Substitution (Esters, Amides, Anhydrides)",
+        "Amino Acids, Peptide Linkages & Zwitterions",
+        "Synthetic Polymers, Nylon, Polyesters & Plastics"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0,
+      "classYear": "2nd Year"
+    },
+    {
+      "id": "ch_phy_xii_1",
+      "subject": "Physics",
+      "chapterNumber": 1,
+      "title": "Electrostatics",
+      "topics": [
+        "Coulomb’s Law in Vector Form & Dielectrics",
+        "Electric Field Intensity & Electric Potential Gradient",
+        "Gauss’s Law & Three Classical Applications",
+        "Capacitance of Parallel Plate Capacitor & Dielectric Polarization"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 1,
+      "classYear": "2nd Year"
+    },
+    {
+      "id": "ch_phy_xii_2",
+      "subject": "Physics",
+      "chapterNumber": 2,
+      "title": "Current Electricity",
+      "topics": [
+        "Drift Velocity, Current Density & Microscopic Ohm’s Law",
+        "Temperature Coefficient of Resistance (alpha)",
+        "Kirchhoff’s Current Law (KCL) & Voltage Law (KVL)",
+        "Potentiometer Principle, Calibration & Measurement of EMF"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 1,
+      "classYear": "2nd Year"
+    },
+    {
+      "id": "ch_phy_xii_3",
+      "subject": "Physics",
+      "chapterNumber": 3,
+      "title": "Electromagnetism",
+      "topics": [
+        "Magnetic Field due to Current & Ampere’s Circuital Law",
+        "Force on a Current-Carrying Conductor in Magnetic Field",
+        "Lorentz Force on Moving Charges & e/m Ratio of Electron",
+        "Moving Coil Galvanometer, Conversion to Ammeter & Voltmeter"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 1,
+      "classYear": "2nd Year"
+    },
+    {
+      "id": "ch_phy_xii_4",
+      "subject": "Physics",
+      "chapterNumber": 4,
+      "title": "Electromagnetic Induction",
+      "topics": [
+        "Faraday’s Law of Electromagnetic Induction & Induced EMF",
+        "Lenz’s Law & Conservation of Energy Principle",
+        "Self-Inductance, Mutual Inductance & Energy in Inductor",
+        "A.C Generator Mechanism & Power Transformers Efficiency"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 1,
+      "classYear": "2nd Year"
+    },
+    {
+      "id": "ch_phy_xii_5",
+      "subject": "Physics",
+      "chapterNumber": 5,
+      "title": "Alternating Current Circuits",
+      "topics": [
+        "Peak, Peak-to-Peak & RMS Values of AC Voltage/Current",
+        "Phase Relationship in Pure R, L, and C Circuits",
+        "Series R-L-C Circuit & Electrical Resonance Condition",
+        "Power Dissipation, Power Factor & Choke Coil Application"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0,
+      "classYear": "2nd Year"
+    },
+    {
+      "id": "ch_phy_xii_6",
+      "subject": "Physics",
+      "chapterNumber": 6,
+      "title": "Physics of Solids",
+      "topics": [
+        "Crystalline, Amorphous and Polymeric Solids Structure",
+        "Stress, Strain, Young’s Modulus & Elastic Limit",
+        "Energy Band Theory (Conductors, Insulators, Semiconductors)",
+        "Superconductivity, Critical Temperature & Meissner Effect"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0,
+      "classYear": "2nd Year"
+    },
+    {
+      "id": "ch_phy_xii_7",
+      "subject": "Physics",
+      "chapterNumber": 7,
+      "title": "Electronics",
+      "topics": [
+        "p-n Junction Diode Formation, Depletion Region & Biasing",
+        "Half-Wave and Full-Wave Bridge Rectification Circuits",
+        "Bipolar Junction Transistor (BJT) Characteristics & Common Emitter Amplifier",
+        "Operational Amplifiers as Inverting & Non-Inverting Amplifiers"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0,
+      "classYear": "2nd Year"
+    },
+    {
+      "id": "ch_phy_xii_8",
+      "subject": "Physics",
+      "chapterNumber": 8,
+      "title": "Dawn of Modern Physics",
+      "topics": [
+        "Special Theory of Relativity Postulates & Mass-Energy Equivalence",
+        "Blackbody Radiation & Planck’s Quantum Hypothesis",
+        "Photoelectric Effect, Einstein’s Equation & Stopping Potential",
+        "Compton Effect & de Broglie Matter Waves Hypothesis"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0,
+      "classYear": "2nd Year"
+    },
+    {
+      "id": "ch_phy_xii_9",
+      "subject": "Physics",
+      "chapterNumber": 9,
+      "title": "Atomic Spectra",
+      "topics": [
+        "Bohr’s Model of Hydrogen Atom & Energy Level Postulates",
+        "Hydrogen Emission Series (Lyman, Balmer, Paschen, Brackett, Pfund)",
+        "Inner Shell Transitions & Production of Characteristic X-Rays",
+        "Population Inversion, Stimulated Emission & Laser Principles"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0,
+      "classYear": "2nd Year"
+    },
+    {
+      "id": "ch_phy_xii_10",
+      "subject": "Physics",
+      "chapterNumber": 10,
+      "title": "Nuclear Physics",
+      "topics": [
+        "Atomic Nucleus, Mass Defect & Nuclear Binding Energy Curve",
+        "Radioactive Decay Law, Half-Life & Decay Constant Calculations",
+        "Alpha, Beta & Gamma Rays Properties and Biological Hazards",
+        "Nuclear Fission, Chain Reaction, Critical Mass & Nuclear Fusion"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 1,
+      "classYear": "2nd Year"
     }
   ],
   "materials": [
@@ -752,7 +1387,588 @@
       "bookmarked": false
     }
   ],
-  "mcqs": [],
+  "mcqs": [
+    {
+      "id": "mcq_bio_1st_1",
+      "subject": "Biology",
+      "chapter": "Biological Molecules",
+      "topic": "Carbohydrates & Glycosidic Linkages",
+      "question": "In the disaccharide Maltose, which type of glycosidic bond links the two alpha-D-glucose units?",
+      "options": {
+        "A": "alpha-1,4-glycosidic bond",
+        "B": "beta-1,4-glycosidic bond",
+        "C": "alpha-1,2-glycosidic bond",
+        "D": "beta-1,6-glycosidic bond"
+      },
+      "correctAnswer": "A",
+      "explanation": "Maltose is a reducing disaccharide consisting of two alpha-D-glucose molecules joined by an alpha(1->4) glycosidic linkage. In contrast, lactose features a beta(1->4) bond and sucrose has an alpha-1,beta-2 bond.",
+      "difficulty": "MDCAT Level",
+      "questionType": "Factual",
+      "source": "Sindh Textbook Board Biology Class XI",
+      "classYear": "1st Year",
+      "createdAt": "2026-09-01T00:00:00.000Z"
+    },
+    {
+      "id": "mcq_bio_1st_2",
+      "subject": "Biology",
+      "chapter": "Biological Molecules",
+      "topic": "Protein Structure & Hemoglobin",
+      "question": "Which level of protein organization is primarily stabilized by hydrogen bonds between the carbonyl oxygen and amide hydrogen of the polypeptide backbone?",
+      "options": {
+        "A": "Primary structure",
+        "B": "Secondary structure (alpha-helix & beta-pleated sheets)",
+        "C": "Tertiary structure with hydrophobic interactions",
+        "D": "Quaternary structure of multi-subunit proteins"
+      },
+      "correctAnswer": "B",
+      "explanation": "Secondary structure (alpha-helices and beta-pleated sheets) is exclusively formed and stabilized by repeating hydrogen bonds between backbone peptide carbonyl oxygens (C=O) and amide nitrogens (N-H).",
+      "difficulty": "MDCAT Level",
+      "questionType": "Conceptual",
+      "source": "Sindh Textbook Board Biology Class XI",
+      "classYear": "1st Year",
+      "createdAt": "2026-09-01T00:00:00.000Z"
+    },
+    {
+      "id": "mcq_bio_1st_3",
+      "subject": "Biology",
+      "chapter": "Enzymes",
+      "topic": "Enzyme Kinetics & Competitive Inhibition",
+      "question": "How does a competitive enzyme inhibitor affect the Michaelis-Menten kinetic parameters (Vmax and Km)?",
+      "options": {
+        "A": "Vmax decreases, Km remains unaltered",
+        "B": "Vmax remains unchanged, apparent Km increases",
+        "C": "Both Vmax and Km decrease proportionally",
+        "D": "Both Vmax and Km increase significantly"
+      },
+      "correctAnswer": "B",
+      "explanation": "Competitive inhibitors bind reversibly to the active site, competing directly with substrate. High substrate concentrations overcome the inhibition, so Vmax remains attainable (unchanged), but a higher substrate concentration is required to achieve 1/2 Vmax, meaning apparent Km increases.",
+      "difficulty": "MDCAT Level",
+      "questionType": "Conceptual",
+      "source": "Sindh Textbook Board Biology Class XI",
+      "classYear": "1st Year",
+      "createdAt": "2026-09-01T00:00:00.000Z"
+    },
+    {
+      "id": "mcq_bio_1st_4",
+      "subject": "Biology",
+      "chapter": "Cell Structure and Functions",
+      "topic": "Fluid Mosaic Model & Membrane Transport",
+      "question": "According to the Singer and Nicolson Fluid Mosaic Model, the fluidity of the plasma membrane at physiological temperature is primarily maintained by:",
+      "options": {
+        "A": "Peripheral proteins attached to the extracellular surface",
+        "B": "Unsaturated fatty acid tails and interspersed cholesterol molecules",
+        "C": "Rigid cross-linked peptidoglycan chains",
+        "D": "Covalent disulfide bridges between adjacent phospholipids"
+      },
+      "correctAnswer": "B",
+      "explanation": "Kinks introduced by cis-double bonds in unsaturated fatty acyl tails prevent close packing of lipids. Cholesterol acts as a bidirectional membrane fluidity buffer, preventing solidification at lower temperatures and excessive fluidity at high temperatures.",
+      "difficulty": "MDCAT Level",
+      "questionType": "Application-based",
+      "source": "Sindh Textbook Board Biology Class XI",
+      "classYear": "1st Year",
+      "createdAt": "2026-09-01T00:00:00.000Z"
+    },
+    {
+      "id": "mcq_bio_1st_5",
+      "subject": "Biology",
+      "chapter": "Bioenergetics",
+      "topic": "Chemiosmosis & Photophosphorylation",
+      "question": "During light-dependent photophosphorylation in chloroplasts, protons (H+) are pumped across the thylakoid membrane from the:",
+      "options": {
+        "A": "Stroma into the thylakoid lumen",
+        "B": "Thylakoid lumen into the stroma",
+        "C": "Intermembrane space into the mitochondrial matrix",
+        "D": "Cytoplasm across the outer chloroplast membrane"
+      },
+      "correctAnswer": "A",
+      "explanation": "Protons are pumped by the cytochrome b6f complex from the stroma into the thylakoid lumen, generating a proton-motive force (pH gradient). Protons then flow back down their gradient through ATP synthase into the stroma to synthesize ATP.",
+      "difficulty": "MDCAT Level",
+      "questionType": "Conceptual",
+      "source": "Sindh Textbook Board Biology Class XI",
+      "classYear": "1st Year",
+      "createdAt": "2026-09-01T00:00:00.000Z"
+    },
+    {
+      "id": "mcq_bio_2nd_1",
+      "subject": "Biology",
+      "chapter": "Homeostasis",
+      "topic": "Nephron & Countercurrent Multiplier",
+      "question": "Which anatomical segment of the mammalian nephron is impermeable to water but actively transports sodium and chloride ions into the medullary interstitium?",
+      "options": {
+        "A": "Proximal convoluted tubule",
+        "B": "Descending limb of the loop of Henle",
+        "C": "Thick ascending limb of the loop of Henle",
+        "D": "Cortical collecting duct in the presence of ADH"
+      },
+      "correctAnswer": "C",
+      "explanation": "The thick ascending limb of Henle’s loop is structurally impermeable to water while utilizing Na+/K+/2Cl- cotransporters to actively pump solutes into the renal medulla, establishing the hypertonic medullary osmotic gradient.",
+      "difficulty": "MDCAT Level",
+      "questionType": "Conceptual",
+      "source": "Sindh Textbook Board Biology Class XII",
+      "classYear": "2nd Year",
+      "createdAt": "2026-09-01T00:00:00.000Z"
+    },
+    {
+      "id": "mcq_bio_2nd_2",
+      "subject": "Biology",
+      "chapter": "Coordination and Control",
+      "topic": "Resting Membrane Potential & Action Potential",
+      "question": "The rapid repolarization phase of a neuronal action potential is predominantly driven by:",
+      "options": {
+        "A": "Rapid opening of voltage-gated Na+ channels and sodium influx",
+        "B": "Closure of voltage-gated Na+ channels and opening of voltage-gated K+ channels allowing potassium efflux",
+        "C": "Continuous activation of the electrogenic Na+/K+ ATPase pump",
+        "D": "Influx of chloride ions through GABA-gated ligand channels"
+      },
+      "correctAnswer": "B",
+      "explanation": "Repolarization occurs when voltage-gated Na+ channels become inactivated and voltage-gated K+ channels open, allowing K+ ions to rapidly diffuse down their electrochemical gradient out of the neuron, restoring negative intracellular potential.",
+      "difficulty": "MDCAT Level",
+      "questionType": "Conceptual",
+      "source": "Sindh Textbook Board Biology Class XII",
+      "classYear": "2nd Year",
+      "createdAt": "2026-09-01T00:00:00.000Z"
+    },
+    {
+      "id": "mcq_bio_2nd_3",
+      "subject": "Biology",
+      "chapter": "Support and Movement",
+      "topic": "Sliding Filament Theory & Sarcomere",
+      "question": "During skeletal muscle contraction, which of the following bands or zones within the sarcomere remains constant in length?",
+      "options": {
+        "A": "I-band",
+        "B": "H-zone",
+        "C": "A-band",
+        "D": "Distance between adjacent Z-discs"
+      },
+      "correctAnswer": "C",
+      "explanation": "According to the Sliding Filament Theory, actin filaments slide past myosin filaments toward the M-line. Consequently, the H-zone and I-band narrow and the sarcomere shortens, but the A-band (representing the entire length of thick myosin filaments) stays constant.",
+      "difficulty": "MDCAT Level",
+      "questionType": "Factual",
+      "source": "Sindh Textbook Board Biology Class XII",
+      "classYear": "2nd Year",
+      "createdAt": "2026-09-01T00:00:00.000Z"
+    },
+    {
+      "id": "mcq_bio_2nd_4",
+      "subject": "Biology",
+      "chapter": "Reproduction",
+      "topic": "Endocrine Regulation of the Menstrual Cycle",
+      "question": "Ovulation in the human female reproductive cycle is directly triggered by an acute mid-cycle surge of which anterior pituitary hormone?",
+      "options": {
+        "A": "Follicle Stimulating Hormone (FSH)",
+        "B": "Luteinizing Hormone (LH)",
+        "C": "Human Chorionic Gonadotropin (hCG)",
+        "D": "Progesterone"
+      },
+      "correctAnswer": "B",
+      "explanation": "Rising estrogen levels from the dominant mature Graafian follicle exert positive feedback on the hypothalamus and anterior pituitary, producing a massive surge of LH (Luteinizing Hormone). This LH surge induces rupture of the follicle and release of the secondary oocyte approximately 24-36 hours later.",
+      "difficulty": "MDCAT Level",
+      "questionType": "Conceptual",
+      "source": "Sindh Textbook Board Biology Class XII",
+      "classYear": "2nd Year",
+      "createdAt": "2026-09-01T00:00:00.000Z"
+    },
+    {
+      "id": "mcq_bio_2nd_5",
+      "subject": "Biology",
+      "chapter": "Variation and Genetics",
+      "topic": "DNA Replication & Molecular Genetics",
+      "question": "In eukaryotic DNA replication, the RNA primers on the lagging strand are removed and replaced by DNA nucleotides primarily through the action of:",
+      "options": {
+        "A": "DNA Polymerase I / RNase H and DNA Polymerase delta",
+        "B": "DNA Helicase and single-stranded binding proteins (SSBs)",
+        "C": "DNA Topoisomerase II (Gyrase)",
+        "D": "DNA Ligase alone without exonuclease activity"
+      },
+      "correctAnswer": "A",
+      "explanation": "RNA primers used to initiate Okazaki fragments are degraded by RNase H and flap endonuclease, and the resulting gaps are filled with deoxyribonucleotides by DNA polymerases before being covalently sealed by DNA Ligase.",
+      "difficulty": "Hard",
+      "questionType": "Application-based",
+      "source": "Sindh Textbook Board Biology Class XII",
+      "classYear": "2nd Year",
+      "createdAt": "2026-09-01T00:00:00.000Z"
+    },
+    {
+      "id": "mcq_chem_1st_1",
+      "subject": "Chemistry",
+      "chapter": "Stoichiometry",
+      "topic": "Limiting Reactant & Molar Volume",
+      "question": "If 4.0 g of H2 gas (molar mass = 2 g/mol) reacts with 32.0 g of O2 gas (molar mass = 32 g/mol) to form liquid water, what is the theoretical yield of H2O?",
+      "options": {
+        "A": "18.0 g",
+        "B": "36.0 g",
+        "C": "28.0 g",
+        "D": "72.0 g"
+      },
+      "correctAnswer": "B",
+      "explanation": "Reaction: 2 H2 + O2 -> 2 H2O. We have 4.0 g / 2 = 2.0 moles of H2, and 32.0 g / 32 = 1.0 mole of O2. The mole ratio 2:1 is stoichiometric, so both are completely consumed. 2 moles of H2O formed = 2 * 18.0 g = 36.0 g.",
+      "difficulty": "MDCAT Level",
+      "questionType": "Application-based",
+      "source": "Sindh Textbook Board Chemistry Class XI",
+      "classYear": "1st Year",
+      "createdAt": "2026-09-01T00:00:00.000Z"
+    },
+    {
+      "id": "mcq_chem_1st_2",
+      "subject": "Chemistry",
+      "chapter": "Atomic Structure",
+      "topic": "Quantum Numbers & Electronic Configuration",
+      "question": "The anomalous electronic ground-state configuration of Chromium (Cr, Z = 24) is [Ar] 4s1 3d5 rather than [Ar] 4s2 3d4 because:",
+      "options": {
+        "A": "The 4s subshell has higher energy than the 3d subshell at Z=24",
+        "B": "A half-filled d-subshell (3d5) possesses extra thermodynamic stability due to symmetrical distribution and maximum exchange energy",
+        "C": "Hund’s rule is completely suspended in all transition elements",
+        "D": "The effective nuclear charge (Zeff) drops to zero in d-orbitals"
+      },
+      "correctAnswer": "B",
+      "explanation": "Half-filled (d5) and fully-filled (d10) degenerate subshells have increased stability due to high exchange energy and spatial electrostatic symmetry, causing one 4s electron to occupy the 3d level.",
+      "difficulty": "MDCAT Level",
+      "questionType": "Conceptual",
+      "source": "Sindh Textbook Board Chemistry Class XI",
+      "classYear": "1st Year",
+      "createdAt": "2026-09-01T00:00:00.000Z"
+    },
+    {
+      "id": "mcq_chem_1st_3",
+      "subject": "Chemistry",
+      "chapter": "Chemical Bonding",
+      "topic": "VSEPR Theory & Molecular Geometry",
+      "question": "According to VSEPR theory, the molecular shape of Chlorine trifluoride (ClF3) is:",
+      "options": {
+        "A": "Trigonal planar",
+        "B": "Trigonal pyramidal",
+        "C": "T-shaped",
+        "D": "See-saw"
+      },
+      "correctAnswer": "C",
+      "explanation": "Central Cl has 7 valence electrons + 3 from F = 10 electrons (5 electron pairs = 3 bond pairs + 2 lone pairs). The electron pair geometry is trigonal bipyramidal. To minimize 90° lone-pair repulsions, the two lone pairs occupy equatorial positions, producing a T-shaped molecular geometry.",
+      "difficulty": "MDCAT Level",
+      "questionType": "Conceptual",
+      "source": "Sindh Textbook Board Chemistry Class XI",
+      "classYear": "1st Year",
+      "createdAt": "2026-09-01T00:00:00.000Z"
+    },
+    {
+      "id": "mcq_chem_1st_4",
+      "subject": "Chemistry",
+      "chapter": "Chemical Equilibrium",
+      "topic": "Le Chatelier’s Principle",
+      "question": "For the exothermic synthesis of ammonia: N2(g) + 3H2(g) <=> 2NH3(g) (Delta H = -92 kJ/mol), which set of conditions maximizes equilibrium yield of NH3?",
+      "options": {
+        "A": "High temperature and low pressure",
+        "B": "Low temperature and high pressure",
+        "C": "High temperature and high pressure",
+        "D": "Low temperature and low pressure"
+      },
+      "correctAnswer": "B",
+      "explanation": "Since Delta H < 0 (exothermic), lowering temperature favors the forward reaction according to Le Chatelier’s principle. 4 moles of gas produce 2 moles of gas (Delta n < 0), so increasing pressure shifts equilibrium toward fewer gas moles (the right). Thus low T and high P maximize equilibrium yield.",
+      "difficulty": "MDCAT Level",
+      "questionType": "Application-based",
+      "source": "Sindh Textbook Board Chemistry Class XI",
+      "classYear": "1st Year",
+      "createdAt": "2026-09-01T00:00:00.000Z"
+    },
+    {
+      "id": "mcq_chem_2nd_1",
+      "subject": "Chemistry",
+      "chapter": "d and f Block Transition Elements",
+      "topic": "Transition Metals & Complex Formation",
+      "question": "Why do most transition metal aqueous ions (such as Cu2+, Fe3+, and Ni2+) exhibit vibrant characteristic colors in visible light?",
+      "options": {
+        "A": "Excitation of electrons between 4s and 4p atomic orbitals",
+        "B": "d-d electronic transitions occurring between split eg and t2g d-orbitals in crystal field theory",
+        "C": "Complete absorption of all visible wavelengths by free delocalized valence electrons",
+        "D": "Direct emission of ionizing gamma radiation from the nucleus"
+      },
+      "correctAnswer": "B",
+      "explanation": "In the presence of surrounding ligands, degenerate d-orbitals split into higher and lower energy levels (crystal field splitting). Absorption of specific visible light wavelengths promotes an electron from lower (e.g. t2g) to higher (e.g. eg) d-orbitals, and the complementary transmitted light imparts color.",
+      "difficulty": "MDCAT Level",
+      "questionType": "Conceptual",
+      "source": "Sindh Textbook Board Chemistry Class XII",
+      "classYear": "2nd Year",
+      "createdAt": "2026-09-01T00:00:00.000Z"
+    },
+    {
+      "id": "mcq_chem_2nd_2",
+      "subject": "Chemistry",
+      "chapter": "Organic Chemistry - Hydrocarbons",
+      "topic": "Aromaticity & Electrophilic Substitution",
+      "question": "Benzene resists addition reactions under mild conditions and undergoes electrophilic aromatic substitution primarily because:",
+      "options": {
+        "A": "It contains isolated non-interacting double bonds",
+        "B": "The cyclic delocalization of 6 pi-electrons confers high resonance stabilization energy (approx. 150.7 kJ/mol)",
+        "C": "Carbon atoms in benzene are sp3 hybridized with tetrahedral geometry",
+        "D": "The C-C bond lengths alternate between 134 pm and 154 pm"
+      },
+      "correctAnswer": "B",
+      "explanation": "Benzene possesses exceptional aromatic resonance stabilization energy due to a continuous closed loop of 6 pi electrons adhering to Huckel’s 4n+2 rule. Addition reactions destroy aromaticity, whereas electrophilic substitution retains the intact conjugated pi-cloud.",
+      "difficulty": "MDCAT Level",
+      "questionType": "Conceptual",
+      "source": "Sindh Textbook Board Chemistry Class XII",
+      "classYear": "2nd Year",
+      "createdAt": "2026-09-01T00:00:00.000Z"
+    },
+    {
+      "id": "mcq_chem_2nd_3",
+      "subject": "Chemistry",
+      "chapter": "Alkyl Halides",
+      "topic": "SN1 vs SN2 Reaction Mechanisms",
+      "question": "An SN1 nucleophilic substitution reaction of a tertiary alkyl halide (such as tert-butyl bromide) proceeds with:",
+      "options": {
+        "A": "A concerted single-step transition state with complete Walden inversion",
+        "B": "A two-step mechanism via a planar carbocation intermediate leading to racemization",
+        "C": "Second-order overall kinetics (rate = k[R-X][Nu-])",
+        "D": "Strict retention of stereochemical configuration exclusively"
+      },
+      "correctAnswer": "B",
+      "explanation": "SN1 is a unimolecular two-step mechanism. The rate-determining step is heterolytic C-X bond cleavage forming a planar, sp2-hybridized carbocation. Nucleophilic attack can occur with equal probability from either face, yielding a racemic mixture.",
+      "difficulty": "MDCAT Level",
+      "questionType": "Conceptual",
+      "source": "Sindh Textbook Board Chemistry Class XII",
+      "classYear": "2nd Year",
+      "createdAt": "2026-09-01T00:00:00.000Z"
+    },
+    {
+      "id": "mcq_chem_2nd_4",
+      "subject": "Chemistry",
+      "chapter": "Alcohols, Phenols and Ethers",
+      "topic": "Acidity of Phenol vs Ethanol",
+      "question": "Phenol is significantly more acidic than aliphatic alcohols (like ethanol) because:",
+      "options": {
+        "A": "The phenoxide ion is stabilized by resonance delocalization of negative charge into the aromatic benzene ring",
+        "B": "Phenol has a higher molecular weight than ethanol",
+        "C": "The hydroxyl group in phenol is attached to an sp3-hybridized carbon atom",
+        "D": "Ethanol is unable to form intermolecular hydrogen bonds"
+      },
+      "correctAnswer": "A",
+      "explanation": "Deprotonation of phenol produces the phenoxide ion, where the negative charge on oxygen is delocalized over the ortho- and para-positions of the aromatic ring through resonance. In ethoxide, the ethyl group has a +I inductive effect that destabilizes the conjugate base.",
+      "difficulty": "MDCAT Level",
+      "questionType": "Conceptual",
+      "source": "Sindh Textbook Board Chemistry Class XII",
+      "classYear": "2nd Year",
+      "createdAt": "2026-09-01T00:00:00.000Z"
+    },
+    {
+      "id": "mcq_phys_1st_1",
+      "subject": "Physics",
+      "chapter": "Measurements",
+      "topic": "Dimensional Analysis",
+      "question": "What are the base SI dimensions of universal gravitational constant (G)?",
+      "options": {
+        "A": "[M^-1 L^3 T^-2]",
+        "B": "[M L^2 T^-2]",
+        "C": "[M^-1 L^2 T^-1]",
+        "D": "[M L^3 T^-2]"
+      },
+      "correctAnswer": "A",
+      "explanation": "From Newton’s law F = G*m1*m2/r^2, G = F*r^2 / (m1*m2). Dimensions: [M L T^-2] * [L^2] / [M^2] = [M^-1 L^3 T^-2].",
+      "difficulty": "MDCAT Level",
+      "questionType": "Factual",
+      "source": "Sindh Textbook Board Physics Class XI",
+      "classYear": "1st Year",
+      "createdAt": "2026-09-01T00:00:00.000Z"
+    },
+    {
+      "id": "mcq_phys_1st_2",
+      "subject": "Physics",
+      "chapter": "Motion and Force",
+      "topic": "Projectile Motion",
+      "question": "A projectile is launched from ground level with speed v at an angle of 45 degrees to the horizontal. At the apogee (highest point) of its trajectory, its kinetic energy is:",
+      "options": {
+        "A": "Zero",
+        "B": "Equal to its initial kinetic energy (K0)",
+        "C": "Half of its initial kinetic energy (0.5 * K0)",
+        "D": "One-fourth of its initial kinetic energy (0.25 * K0)"
+      },
+      "correctAnswer": "C",
+      "explanation": "At the apex, vertical velocity vy = 0, while horizontal velocity vx = v * cos(45°) = v / sqrt(2). Thus kinetic energy at the peak K = 1/2 * m * vx^2 = 1/2 * m * (v^2 / 2) = 0.5 * K0.",
+      "difficulty": "MDCAT Level",
+      "questionType": "Application-based",
+      "source": "Sindh Textbook Board Physics Class XI",
+      "classYear": "1st Year",
+      "createdAt": "2026-09-01T00:00:00.000Z"
+    },
+    {
+      "id": "mcq_phys_1st_3",
+      "subject": "Physics",
+      "chapter": "Work and Energy",
+      "topic": "Conservation of Mechanical Energy",
+      "question": "A body of mass m falls freely from rest through a height h in a vacuum. The work done by gravitational force on the body during this fall is:",
+      "options": {
+        "A": "0",
+        "B": "+mgh",
+        "C": "-mgh",
+        "D": "1/2 mgh"
+      },
+      "correctAnswer": "B",
+      "explanation": "Work = Force * Displacement * cos(theta). The force of gravity (mg) is downward and displacement (h) is downward (theta = 0°, cos 0° = +1). Hence Work = +mgh, exactly equal to the loss in gravitational potential energy.",
+      "difficulty": "Easy",
+      "questionType": "Conceptual",
+      "source": "Sindh Textbook Board Physics Class XI",
+      "classYear": "1st Year",
+      "createdAt": "2026-09-01T00:00:00.000Z"
+    },
+    {
+      "id": "mcq_phys_1st_4",
+      "subject": "Physics",
+      "chapter": "Waves",
+      "topic": "Doppler Effect",
+      "question": "When an emergency medical ambulance with its siren sounding approaches a stationary pedestrian, the pedestrian detects a frequency higher than the siren’s intrinsic frequency because:",
+      "options": {
+        "A": "The speed of sound in air increases ahead of the vehicle",
+        "B": "The wavefronts ahead of the moving source are compressed, shortening the apparent wavelength",
+        "C": "The amplitude of the sound wave exponentially multiplies",
+        "D": "The siren vibrates with higher mechanical frequency when traveling forward"
+      },
+      "correctAnswer": "B",
+      "explanation": "As a sound source approaches an observer, successive wave crests are emitted closer together in space, shortening the observed wavelength (lambda_observed = (v - vs)/f). Since wave speed in still air is constant, observed frequency f_observed = v / lambda increases.",
+      "difficulty": "MDCAT Level",
+      "questionType": "Conceptual",
+      "source": "Sindh Textbook Board Physics Class XI",
+      "classYear": "1st Year",
+      "createdAt": "2026-09-01T00:00:00.000Z"
+    },
+    {
+      "id": "mcq_phys_2nd_1",
+      "subject": "Physics",
+      "chapter": "Electrostatics",
+      "topic": "Gauss’s Law & Electric Potential",
+      "question": "The electric field intensity (E) everywhere inside the cavity of a hollow, uniformly charged spherical metallic conductor in electrostatic equilibrium is:",
+      "options": {
+        "A": "Directly proportional to the conductor’s radius",
+        "B": "Zero",
+        "C": "Infinite",
+        "D": "Equal to the surface charge density sigma"
+      },
+      "correctAnswer": "B",
+      "explanation": "By Gauss’s Law, any Gaussian surface drawn entirely inside the hollow cavity encloses zero net electric charge. Hence the electric flux is zero and electric field intensity E = 0 inside. This is the operating principle of electrostatic shielding (Faraday cage).",
+      "difficulty": "MDCAT Level",
+      "questionType": "Conceptual",
+      "source": "Sindh Textbook Board Physics Class XII",
+      "classYear": "2nd Year",
+      "createdAt": "2026-09-01T00:00:00.000Z"
+    },
+    {
+      "id": "mcq_phys_2nd_2",
+      "subject": "Physics",
+      "chapter": "Current Electricity",
+      "topic": "Temperature Coefficient & Ohm’s Law",
+      "question": "For an intrinsic semiconductor (such as pure Germanium or Silicon), as temperature increases, electrical resistance:",
+      "options": {
+        "A": "Increases linearly due to enhanced lattice phonon scattering",
+        "B": "Decreases exponentially because thermal energy breaks covalent bonds and generates free electron-hole pairs",
+        "C": "Remains strictly unchanged",
+        "D": "Fluctuates unpredictably without physical pattern"
+      },
+      "correctAnswer": "B",
+      "explanation": "Semiconductors have a negative temperature coefficient of resistance (alpha < 0). Increased temperature liberates large numbers of charge carriers across the bandgap, exponentially increasing electrical conductivity and dropping resistance.",
+      "difficulty": "MDCAT Level",
+      "questionType": "Conceptual",
+      "source": "Sindh Textbook Board Physics Class XII",
+      "classYear": "2nd Year",
+      "createdAt": "2026-09-01T00:00:00.000Z"
+    },
+    {
+      "id": "mcq_phys_2nd_3",
+      "subject": "Physics",
+      "chapter": "Electromagnetism",
+      "topic": "Lorentz Force & Magnetic Deflection",
+      "question": "A proton enters a uniform magnetic field directed perpendicularly into the page. The magnetic force acting on the moving proton:",
+      "options": {
+        "A": "Changes both the speed and kinetic energy of the proton",
+        "B": "Does zero work and only alters the direction of the velocity vector (centripetal deflection)",
+        "C": "Accelerates the proton along the magnetic field lines",
+        "D": "Gradually reduces the charge of the proton to zero"
+      },
+      "correctAnswer": "B",
+      "explanation": "The magnetic force is given by F = q(v x B). Because F is always perpendicular to instantaneous velocity (F . v = 0), the rate of work done (Power = F . v) is zero. Thus kinetic energy and speed remain constant while trajectory curves in uniform circular motion.",
+      "difficulty": "MDCAT Level",
+      "questionType": "Conceptual",
+      "source": "Sindh Textbook Board Physics Class XII",
+      "classYear": "2nd Year",
+      "createdAt": "2026-09-01T00:00:00.000Z"
+    },
+    {
+      "id": "mcq_phys_2nd_4",
+      "subject": "Physics",
+      "chapter": "Electromagnetic Induction",
+      "topic": "Lenz’s Law & Conservation of Energy",
+      "question": "Lenz’s law, which states that the polarity of induced electromotive force opposes the change in magnetic flux producing it, is a direct manifestation of which fundamental conservation law?",
+      "options": {
+        "A": "Conservation of electric charge",
+        "B": "Conservation of energy",
+        "C": "Conservation of linear momentum",
+        "D": "Conservation of mass"
+      },
+      "correctAnswer": "B",
+      "explanation": "If the induced current aided the flux change rather than opposing it, kinetic energy would increase spontaneously without external work, violating the law of conservation of energy. Lenz’s law ensures mechanical work must be done against electromagnetic repulsion to generate electrical energy.",
+      "difficulty": "MDCAT Level",
+      "questionType": "Factual",
+      "source": "Sindh Textbook Board Physics Class XII",
+      "classYear": "2nd Year",
+      "createdAt": "2026-09-01T00:00:00.000Z"
+    },
+    {
+      "id": "mcq_phys_2nd_5",
+      "subject": "Physics",
+      "chapter": "Nuclear Physics",
+      "topic": "Radioactive Decay & Half Life",
+      "question": "A radioactive isotope has a half-life of 8 days. What fraction of the original radioactive nuclei will remain undecayed after 24 days?",
+      "options": {
+        "A": "1/2",
+        "B": "1/4",
+        "C": "1/8",
+        "D": "1/16"
+      },
+      "correctAnswer": "C",
+      "explanation": "Number of elapsed half-lives n = 24 days / 8 days = 3. The remaining fraction is (1/2)^n = (1/2)^3 = 1/8 (12.5%).",
+      "difficulty": "MDCAT Level",
+      "questionType": "Application-based",
+      "source": "Sindh Textbook Board Physics Class XII",
+      "classYear": "2nd Year",
+      "createdAt": "2026-09-01T00:00:00.000Z"
+    },
+    {
+      "id": "mcq_eng_1",
+      "subject": "English",
+      "chapter": "Essential Grammar & Subject-Verb Agreement",
+      "topic": "Subject-Verb Concord",
+      "question": "Choose the grammatically correct sentence:",
+      "options": {
+        "A": "Neither the attending physician nor the resident doctors was present in the operating theatre.",
+        "B": "Neither the attending physician nor the resident doctors were present in the operating theatre.",
+        "C": "Neither the attending physician nor the resident doctors has been present in the operating theatre.",
+        "D": "Neither the attending physician nor the resident doctors is present in the operating theatre."
+      },
+      "correctAnswer": "B",
+      "explanation": "Under the Rule of Proximity for correlative conjunctions (neither... nor), the verb agrees with the closer subject. \"Resident doctors\" is plural, requiring the plural verb \"were present\".",
+      "difficulty": "MDCAT Level",
+      "questionType": "Application-based",
+      "source": "MDCAT Medical Entry Test English Syllabus",
+      "classYear": "1st Year",
+      "createdAt": "2026-09-01T00:00:00.000Z"
+    },
+    {
+      "id": "mcq_eng_2",
+      "subject": "English",
+      "chapter": "High-Yield Vocabulary & Root Words",
+      "topic": "Medical Terminology & Roots",
+      "question": "What does the clinical prefix \"hemo-\" or \"hemato-\" signify in medical vocabulary?",
+      "options": {
+        "A": "Pertaining to liver tissue",
+        "B": "Pertaining to blood or blood components",
+        "C": "Pertaining to bone marrow density",
+        "D": "Pertaining to renal filtration"
+      },
+      "correctAnswer": "B",
+      "explanation": "The Greek prefix \"haima/haimato-\" denotes blood (e.g. hematology, hemoglobin, hemorrhage, hematuria). \"Hepato-\" denotes liver, and \"osteo-\" denotes bone.",
+      "difficulty": "Easy",
+      "questionType": "Factual",
+      "source": "MDCAT Medical Entry Test English Syllabus",
+      "classYear": "1st Year",
+      "createdAt": "2026-09-01T00:00:00.000Z"
+    }
+  ],
   "quizAttempts": [
     {
       "_id": "6abb90c2fe376c513156c3c6",

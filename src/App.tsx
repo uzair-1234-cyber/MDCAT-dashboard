@@ -269,6 +269,35 @@ export default function App() {
     }
   };
 
+  const handleAddBatchChapters = async (chaptersList: Array<{
+    subject: SubjectName;
+    chapterNumber?: number;
+    title: string;
+    topics?: string[];
+    classYear?: '1st Year' | '2nd Year';
+  }>) => {
+    try {
+      const added = await api.addChaptersBatch({ chapters: chaptersList });
+      setData((prev) => {
+        if (!prev) return prev;
+        const newChapters = [...prev.chapters, ...added];
+        const newSubjects = prev.subjects.map((s) => ({
+          ...s,
+          chaptersCount: newChapters.filter((c) => c.subject.toLowerCase() === s.name.toLowerCase()).length,
+        }));
+        return {
+          ...prev,
+          chapters: newChapters,
+          subjects: newSubjects,
+        };
+      });
+      showToast(`Loaded ${added.length} chapters into your syllabus!`, 'doctor');
+    } catch (err: any) {
+      console.error(err);
+      showToast(err?.message || 'Could not load batch chapters', 'info');
+    }
+  };
+
   const handleLogStudyMinutes = async (minutes: number) => {
     const updatedState = await api.logStudySession(minutes);
     setData((prev) => (prev ? { ...prev, studyState: updatedState } : prev));
@@ -738,11 +767,15 @@ export default function App() {
             <GenerateMcqsPage
               chapters={data.chapters}
               materials={data.materials}
+              mcqs={data.mcqs}
               preselectedSubject={activeSubject as SubjectName}
               onSaveMCQsToBank={handleSaveMCQsToBank}
               onStartQuizWithMCQs={handleStartQuizWithMCQs}
               onToggleBookmark={handleToggleMCQBookmark}
               onToggleDifficult={handleToggleMCQDifficult}
+              onAddChapter={handleAddChapter}
+              onAddBatchChapters={handleAddBatchChapters}
+              onRecordMistake={handleRecordMistake}
             />
           )}
 

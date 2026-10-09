@@ -7,6 +7,7 @@ import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import { GoogleGenAI, Type } from '@google/genai';
 import { authManager } from './server/authManager';
+import { uploadToCloudinary, getCloudinaryStatus } from './src/services/cloudinaryService';
 
 dotenv.config();
 
@@ -2492,12 +2493,24 @@ app.post('/api/materials', async (req, res) => {
 
   if (fileBase64 && fileName) {
     try {
-      const sanitizedName = Date.now() + '_' + fileName.replace(/[^a-zA-Z0-9.-]/g, '_');
-      const filePath = path.join(UPLOADS_DIR, sanitizedName);
-      const base64Data = fileBase64.replace(/^data:([A-Za-z-+/]+);base64,/, '');
-      fs.writeFileSync(filePath, Buffer.from(base64Data, 'base64'));
-      savedFileName = fileName;
-      savedFileUrl = `/uploads/${sanitizedName}`;
+      // 1. Attempt upload to Cloudinary CDN if configured
+      const cloudResult = await uploadToCloudinary(fileBase64, {
+        folder: 'mediprep/study_materials',
+      });
+
+      if (cloudResult && cloudResult.url) {
+        savedFileName = fileName;
+        savedFileUrl = cloudResult.url;
+        console.log('[Materials] File permanently uploaded to Cloudinary:', savedFileUrl);
+      } else {
+        // 2. Fallback to local server disk storage
+        const sanitizedName = Date.now() + '_' + fileName.replace(/[^a-zA-Z0-9.-]/g, '_');
+        const filePath = path.join(UPLOADS_DIR, sanitizedName);
+        const base64Data = fileBase64.replace(/^data:([A-Za-z-+/]+);base64,/, '');
+        fs.writeFileSync(filePath, Buffer.from(base64Data, 'base64'));
+        savedFileName = fileName;
+        savedFileUrl = `/uploads/${sanitizedName}`;
+      }
     } catch (err) {
       console.error('Error saving uploaded file:', err);
     }
@@ -4084,12 +4097,33 @@ app.get('/api/pastpapers', (req, res) => {
   res.json(papers);
 });
 
+// Cloudinary Storage Status Endpoint
+app.get('/api/cloudinary/status', (req, res) => {
+  res.json(getCloudinaryStatus());
+});
+
 // 2. Upload a new past paper
-app.post('/api/pastpapers', (req, res) => {
+app.post('/api/pastpapers', async (req, res) => {
   const { title, year, conductingBody, subjectsCovered, fileName, fileBase64, rawContentSnippet } = req.body;
 
   if (!title || !year) {
     return res.status(400).json({ error: 'Title and Year are required for past papers.' });
+  }
+
+  let fileUrl = '';
+  if (fileBase64) {
+    try {
+      const cloudResult = await uploadToCloudinary(fileBase64, {
+        folder: 'mediprep/past_papers',
+        resourceType: 'auto',
+      });
+      if (cloudResult && cloudResult.url) {
+        fileUrl = cloudResult.url;
+        console.log('[PastPapers] File permanently uploaded to Cloudinary:', fileUrl);
+      }
+    } catch (err) {
+      console.warn('[PastPapers] Cloudinary upload notice:', err);
+    }
   }
 
   const newPaper: PastPaper = {
@@ -4101,6 +4135,7 @@ app.post('/api/pastpapers', (req, res) => {
     questionsCount: rawContentSnippet ? Math.max((rawContentSnippet.match(/Q\d+/g) || []).length, 25) : 50,
     fileName,
     fileBase64,
+    fileUrl: fileUrl || undefined,
     rawContentSnippet: rawContentSnippet || `MDCAT Past Paper: ${title} (${year})\nUploaded study material content available for AI extraction.`,
     uploadedAt: new Date().toISOString().split('T')[0],
     isCurated: false,

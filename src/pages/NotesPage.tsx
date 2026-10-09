@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   FileText,
   Plus,
@@ -10,8 +10,11 @@ import {
   Tag,
   BookOpen,
   X,
+  GraduationCap,
+  Sparkles,
 } from 'lucide-react';
-import { StudyNote, SubjectName, ChapterData } from '../types';
+import { StudyNote, SubjectName, ChapterData, AcademicYear } from '../types';
+import { STANDARD_SECOND_YEAR_CHAPTERS } from '../data/standardSecondYearChapters';
 
 interface NotesPageProps {
   notes: StudyNote[];
@@ -29,11 +32,13 @@ export const NotesPage: React.FC<NotesPageProps> = ({
   onDeleteNote,
 }) => {
   const [subjectFilter, setSubjectFilter] = useState<string>('All');
+  const [academicYear, setAcademicYear] = useState<'All' | '1st Year' | '2nd Year'>('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingNote, setEditingNote] = useState<StudyNote | null>(null);
 
   // Form State
+  const [noteYear, setNoteYear] = useState<AcademicYear>('1st Year');
   const [title, setTitle] = useState('');
   const [subject, setSubject] = useState<SubjectName>('Biology');
   const [chapter, setChapter] = useState('');
@@ -41,10 +46,41 @@ export const NotesPage: React.FC<NotesPageProps> = ({
   const [content, setContent] = useState('');
   const [tags, setTags] = useState('High Yield, Sindh Board');
 
-  const filteredChapters = chapters.filter((c) => c.subject.toLowerCase() === subject.toLowerCase());
+  // Ensure all 2nd Year chapters are present in the list
+  const allChapters = useMemo(() => {
+    const combined = [...chapters];
+    STANDARD_SECOND_YEAR_CHAPTERS.forEach((stdCh) => {
+      if (
+        !combined.some(
+          (c) =>
+            c.subject.toLowerCase() === stdCh.subject.toLowerCase() &&
+            c.title.toLowerCase() === stdCh.title.toLowerCase()
+        )
+      ) {
+        combined.push({
+          id: `ch_std_${stdCh.subject.toLowerCase()}_${stdCh.chapterNumber}`,
+          subject: stdCh.subject,
+          chapterNumber: stdCh.chapterNumber,
+          title: stdCh.title,
+          topics: stdCh.topics,
+          completed: false,
+          status: 'not_started',
+          notesCount: 0,
+          mcqsCount: 0,
+          classYear: '2nd Year',
+        });
+      }
+    });
+    return combined;
+  }, [chapters]);
+
+  const filteredChapters = allChapters.filter(
+    (c) => c.subject.toLowerCase() === subject.toLowerCase() && (c.classYear || '1st Year') === noteYear
+  );
 
   const filteredNotes = notes.filter((n) => {
     const matchesSubject = subjectFilter === 'All' || n.subject.toLowerCase() === subjectFilter.toLowerCase();
+    const matchesYear = academicYear === 'All' || (n.classYear || '1st Year') === academicYear;
     const q = searchQuery.toLowerCase().trim();
     const matchesSearch =
       !q ||
@@ -53,12 +89,16 @@ export const NotesPage: React.FC<NotesPageProps> = ({
       n.topic.toLowerCase().includes(q) ||
       n.content.toLowerCase().includes(q);
 
-    return matchesSubject && matchesSearch;
+    return matchesSubject && matchesYear && matchesSearch;
   });
+
+  const firstYearNotesCount = notes.filter((n) => (n.classYear || '1st Year') === '1st Year').length;
+  const secondYearNotesCount = notes.filter((n) => n.classYear === '2nd Year').length;
 
   const handleOpenNew = () => {
     setEditingNote(null);
     setTitle('');
+    setNoteYear(academicYear === '2nd Year' ? '2nd Year' : '1st Year');
     setSubject('Biology');
     setChapter('');
     setTopic('');
@@ -70,6 +110,7 @@ export const NotesPage: React.FC<NotesPageProps> = ({
   const handleOpenEdit = (n: StudyNote) => {
     setEditingNote(n);
     setTitle(n.title);
+    setNoteYear(n.classYear || '1st Year');
     setSubject(n.subject);
     setChapter(n.chapter);
     setTopic(n.topic);
@@ -91,6 +132,7 @@ export const NotesPage: React.FC<NotesPageProps> = ({
           topic: topic || 'Key Concepts',
           content,
           tags: tags.split(',').map((t) => t.trim()).filter(Boolean),
+          classYear: noteYear,
         });
       } else {
         await onAddNote({
@@ -101,6 +143,7 @@ export const NotesPage: React.FC<NotesPageProps> = ({
           content,
           tags: tags.split(',').map((t) => t.trim()).filter(Boolean),
           bookmarked: false,
+          classYear: noteYear,
         });
       }
       setIsEditorOpen(false);
@@ -111,6 +154,77 @@ export const NotesPage: React.FC<NotesPageProps> = ({
 
   const handleToggleBookmark = (n: StudyNote) => {
     onUpdateNote(n.id, { bookmarked: !n.bookmarked });
+  };
+
+  const handleLoadSecondYearNotes = async () => {
+    const secondYearSamples: Partial<StudyNote>[] = [
+      {
+        title: 'Homeostasis: Nephron Counter-Current & Kidney Mechanics',
+        subject: 'Biology',
+        chapter: 'Homeostasis',
+        topic: 'Osmoregulation & Nephron Structure',
+        content: `### 🩺 High-Yield MDCAT Summary: Homeostasis (Class XII)
+1. **Osmoregulation vs Excretion:**
+   - Nephron is the structural and functional unit of the human kidney (~1 million per kidney).
+   - **Glomerular Ultrafiltration:** Occurs due to high hydrostatic pressure in afferent arteriole (> efferent). Filtration slit diameter ~7-9 nm.
+2. **Counter-Current Multiplier:**
+   - Descending Loop of Henle: Permeable to water via aquaporins, impermeable to ions. Filtrate becomes hypertonic (up to 1200 mOsm/L at hairpin bend).
+   - Ascending Loop of Henle: Impermeable to water. Actively pumps Na+/Cl- into medullary interstitium.
+3. **Hormonal Regulation:**
+   - **ADH (Vasopressin):** Secreted from posterior pituitary when blood osmolarity rises. Inserts aquaporin-2 into collecting duct cells -> concentrated urine.
+   - **Aldosterone:** Released from adrenal cortex via Renin-Angiotensin System (RAAS) to promote Na+ reabsorption and K+ excretion in distal convoluted tubule (DCT).`,
+        tags: ['MDCAT High Yield', 'Class XII Biology', 'Sindh Board'],
+        bookmarked: true,
+        classYear: '2nd Year',
+      },
+      {
+        title: 'Benzene: Resonance, Aromaticity & Electrophilic Substitution',
+        subject: 'Chemistry',
+        chapter: 'Hydrocarbons',
+        topic: 'Aromatic Hydrocarbons & Reactions',
+        content: `### 🧪 Class XII Chemistry: Benzene Structure & Mechanisms
+1. **Kekulé & Resonance Structure:**
+   - Planar regular hexagon, C-C bond length is 1.397 Å (intermediate between single 1.54 Å and double 1.34 Å).
+   - Resonance energy = 150.5 kJ/mol (stabilization energy).
+2. **Hückel's Rule of Aromaticity:**
+   - Ring must be cyclic, planar, fully conjugated, and contain (4n + 2) pi electrons (n=1 for Benzene -> 6 pi electrons).
+3. **Key Electrophilic Aromatic Substitutions (EAS):**
+   - **Nitration:** Reagent = Conc. HNO3 + Conc. H2SO4 at 50-55°C. Electrophile = Nitronium ion ($NO_2^+$).
+   - **Halogenation:** Cl2 with Lewis acid catalyst (FeCl3 or AlCl3). Electrophile = Chloronium ($Cl^+$).
+   - **Friedel-Crafts Alkylation:** R-Cl + AlCl3 -> Carbocation intermediate ($R^+$).
+   - **Directing Groups:** -OH, -NH2, -CH3 are ortho/para-directing (activating). -NO2, -COOH, -CHO are meta-directing (deactivating).`,
+        tags: ['Class XII Chemistry', 'Sindh Board', 'MDCAT High Yield'],
+        bookmarked: true,
+        classYear: '2nd Year',
+      },
+      {
+        title: 'Electromagnetism: Biot-Savart, Lorentz Force & Faraday’s Induction',
+        subject: 'Physics',
+        chapter: 'Electromagnetism',
+        topic: 'Magnetic Induction & Faraday’s Law',
+        content: `### ⚡ Class XII Physics: Core MDCAT Formulas & Concepts
+1. **Magnetic Force on Moving Charge:**
+   - $\vec{F} = q (\vec{v} \times \vec{B}) \implies F = q v B \sin\theta$.
+   - Max force at $\theta = 90^\circ$ (perpendicular velocity). Force is ZERO when charge moves parallel to B ($\theta = 0^\circ$).
+   - Magnetic force does NO work on a charged particle because $\vec{F} \perp \vec{v}$ at all instants ($\Delta K = 0$).
+2. **Faraday's Law of Induction:**
+   - Induced EMF: $\mathcal{E} = -N \frac{\Delta \Phi}{\Delta t}$ where $\Phi = \vec{B} \cdot \vec{A} = BA\cos\theta$.
+3. **Lenz's Law:**
+   - The direction of induced current is such that it opposes the change that produces it (Law of Conservation of Energy).
+4. **Self & Mutual Induction:**
+   - $\mathcal{E}_L = -L \frac{\Delta I}{\Delta t}$, Unit of Inductance = Henry (H). Energy stored in inductor: $U = \frac{1}{2} L I^2$.`,
+        tags: ['Class XII Physics', 'Sindh Board', 'Formulas'],
+        bookmarked: true,
+        classYear: '2nd Year',
+      },
+    ];
+
+    for (const note of secondYearSamples) {
+      if (!notes.some((n) => n.title === note.title)) {
+        await onAddNote(note);
+      }
+    }
+    setAcademicYear('2nd Year');
   };
 
   return (
@@ -125,17 +239,92 @@ export const NotesPage: React.FC<NotesPageProps> = ({
             <h2 className="text-xl sm:text-2xl font-bold text-slate-900">Medical Study Notes</h2>
           </div>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Synthesize formulas, high-yield facts, and medical diagrams for your 4 Sindh Board subjects.
+            Synthesize formulas, high-yield facts, and medical diagrams for 1st Year (XI) & 2nd Year (XII).
           </p>
         </div>
 
-        <button
-          onClick={handleOpenNew}
-          className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs sm:text-sm shadow-md transition-all"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Write Study Note</span>
-        </button>
+        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+          <button
+            onClick={handleLoadSecondYearNotes}
+            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 font-semibold text-xs transition-all shadow-2xs whitespace-nowrap"
+            title="Pre-load official 2nd Year (XII) revision summaries for Biology, Chemistry, and Physics"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+            <span>Load 2nd Year High-Yield Notes</span>
+          </button>
+
+          <button
+            onClick={handleOpenNew}
+            className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs sm:text-sm shadow-md transition-all whitespace-nowrap"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Write Study Note</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Academic Year Switcher Bar */}
+      <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <span className="p-2 rounded-xl bg-purple-50 text-purple-700 border border-purple-200">
+            <GraduationCap className="w-4 h-4" />
+          </span>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-slate-900">Academic Year / Syllabus Level:</span>
+              <span
+                className={`text-[10px] font-extrabold px-2 py-0.5 rounded border ${
+                  academicYear === '2nd Year'
+                    ? 'bg-purple-100 text-purple-800 border-purple-200'
+                    : academicYear === '1st Year'
+                    ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
+                    : 'bg-cyan-100 text-cyan-800 border-cyan-200'
+                }`}
+              >
+                {academicYear === 'All' ? 'All MDCAT Notes' : academicYear}
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-500">
+              Filter study notes by 1st Year (XI) or 2nd Year (XII).
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl border border-slate-200 text-xs font-bold self-start sm:self-auto">
+          <button
+            type="button"
+            onClick={() => setAcademicYear('All')}
+            className={`px-3 py-1.5 rounded-lg transition-all ${
+              academicYear === 'All'
+                ? 'bg-white text-slate-900 shadow-2xs font-extrabold'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            All Notes ({notes.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setAcademicYear('1st Year')}
+            className={`px-3 py-1.5 rounded-lg transition-all ${
+              academicYear === '1st Year'
+                ? 'bg-emerald-600 text-white shadow-xs font-extrabold'
+                : 'text-slate-600 hover:text-emerald-700'
+            }`}
+          >
+            1st Year (XI) ({firstYearNotesCount})
+          </button>
+          <button
+            type="button"
+            onClick={() => setAcademicYear('2nd Year')}
+            className={`px-3 py-1.5 rounded-lg transition-all ${
+              academicYear === '2nd Year'
+                ? 'bg-purple-600 text-white shadow-xs font-extrabold'
+                : 'text-slate-600 hover:text-purple-700'
+            }`}
+          >
+            2nd Year (XII) ({secondYearNotesCount})
+          </button>
+        </div>
       </div>
 
       {/* Filter and Search Bar */}
@@ -177,9 +366,20 @@ export const NotesPage: React.FC<NotesPageProps> = ({
           >
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-800 border border-cyan-200">
-                  {note.subject}
-                </span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-800 border border-cyan-200">
+                    {note.subject}
+                  </span>
+                  <span
+                    className={`text-[10px] font-extrabold px-2 py-0.5 rounded border ${
+                      (note.classYear || '1st Year') === '2nd Year'
+                        ? 'bg-purple-100 text-purple-800 border-purple-200'
+                        : 'bg-emerald-100 text-emerald-800 border-emerald-200'
+                    }`}
+                  >
+                    {note.classYear || '1st Year'}
+                  </span>
+                </div>
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => handleToggleBookmark(note)}
@@ -279,6 +479,43 @@ export const NotesPage: React.FC<NotesPageProps> = ({
                   className="w-full px-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-amber-500 font-bold"
                   required
                 />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Academic Year / Class Level *
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setNoteYear('1st Year');
+                      setChapter('');
+                    }}
+                    className={`py-2 px-3 text-xs font-bold rounded-xl border transition-all flex items-center justify-center gap-1.5 ${
+                      noteYear === '1st Year'
+                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                        : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                    }`}
+                  >
+                    <GraduationCap className="w-3.5 h-3.5" />
+                    <span>1st Year (Class XI)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setNoteYear('2nd Year');
+                      setChapter('');
+                    }}
+                    className={`py-2 px-3 text-xs font-bold rounded-xl border transition-all flex items-center justify-center gap-1.5 ${
+                      noteYear === '2nd Year'
+                        ? 'bg-purple-600 text-white border-purple-600 shadow-xs'
+                        : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                    }`}
+                  >
+                    <GraduationCap className="w-3.5 h-3.5" />
+                    <span>2nd Year (Class XII)</span>
+                  </button>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

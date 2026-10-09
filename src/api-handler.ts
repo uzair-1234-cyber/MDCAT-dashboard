@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import { GoogleGenAI, Type } from '@google/genai';
+import { uploadToCloudinary, getCloudinaryStatus } from './services/cloudinaryService';
 
 dotenv.config();
 
@@ -2370,6 +2371,94 @@ app.get('/api/chapters', optionalAuthenticateToken, async (req: any, res) => {
   res.json(allChapters);
 });
 
+app.post('/api/chapters', optionalAuthenticateToken, async (req: any, res) => {
+  try {
+    const { subject, chapterNumber, title, topics, classYear } = req.body;
+    if (!subject || !title) {
+      return res.status(400).json({ error: 'Subject and title are required' });
+    }
+    let newChapter: ChapterData | null = null;
+    const addLogic = (data: DatabaseSchema) => {
+      const targetYear = (classYear || '2nd Year') as '1st Year' | '2nd Year';
+      const existingInYear = data.chapters.filter((c) => c.subject.toLowerCase() === subject.toLowerCase() && (c.classYear || '1st Year') === targetYear);
+      const nextNum = chapterNumber || (existingInYear.length + 1);
+      const id = 'ch_' + subject.toLowerCase().slice(0, 4) + '_' + targetYear.replace(/\s+/g, '').toLowerCase() + '_' + Date.now();
+      newChapter = {
+        id,
+        subject,
+        chapterNumber: nextNum,
+        title: title.trim(),
+        topics: Array.isArray(topics) && topics.length > 0 ? topics : ['Core Syllabus Topic', 'MDCAT High Yield Concept'],
+        completed: false,
+        status: 'not_started',
+        notesCount: 0,
+        mcqsCount: 0,
+        classYear: targetYear,
+      };
+      data.chapters.push(newChapter);
+      const sub = data.subjects.find((s) => s.name.toLowerCase() === subject.toLowerCase());
+      if (sub) {
+        sub.chaptersCount = data.chapters.filter((c) => c.subject.toLowerCase() === subject.toLowerCase()).length;
+      }
+    };
+
+    if (req.user && req.user.userId) {
+      await updateUserData(req.user.userId, addLogic, req.user.email);
+    } else {
+      dbStore.updateData(addLogic);
+    }
+    res.status(201).json(newChapter);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Failed to add chapter' });
+  }
+});
+
+app.post('/api/chapters/batch', optionalAuthenticateToken, async (req: any, res) => {
+  try {
+    const { chapters } = req.body;
+    if (!Array.isArray(chapters) || chapters.length === 0) {
+      return res.status(400).json({ error: 'chapters array is required' });
+    }
+    const addedChapters: ChapterData[] = [];
+    const batchLogic = (data: DatabaseSchema) => {
+      chapters.forEach((item: any, idx: number) => {
+        const { subject, chapterNumber, title, topics, classYear } = item;
+        if (!subject || !title) return;
+        const targetYear = (classYear || '2nd Year') as '1st Year' | '2nd Year';
+        const existingInYear = data.chapters.filter((c) => c.subject.toLowerCase() === subject.toLowerCase() && (c.classYear || '1st Year') === targetYear);
+        const nextNum = chapterNumber || (existingInYear.length + 1);
+        const id = 'ch_' + subject.toLowerCase().slice(0, 4) + '_' + targetYear.replace(/\s+/g, '').toLowerCase() + '_' + Date.now() + '_' + idx;
+        const created: ChapterData = {
+          id,
+          subject,
+          chapterNumber: nextNum,
+          title: title.trim(),
+          topics: Array.isArray(topics) && topics.length > 0 ? topics : ['Core Syllabus Topic', 'MDCAT High Yield Concept'],
+          completed: false,
+          status: 'not_started',
+          notesCount: 0,
+          mcqsCount: 0,
+          classYear: targetYear,
+        };
+        data.chapters.push(created);
+        addedChapters.push(created);
+      });
+      data.subjects.forEach((sub) => {
+        sub.chaptersCount = data.chapters.filter((c) => c.subject.toLowerCase() === sub.name.toLowerCase()).length;
+      });
+    };
+
+    if (req.user && req.user.userId) {
+      await updateUserData(req.user.userId, batchLogic, req.user.email);
+    } else {
+      dbStore.updateData(batchLogic);
+    }
+    res.status(201).json(addedChapters);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Failed to add batch chapters' });
+  }
+});
+
 app.post('/api/chapters/:id/toggle', optionalAuthenticateToken, async (req: any, res) => {
   const { id } = req.params;
   const { status } = req.body;
@@ -2443,12 +2532,24 @@ app.post('/api/materials', async (req, res) => {
 
   if (fileBase64 && fileName) {
     try {
-      const sanitizedName = Date.now() + '_' + fileName.replace(/[^a-zA-Z0-9.-]/g, '_');
-      const filePath = path.join(UPLOADS_DIR, sanitizedName);
-      const base64Data = fileBase64.replace(/^data:([A-Za-z-+/]+);base64,/, '');
-      fs.writeFileSync(filePath, Buffer.from(base64Data, 'base64'));
-      savedFileName = fileName;
-      savedFileUrl = `/uploads/${sanitizedName}`;
+      // 1. Attempt upload to Cloudinary CDN if configured
+      const cloudResult = await uploadToCloudinary(fileBase64, {
+        folder: 'mediprep/study_materials',
+      });
+
+      if (cloudResult && cloudResult.url) {
+        savedFileName = fileName;
+        savedFileUrl = cloudResult.url;
+        console.log('[Materials] File permanently uploaded to Cloudinary:', savedFileUrl);
+      } else {
+        // 2. Fallback to local server disk storage
+        const sanitizedName = Date.now() + '_' + fileName.replace(/[^a-zA-Z0-9.-]/g, '_');
+        const filePath = path.join(UPLOADS_DIR, sanitizedName);
+        const base64Data = fileBase64.replace(/^data:([A-Za-z-+/]+);base64,/, '');
+        fs.writeFileSync(filePath, Buffer.from(base64Data, 'base64'));
+        savedFileName = fileName;
+        savedFileUrl = `/uploads/${sanitizedName}`;
+      }
     } catch (err) {
       console.error('Error saving uploaded file:', err);
     }
@@ -4020,12 +4121,33 @@ app.get('/api/pastpapers', (req, res) => {
   res.json(papers);
 });
 
+// Cloudinary Storage Status Endpoint
+app.get('/api/cloudinary/status', (req, res) => {
+  res.json(getCloudinaryStatus());
+});
+
 // 2. Upload a new past paper
-app.post('/api/pastpapers', (req, res) => {
+app.post('/api/pastpapers', async (req, res) => {
   const { title, year, conductingBody, subjectsCovered, fileName, fileBase64, rawContentSnippet } = req.body;
 
   if (!title || !year) {
     return res.status(400).json({ error: 'Title and Year are required for past papers.' });
+  }
+
+  let fileUrl = '';
+  if (fileBase64) {
+    try {
+      const cloudResult = await uploadToCloudinary(fileBase64, {
+        folder: 'mediprep/past_papers',
+        resourceType: 'auto',
+      });
+      if (cloudResult && cloudResult.url) {
+        fileUrl = cloudResult.url;
+        console.log('[PastPapers] File permanently uploaded to Cloudinary:', fileUrl);
+      }
+    } catch (err) {
+      console.warn('[PastPapers] Cloudinary upload notice:', err);
+    }
   }
 
   const newPaper: PastPaper = {
@@ -4037,6 +4159,7 @@ app.post('/api/pastpapers', (req, res) => {
     questionsCount: rawContentSnippet ? Math.max((rawContentSnippet.match(/Q\d+/g) || []).length, 25) : 50,
     fileName,
     fileBase64,
+    fileUrl: fileUrl || undefined,
     rawContentSnippet: rawContentSnippet || `MDCAT Past Paper: ${title} (${year})\nUploaded study material content available for AI extraction.`,
     uploadedAt: new Date().toISOString().split('T')[0],
     isCurated: false,

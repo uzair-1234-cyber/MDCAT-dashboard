@@ -1,0 +1,123 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 400" width="100%" height="100%">
+  <defs>
+    <!-- Cross Gradient -->
+    <linearGradient id="embCrossGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00C9A7" />
+      <stop offset="100%" stop-color="#0081A7" />
+    </linearGradient>
+
+    <!-- Top Page Gradient -->
+    <linearGradient id="embTopPageGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00BFA5" />
+      <stop offset="100%" stop-color="#008F9B" />
+    </linearGradient>
+
+    <!-- Middle Page Gradient -->
+    <linearGradient id="embMidPageGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0096C7" />
+      <stop offset="100%" stop-color="#0077B6" />
+    </linearGradient>
+  </defs>
+
+  <!-- OPEN BOOK PAGES -->
+  <g id="open-book">
+    <!-- Left Top Teal Page -->
+    <path d="M 245 285 C 195 240 145 200 135 195 L 180 220 C 205 242 230 265 245 285 Z" fill="#00B4D8" />
+    <path d="M 245 282 C 185 220 145 190 132 188 L 175 195 C 205 222 232 255 245 282 Z" fill="url(#embTopPageGrad)" />
+
+    <!-- Left Middle Cyan Page -->
+    <path d="M 246 295 C 190 260 145 235 115 225 L 170 235 C 205 258 232 280 246 295 Z" fill="url(#embMidPageGrad)" />
+
+    <!-- Left Bottom Navy Base Page -->
+    <path d="M 248 308 C 185 275 135 258 100 252 C 120 268 180 295 245 320 Z" fill="#0B2545" />
+
+    <!-- Left Main Curved Wing Page -->
+    <path d="M 248 290 C 200 238 148 215 130 208 C 120 225 110 242 100 252 C 150 262 205 282 245 315 Z" fill="#0077B6" />
+
+    <!-- Right Top Teal Page -->
+    <path d="M 255 285 C 305 240 355 200 365 195 L 320 220 C 295 242 270 265 255 285 Z" fill="#00B4D8" />
+    <path d="M 255 282 C 315 220 355 190 368 188 L 325 195 C 295 222 268 255 255 282 Z" fill="url(#embTopPageGrad)" />
+
+    <!-- Right Middle Cyan Page -->
+    <path d="M 254 295 C 310 260 355 235 385 225 L 330 235 C 295 258 268 280 254 295 Z" fill="url(#embMidPageGrad)" />
+
+    <!-- Right Bottom Navy Base Page -->
+    <path d="M 252 308 C 315 275 365 258 400 252 C 380 268 320 295 255 320 Z" fill="#0B2545" />
+
+    <!-- Right Main Curved Wing Page -->
+    <path d="M 252 290 C 300 238 352 215 370 208 C 380 225 390 242 400 252 C 350 262 295 282 255 315 Z" fill="#0077B6" />
+
+    <!-- Front Open Book Spine / Binding V-Shape -->
+    <path d="M 250 286 L 244 316 L 250 324 L 256 316 Z" fill="#0B2545" />
+  </g>
+
+  <!-- STETHOSCOPE -->
+  <g id="stethoscope">
+    <!-- Binaural Tubes Loop -->
+    <path d="M 215 78 C 215 70 225 70 225 78 C 225 90 200 95 190 125 C 180 155 195 210 240 232 C 255 240 265 255 255 270 C 250 276 242 270 240 255 C 235 242 225 235 210 225 C 175 200 162 145 178 110 C 190 85 205 78 215 78 Z" fill="#0B2545" />
+    <path d="M 285 78 C 285 70 275 70 275 78 C 275 90 300 95 310 125 C 318 150 310 190 285 218 C 272 232 260 245 255 268 C 265 255 278 240 295 220 C 325 188 335 145 322 110 C 310 85 295 78 285 78 Z" fill="#0B2545" />
+
+    <!-- Ear Tips -->
+    <ellipse cx="218" cy="74" rx="14" ry="10" transform="rotate(-15 218 74)" fill="#0B2545" />
+    <ellipse cx="282" cy="74" rx="14" ry="10" transform="rotate(15 282 74)" fill="#0B2545" />
+
+    <!-- Central Tubing Loop under the cross -->
+    <path d="M 235 215 C 238 238 245 260 250 270 C 255 260 262 238 265 215" stroke="#0B2545" stroke-width="15" stroke-linecap="round" fill="none" />
+
+    <!-- Chest Piece / Diaphragm (Angled to the Right) -->
+    <path d="M 268 255 L 328 178" stroke="#0B2545" stroke-width="12" stroke-linecap="round" fill="none" />
+    <path d="M 322 185 L 338 165" stroke="#0B2545" stroke-width="16" stroke-linecap="round" fill="none" />
+    <circle cx="344" cy="158" r="24" fill="#0B2545" />
+    <circle cx="344" cy="158" r="19" fill="#FFFFFF" />
+    <circle cx="344" cy="158" r="14" fill="url(#embTopPageGrad)" />
+    <circle cx="344" cy="158" r="4" fill="#0B2545" />
+  </g>
+
+  <!-- MEDICAL CROSS WITH ECG PULSE -->
+  <g id="medical-cross" transform="translate(250, 142)">
+    <path d="
+      M -17 -42 
+      L 17 -42 
+      C 22 -42, 22 -42, 22 -37 
+      L 22 -17 
+      L 42 -17 
+      C 47 -17, 47 -17, 47 -12 
+      L 47 12 
+      C 47 17, 47 17, 42 17 
+      L 22 17 
+      L 22 37 
+      C 22 42, 22 42, 17 42 
+      L -17 42 
+      C -22 42, -22 42, -22 37 
+      L -22 17 
+      L -42 17 
+      C -47 17, -47 17, -47 12 
+      L -47 -12 
+      C -47 -17, -47 -17, -42 -17 
+      L -22 -17 
+      L -22 -37 
+      C -22 -42, -22 -42, -17 -42 
+      Z" 
+      fill="url(#embCrossGrad)" 
+      stroke="#FFFFFF" 
+      stroke-width="1.5"
+    />
+
+    <!-- ECG / Heartbeat Waveform Line -->
+    <path d="
+      M -42 0 
+      L -24 0 
+      L -18 8 
+      L -9 -24 
+      L 2 28 
+      L 11 -8 
+      L 17 0 
+      L 42 0" 
+      stroke="#FFFFFF" 
+      stroke-width="5.5" 
+      stroke-linecap="round" 
+      stroke-linejoin="round"
+      fill="none"
+    />
+  </g>
+</svg>

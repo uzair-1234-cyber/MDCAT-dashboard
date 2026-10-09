@@ -858,4 +858,24 @@ export const api = {
   async getAiRevisionSuggestions() {
     return this.getAiRevisionSuggestion();
   },
+
+  async getCloudinaryStatus(): Promise<{
+    configured: boolean;
+    cloudName: string;
+    hasApiKey: boolean;
+    hasApiSecret: boolean;
+    statusText: string;
+  }> {
+    const res = await fetch('/api/cloudinary/status');
+    if (!res.ok) {
+      return {
+        configured: false,
+        cloudName: 'Not configured',
+        hasApiKey: false,
+        hasApiSecret: false,
+        statusText: 'Could not reach server',
+      };
+    }
+    return res.json();
+  },
 };

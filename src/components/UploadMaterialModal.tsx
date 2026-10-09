@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { X, Upload, FileText, CheckCircle2, AlertCircle, Image as ImageIcon, Eye, Trash2 } from 'lucide-react';
-import { ChapterData, SubjectName, MaterialType } from '../types';
+import React, { useState, useMemo } from 'react';
+import { X, Upload, FileText, CheckCircle2, AlertCircle, Image as ImageIcon, Eye, Trash2, GraduationCap } from 'lucide-react';
+import { ChapterData, SubjectName, MaterialType, AcademicYear } from '../types';
+import { STANDARD_SECOND_YEAR_CHAPTERS } from '../data/standardSecondYearChapters';
 
 interface UploadMaterialModalProps {
   isOpen: boolean;
@@ -15,6 +16,7 @@ export const UploadMaterialModal: React.FC<UploadMaterialModalProps> = ({
   chapters,
   onUploadSuccess,
 }) => {
+  const [classYear, setClassYear] = useState<AcademicYear>('1st Year');
   const [subject, setSubject] = useState<SubjectName>('Biology');
   const [chapter, setChapter] = useState('');
   const [topic, setTopic] = useState('');
@@ -22,7 +24,7 @@ export const UploadMaterialModal: React.FC<UploadMaterialModalProps> = ({
   const [type, setType] = useState<MaterialType>('PDF');
   const [description, setDescription] = useState('');
   const [contentSnippet, setContentSnippet] = useState('');
-  const [tags, setTags] = useState('Sindh Board, First Year');
+  const [tags, setTags] = useState('Sindh Board, MDCAT');
   const [fileName, setFileName] = useState('');
   const [fileBase64, setFileBase64] = useState('');
   const [fileSize, setFileSize] = useState('');
@@ -30,9 +32,39 @@ export const UploadMaterialModal: React.FC<UploadMaterialModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
+  // Merge chapters with standard 2nd year chapters
+  const allChapters = useMemo(() => {
+    const combined = [...chapters];
+    STANDARD_SECOND_YEAR_CHAPTERS.forEach((stdCh) => {
+      if (
+        !combined.some(
+          (c) =>
+            c.subject.toLowerCase() === stdCh.subject.toLowerCase() &&
+            c.title.toLowerCase() === stdCh.title.toLowerCase()
+        )
+      ) {
+        combined.push({
+          id: `ch_std_${stdCh.subject.toLowerCase()}_${stdCh.chapterNumber}`,
+          subject: stdCh.subject,
+          chapterNumber: stdCh.chapterNumber,
+          title: stdCh.title,
+          topics: stdCh.topics,
+          completed: false,
+          status: 'not_started',
+          notesCount: 0,
+          mcqsCount: 0,
+          classYear: '2nd Year',
+        });
+      }
+    });
+    return combined;
+  }, [chapters]);
+
   if (!isOpen) return null;
 
-  const subjectChapters = chapters.filter((c) => c.subject.toLowerCase() === subject.toLowerCase());
+  const subjectChapters = allChapters.filter(
+    (c) => c.subject.toLowerCase() === subject.toLowerCase() && (c.classYear || '1st Year') === classYear
+  );
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -87,11 +119,12 @@ export const UploadMaterialModal: React.FC<UploadMaterialModalProps> = ({
         topic: topic || 'Key Concepts',
         type,
         description,
-        contentSnippet: contentSnippet || description || (imagePreview ? 'Uploaded medical diagram / illustration.' : 'Uploaded study document for First-Year Medical Preparation.'),
+        contentSnippet: contentSnippet || description || (imagePreview ? 'Uploaded medical diagram / illustration.' : `Uploaded study document for ${classYear} Medical Preparation.`),
         tags: tags.split(',').map((t) => t.trim()).filter(Boolean),
         fileName,
         fileBase64,
         fileSize: fileSize || '1.2 MB',
+        classYear,
       });
       clearFile();
       onClose();
@@ -188,6 +221,45 @@ export const UploadMaterialModal: React.FC<UploadMaterialModalProps> = ({
               </p>
             </div>
           )}
+
+          {/* Academic Year Selection */}
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1.5">
+              Academic Year / Class Level *
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setClassYear('1st Year');
+                  setChapter('');
+                }}
+                className={`py-2 px-3 text-xs font-bold rounded-xl border transition-all flex items-center justify-center gap-1.5 ${
+                  classYear === '1st Year'
+                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                    : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                }`}
+              >
+                <GraduationCap className="w-3.5 h-3.5" />
+                <span>1st Year (Class XI)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setClassYear('2nd Year');
+                  setChapter('');
+                }}
+                className={`py-2 px-3 text-xs font-bold rounded-xl border transition-all flex items-center justify-center gap-1.5 ${
+                  classYear === '2nd Year'
+                    ? 'bg-purple-600 text-white border-purple-600 shadow-xs'
+                    : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                }`}
+              >
+                <GraduationCap className="w-3.5 h-3.5" />
+                <span>2nd Year (Class XII)</span>
+              </button>
+            </div>
+          </div>
 
           {/* Subject & Type Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

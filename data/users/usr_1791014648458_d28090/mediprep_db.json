@@ -42,7 +42,7 @@
     {
       "id": "sub_phys",
       "name": "Physics",
-      "chaptersCount": 8,
+      "chaptersCount": 14,
       "description": "Mechanics, vectors, rotational dynamics, work-energy, fluid flow, circular motion, and physical optics.",
       "color": "teal",
       "badge": "27% MDCAT Weightage"
@@ -73,7 +73,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_bio_2",
@@ -90,7 +91,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_bio_3",
@@ -109,7 +111,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_bio_4",
@@ -128,7 +131,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_bio_5",
@@ -146,7 +150,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_bio_6",
@@ -165,7 +170,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_bio_7",
@@ -183,7 +189,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_bio_8",
@@ -201,7 +208,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_bio_9",
@@ -219,7 +227,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_bio_10",
@@ -237,7 +246,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_bio_11",
@@ -256,7 +266,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_bio_12",
@@ -276,7 +287,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_bio_13",
@@ -296,7 +308,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_bio_14",
@@ -316,7 +329,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_chem_1",
@@ -332,7 +346,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_chem_2",
@@ -350,7 +365,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_chem_3",
@@ -368,7 +384,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_chem_4",
@@ -386,7 +403,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_chem_5",
@@ -404,7 +422,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_chem_6",
@@ -421,7 +440,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_chem_7",
@@ -439,7 +459,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_chem_8",
@@ -457,7 +478,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_chem_9",
@@ -475,7 +497,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_chem_10",
@@ -492,7 +515,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_chem_11",
@@ -511,7 +535,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_chem_12",
@@ -530,129 +555,259 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_phys_1",
       "subject": "Physics",
       "chapterNumber": 1,
-      "title": "Physical Quantities & Measurement",
+      "title": "Measurements",
       "topics": [
         "Errors and Uncertainties",
-        "Significant Figures",
-        "Dimensional Analysis"
+        "Precision and Accuracy",
+        "Significant Figures & Rounding Off",
+        "Dimensions of Physical Quantities",
+        "Dimensional Analysis & Verification of Equations"
       ],
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_phys_2",
       "subject": "Physics",
       "chapterNumber": 2,
-      "title": "Vectors and Equilibrium",
+      "title": "Kinematics",
       "topics": [
-        "Vector Addition by Rectangular Components",
-        "Scalar and Vector Products",
-        "Torque and Conditions of Equilibrium"
+        "Displacement, Velocity & Acceleration Graphs",
+        "Equations of Uniformly Accelerated Motion",
+        "Motion Under Gravity & Free Fall",
+        "Relative Velocity in One & Two Dimensions"
       ],
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_phys_3",
       "subject": "Physics",
       "chapterNumber": 3,
-      "title": "Motion and Force",
+      "title": "Dynamics",
       "topics": [
-        "Newtons Laws of Motion",
-        "Momentum & Impulse",
-        "Elastic and Inelastic Collisions",
-        "Projectile Motion Formulas & Range"
+        "Newton’s Laws of Motion & Inertial Frames",
+        "Linear Momentum and Impulse",
+        "Law of Conservation of Linear Momentum",
+        "Elastic and Inelastic Collisions in One & Two Dimensions",
+        "Friction & Coefficient of Friction"
       ],
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_phys_4",
       "subject": "Physics",
       "chapterNumber": 4,
-      "title": "Work, Energy and Power",
+      "title": "Rotational and Circular Motion",
       "topics": [
-        "Work done by Constant & Variable Force",
-        "Work-Energy Theorem",
-        "Conservative vs Non-conservative forces",
-        "Power and Efficiency"
+        "Angular Displacement, Angular Velocity & Angular Acceleration",
+        "Centripetal Force & Centripetal Acceleration",
+        "Banking of Roads & Centrifuge",
+        "Moment of Inertia & Rotational Kinetic Energy",
+        "Law of Conservation of Angular Momentum"
       ],
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_phys_5",
       "subject": "Physics",
       "chapterNumber": 5,
-      "title": "Circular Motion and Gravitation",
+      "title": "Work, Energy and Power",
       "topics": [
-        "Centripetal Acceleration and Force",
-        "Angular Momentum & Moment of Inertia",
-        "Orbital Velocity & Geostationary Satellites"
+        "Work Done by Constant and Variable Forces",
+        "Work-Energy Theorem",
+        "Gravitational Potential Energy & Escape Velocity",
+        "Conservative vs Non-Conservative Forces",
+        "Power, Energy Transformations & Efficiency"
       ],
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_phys_6",
       "subject": "Physics",
       "chapterNumber": 6,
-      "title": "Fluid Dynamics",
+      "title": "Fluid Statics",
       "topics": [
-        "Viscosity & Stokes Law",
-        "Equation of Continuity",
-        "Bernoullis Principle & Venturi Meter Applications in Blood Flow"
+        "Density and Fluid Pressure",
+        "Hydrostatic Pressure & Pascal’s Principle",
+        "Hydraulic Lift and Brakes",
+        "Archimedes’ Principle & Buoyant Force",
+        "Surface Tension & Capillary Action"
       ],
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_phys_7",
       "subject": "Physics",
       "chapterNumber": 7,
-      "title": "Oscillations & Simple Harmonic Motion",
+      "title": "Fluid Dynamics",
       "topics": [
-        "SHM Equations & Energy Conservation in SHM",
-        "Simple Pendulum & Mass-Spring System",
-        "Resonance and Damping"
+        "Streamline vs Turbulent Flow",
+        "Viscosity & Stokes’ Law (Terminal Velocity)",
+        "Equation of Continuity (Volume Flow Rate)",
+        "Bernoulli’s Principle and Its Applications",
+        "Torricelli’s Theorem & Venturi Effect in Blood Flow"
       ],
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_phys_8",
       "subject": "Physics",
       "chapterNumber": 8,
-      "title": "Waves and Physical Optics",
+      "title": "Electric Fields",
       "topics": [
-        "Doppler Effect in Sound",
-        "Youngs Double Slit Experiment",
-        "Diffraction Grating & Polarization"
+        "Coulomb’s Law in Vector Form & Permittivity",
+        "Electric Field Intensity & Electric Field Lines",
+        "Electric Flux and Gauss’s Law Applications",
+        "Electric Potential & Potential Difference",
+        "Equipotential Surfaces & Electron Volt (eV)"
       ],
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
+    },
+    {
+      "id": "ch_phys_9",
+      "subject": "Physics",
+      "chapterNumber": 9,
+      "title": "Capacitors",
+      "topics": [
+        "Capacitance of a Parallel Plate Capacitor",
+        "Dielectrics and Polarization",
+        "Series and Parallel Combination of Capacitors",
+        "Energy Stored in a Charged Capacitor & Energy Density",
+        "Charging and Discharging of a Capacitor"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0,
+      "classYear": "1st Year"
+    },
+    {
+      "id": "ch_phys_10",
+      "subject": "Physics",
+      "chapterNumber": 10,
+      "title": "D.C Circuits",
+      "topics": [
+        "Electric Current, Drift Velocity & Ohm’s Law",
+        "Resistance, Resistivity & Temperature Coefficient",
+        "Electromotive Force (EMF) vs Terminal Potential Difference",
+        "Kirchhoff’s Current Law (KCL) & Voltage Law (KVL)",
+        "Wheatstone Bridge & Potentiometer Principle"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0,
+      "classYear": "1st Year"
+    },
+    {
+      "id": "ch_phys_11",
+      "subject": "Physics",
+      "chapterNumber": 11,
+      "title": "Oscillations",
+      "topics": [
+        "Simple Harmonic Motion (SHM) Characteristics & Equations",
+        "Mass-Spring System & Simple Pendulum",
+        "Energy Conservation in SHM (Kinetic & Potential)",
+        "Free, Forced and Damped Oscillations",
+        "Resonance and Practical Applications"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0,
+      "classYear": "1st Year"
+    },
+    {
+      "id": "ch_phys_12",
+      "subject": "Physics",
+      "chapterNumber": 12,
+      "title": "Acoustics",
+      "topics": [
+        "Speed of Sound (Newton’s Formula & Laplace’s Correction)",
+        "Factors Affecting Speed of Sound (Temperature, Pressure, Humidity)",
+        "Superposition of Waves & Beats Formation",
+        "Stationary Longitudinal Waves in Pipes (Organ Pipes)",
+        "Doppler Effect in Sound and Acoustic Applications"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0,
+      "classYear": "1st Year"
+    },
+    {
+      "id": "ch_phys_13",
+      "subject": "Physics",
+      "chapterNumber": 13,
+      "title": "Physical Optics",
+      "topics": [
+        "Wave Nature of Light & Huygens’ Principle",
+        "Interference of Light (Constructive vs Destructive)",
+        "Young’s Double Slit Experiment & Fringe Width",
+        "Newton’s Rings & Thin Film Interference",
+        "Diffraction of Light (Diffraction Grating) & Polarization"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0,
+      "classYear": "1st Year"
+    },
+    {
+      "id": "ch_phys_14",
+      "subject": "Physics",
+      "chapterNumber": 14,
+      "title": "Communication",
+      "topics": [
+        "Electromagnetic Waves Spectrum and Properties",
+        "Modulation Principles (Amplitude Modulation AM vs Frequency Modulation FM)",
+        "Optical Fiber Communication & Total Internal Reflection",
+        "Communication Satellites & Bandwidth Concepts",
+        "Digital vs Analog Signals in Modern Transmission"
+      ],
+      "completed": false,
+      "status": "not_started",
+      "notesCount": 0,
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_eng_1",
@@ -667,7 +822,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_eng_2",
@@ -682,7 +838,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_eng_3",
@@ -697,7 +854,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_eng_4",
@@ -712,7 +870,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     },
     {
       "id": "ch_eng_5",
@@ -727,7 +886,8 @@
       "completed": false,
       "status": "not_started",
       "notesCount": 0,
-      "mcqsCount": 0
+      "mcqsCount": 0,
+      "classYear": "1st Year"
     }
   ],
   "materials": [],
