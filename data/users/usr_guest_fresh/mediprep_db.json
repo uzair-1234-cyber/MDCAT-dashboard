@@ -912,7 +912,24 @@
   "mistakes": [],
   "notes": [],
   "revisionPlans": [],
-  "activities": [],
+  "activities": [
+    {
+      "id": "act_1791620902553",
+      "title": "Uploaded Study Material: Test Biology Chapter 1 Notes",
+      "description": "Added Notes for Biology - Chapter: Cell Structure & Function.",
+      "subject": "Biology",
+      "type": "pdf_uploaded",
+      "timestamp": "Just now"
+    },
+    {
+      "id": "act_1791620894806",
+      "title": "AI Assistant Consultation: Study",
+      "description": "Asked: \"hy\"",
+      "subject": "General",
+      "type": "ai_question",
+      "timestamp": "Just now"
+    }
+  ],
   "pastPapers": [],
   "aiSessions": []
 }

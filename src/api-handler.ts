@@ -110,10 +110,10 @@ if (geminiApiKey) {
 // If any model encounters 503 UNAVAILABLE or 429 rate limit, it automatically retries with backoff
 // and fails over seamlessly across stable Gemini models.
 const STABLE_FALLBACK_MODELS = [
-  'gemini-2.5-flash',
-  'gemini-2.5-flash-lite',
-  'gemini-3.1-flash-lite',
+  'gemini-3.8-flash',
   'gemini-flash-latest',
+  'gemini-2.5-flash',
+  'gemini-3.1-flash-lite',
 ];
 
 interface FallbackGenParams {
@@ -546,6 +546,7 @@ interface DatabaseSchema {
     targetYear: string;
     dreamMedicalCollege: string;
     personalMotto: string;
+    avatarUrl?: string;
   };
   pastPapers?: PastPaper[];
   aiSessions?: any[];
@@ -1347,7 +1348,7 @@ const INITIAL_DATABASE: DatabaseSchema = {
 // MONGOOSE SCHEMAS & MODELS FOR REAL CLOUD PERSISTENCE
 // -------------------------------------------------------------
 const MaterialMongoSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  userId: { type: String, default: '' },
   id: { type: String, required: true },
   title: { type: String, default: '' },
   subject: { type: String, default: 'Biology' },
@@ -1363,10 +1364,10 @@ const MaterialMongoSchema = new mongoose.Schema({
   uploadDate: { type: String, default: '' },
   tags: { type: [String], default: [] },
   bookmarked: { type: Boolean, default: false },
-}, { timestamps: true });
+}, { timestamps: true, bufferCommands: false });
 
 const MCQMongoSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  userId: { type: String, default: '' },
   id: { type: String, required: true },
   subject: { type: String, default: 'Biology' },
   chapter: { type: String, default: '' },
@@ -1386,10 +1387,10 @@ const MCQMongoSchema = new mongoose.Schema({
   isBookmarked: { type: Boolean, default: false },
   isDifficult: { type: Boolean, default: false },
   createdAt: { type: String, default: '' },
-}, { timestamps: true });
+}, { timestamps: true, bufferCommands: false });
 
 const QuizAttemptMongoSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  userId: { type: String, default: '' },
   id: { type: String, required: true },
   title: { type: String, default: '' },
   subject: { type: String, default: '' },
@@ -1404,10 +1405,10 @@ const QuizAttemptMongoSchema = new mongoose.Schema({
   date: { type: String, default: '' },
   weakTopics: { type: [String], default: [] },
   answersSummary: [mongoose.Schema.Types.Mixed],
-}, { timestamps: true });
+}, { timestamps: true, bufferCommands: false });
 
 const StudyNoteMongoSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  userId: { type: String, default: '' },
   id: { type: String, required: true },
   title: { type: String, default: '' },
   subject: { type: String, default: 'Biology' },
@@ -1418,10 +1419,10 @@ const StudyNoteMongoSchema = new mongoose.Schema({
   bookmarked: { type: Boolean, default: false },
   createdAt: { type: String, default: '' },
   updatedAt: { type: String, default: '' },
-}, { timestamps: true });
+}, { timestamps: true, bufferCommands: false });
 
 const RevisionPlanMongoSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  userId: { type: String, default: '' },
   id: { type: String, required: true },
   subject: { type: String, default: 'Biology' },
   chapter: { type: String, default: '' },
@@ -1431,29 +1432,29 @@ const RevisionPlanMongoSchema = new mongoose.Schema({
   priority: { type: String, default: 'Medium' },
   status: { type: String, default: 'Not Started' },
   notes: { type: String, default: '' },
-}, { timestamps: true });
+}, { timestamps: true, bufferCommands: false });
 
 const ActivityMongoSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  userId: { type: String, default: '' },
   id: { type: String, required: true },
   title: { type: String, default: '' },
   description: { type: String, default: '' },
   subject: { type: String, default: '' },
   type: { type: String, default: '' },
   timestamp: { type: String, default: '' },
-}, { timestamps: true });
+}, { timestamps: true, bufferCommands: false });
 
 const AppStateMongoSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  userId: { type: String, default: '' },
   key: { type: String, required: true, default: 'main_state' },
   userProfile: mongoose.Schema.Types.Mixed,
   studyState: mongoose.Schema.Types.Mixed,
   chapters: [mongoose.Schema.Types.Mixed],
   subjects: [mongoose.Schema.Types.Mixed],
-}, { timestamps: true });
+}, { timestamps: true, bufferCommands: false });
 
 const MistakeMongoSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  userId: { type: String, default: '' },
   id: { type: String, required: true },
   mcqId: { type: String, default: '' },
   question: { type: String, default: '' },
@@ -1477,7 +1478,7 @@ const MistakeMongoSchema = new mongoose.Schema({
   mastered: { type: Boolean, default: false },
   createdAt: { type: String, default: '' },
   lastAttemptedAt: { type: String, default: '' },
-}, { timestamps: true });
+}, { timestamps: true, bufferCommands: false });
 
 const UserSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
@@ -2902,10 +2903,53 @@ app.post('/api/chapters/:id/toggle', optionalAuthenticateToken, async (req: any,
 });
 
 // Study Materials CRUD
-app.get('/api/materials', (req, res) => {
+app.get('/api/materials', optionalAuthenticateToken, async (req: any, res) => {
   const { subject, type, search } = req.query;
-  let list = dbStore.getData().materials;
 
+  let materialsList: StudyMaterial[] = [];
+  if (req.user && req.user.userId) {
+    const userData = await getUserData(req.user.userId, req.user.email);
+    materialsList = userData.materials || [];
+  } else {
+    materialsList = dbStore.getData().materials || [];
+  }
+
+  // Merge with MongoDB Atlas MaterialModel if connected
+  try {
+    const isMongoActive = await ensureMongoConnected();
+    if (isMongoActive && mongoose.connection.readyState === 1) {
+      const mongoMats = (await MaterialModel.find().lean()) as any[];
+      if (mongoMats && mongoMats.length > 0) {
+        const map = new Map<string, StudyMaterial>();
+        for (const m of mongoMats) {
+          map.set(m.id, {
+            id: m.id,
+            title: m.title || '',
+            subject: m.subject || 'Biology',
+            chapter: m.chapter || '',
+            topic: m.topic || '',
+            type: m.type || 'PDF',
+            description: m.description || '',
+            fileName: m.fileName,
+            fileUrl: m.fileUrl,
+            fileBase64: m.fileBase64,
+            fileSize: m.fileSize,
+            contentSnippet: m.contentSnippet,
+            uploadDate: m.uploadDate || '',
+            tags: m.tags || [],
+            bookmarked: !!m.bookmarked,
+            userId: m.userId || '',
+          });
+        }
+        for (const m of materialsList) {
+          map.set(m.id, m);
+        }
+        materialsList = Array.from(map.values());
+      }
+    }
+  } catch (_) {}
+
+  let list = materialsList;
   if (subject && subject !== 'All') {
     list = list.filter((m) => m.subject.toLowerCase() === (subject as string).toLowerCase());
   }
@@ -2927,7 +2971,7 @@ app.get('/api/materials', (req, res) => {
   res.json(list);
 });
 
-app.post('/api/materials', async (req, res) => {
+app.post('/api/materials', optionalAuthenticateToken, async (req: any, res) => {
   const { title, subject, chapter, topic, type, description, contentSnippet, tags, fileBase64, fileName, fileSize } = req.body;
 
   if (!title || !subject || !chapter) {
@@ -2947,7 +2991,7 @@ app.post('/api/materials', async (req, res) => {
       if (cloudResult && cloudResult.url) {
         savedFileName = fileName;
         savedFileUrl = cloudResult.url;
-        console.log('[Materials] File permanently uploaded to Cloudinary:', savedFileUrl);
+        console.log('[Materials] File permanently uploaded to Cloudinary CDN:', savedFileUrl);
       } else {
         // 2. Fallback to local server disk storage
         const sanitizedName = Date.now() + '_' + fileName.replace(/[^a-zA-Z0-9.-]/g, '_');
@@ -2978,10 +3022,14 @@ app.post('/api/materials', async (req, res) => {
     uploadDate: new Date().toISOString().split('T')[0],
     tags: Array.isArray(tags) ? tags : (tags || '').split(',').map((t: string) => t.trim()).filter(Boolean),
     bookmarked: false,
+    userId: req.user?.userId || '',
   };
 
+  // 1. Update in-memory dbStore
   dbStore.updateData((data) => {
-    data.materials.unshift(newMaterial);
+    if (!data.materials.some((m) => m.id === newMaterial.id)) {
+      data.materials.unshift(newMaterial);
+    }
     data.activities.unshift({
       id: 'act_' + Date.now(),
       title: `Uploaded Study Material: ${newMaterial.title}`,
@@ -2992,9 +3040,31 @@ app.post('/api/materials', async (req, res) => {
     });
   });
 
-  // Explicitly persist to MongoDB Atlas immediately
+  // 2. Update dedicated user document if logged in
+  if (req.user && req.user.userId) {
+    try {
+      await updateUserData(req.user.userId, (data) => {
+        if (!data.materials.some((m) => m.id === newMaterial.id)) {
+          data.materials.unshift(newMaterial);
+        }
+        data.activities.unshift({
+          id: 'act_' + Date.now(),
+          title: `Uploaded Study Material: ${newMaterial.title}`,
+          description: `Added ${newMaterial.type} for ${newMaterial.subject} - Chapter: ${newMaterial.chapter}.`,
+          subject: newMaterial.subject,
+          type: 'pdf_uploaded',
+          timestamp: 'Just now',
+        });
+      }, req.user.email);
+    } catch (uErr) {
+      console.warn('Notice updating user dedicated document for material:', uErr);
+    }
+  }
+
+  // 3. Explicitly persist to MongoDB Material collection in Atlas immediately
   try {
-    if (mongoose.connection.readyState >= 1) {
+    const isMongoActive = await ensureMongoConnected();
+    if (isMongoActive && mongoose.connection.readyState === 1) {
       await MaterialModel.findOneAndUpdate(
         { id: newMaterial.id },
         newMaterial,
@@ -3009,7 +3079,7 @@ app.post('/api/materials', async (req, res) => {
   res.status(201).json(newMaterial);
 });
 
-app.delete('/api/materials/:id', async (req, res) => {
+app.delete('/api/materials/:id', optionalAuthenticateToken, async (req: any, res) => {
   const { id } = req.params;
   let deleted = false;
 
@@ -3021,8 +3091,19 @@ app.delete('/api/materials/:id', async (req, res) => {
     }
   });
 
+  if (req.user && req.user.userId) {
+    await updateUserData(req.user.userId, (data) => {
+      const idx = data.materials.findIndex((m) => m.id === id);
+      if (idx !== -1) {
+        data.materials.splice(idx, 1);
+        deleted = true;
+      }
+    }, req.user.email);
+  }
+
   try {
-    if (mongoose.connection.readyState >= 1) {
+    const isMongoActive = await ensureMongoConnected();
+    if (isMongoActive && mongoose.connection.readyState === 1) {
       await MaterialModel.deleteOne({ id });
       console.log(`[MongoDB] Successfully deleted study material ${id} from MongoDB`);
     }
@@ -3974,8 +4055,9 @@ Student's Question:
     contents.push(userContent);
 
     let reply = '';
+    let usedModel = 'gemini-3.8-flash';
     try {
-      const { response } = await callGeminiWithModelFallback({
+      const { response, modelUsed } = await callGeminiWithModelFallback({
         contents,
         config: {
           systemInstruction: systemPrompt,
@@ -3983,15 +4065,29 @@ Student's Question:
         },
         endpointName: '/api/ai/ask',
       });
-      reply = response.text || '';
+      usedModel = modelUsed || 'gemini-3.8-flash';
+      reply =
+        response.text ||
+        response.candidates?.[0]?.content?.parts
+          ?.map((p: any) => p.text)
+          .filter(Boolean)
+          .join('\n') ||
+        '';
     } catch (err: any) {
       console.error('All Gemini fallback models exhausted in /api/ai/ask:', err);
       // Fallback message so student user experience is 100% protected and helpful
       reply = `## 🎯 MDCAT Syllabus Guidance\n\nGoogle Gemini servers par is waqt temporary traffic surge (503) hai. Lekin aapka sawal register ho chuka hai!\n\n### 💡 Key Recommendations:\n1. **Dobara Bhejein:** 2 se 4 seconds baad dobara "Ask" dabayein; system automatically fallback model se fresh answer load karega.\n2. **Direct Question Bank Practice:** Sindh Board First-Year ke mutabiq aap foran **Question Bank** ya **Flashcards** section se practice continue rakh sakte hain.\n\n*Aapka sawal tha:* "${(question || '').slice(0, 80)}"`;
     }
 
-    if (!reply) {
-      reply = 'I analyzed your study materials, but could not generate a response. Please rephrase your question.';
+    const cleanQ = (question || '').trim().toLowerCase();
+    const isGreeting = /^(hy|hey|hi|hello|salam|slam|assalam|aao|hlo)\b/i.test(cleanQ) || cleanQ === 'hy' || cleanQ === 'hi' || cleanQ === 'hello';
+
+    if (!reply || !reply.trim()) {
+      if (isGreeting) {
+        reply = `## 🩺 Assalam-o-Alaikum & Welcome, Future Doctor! ✨\n\nMain **MediPrep AI** hoon — aapka 24/7 First-Year Sindh Textbook Board aur MDCAT Preparation Guide!\n\n### 🔬 Main kis tarah madad kar sakta hoon:\n1. **Concept Breakdown:** Biology, Chemistry, Physics ya English ka koi bhi topic asaan Roman Urdu aur standard terminology mein samjhein.\n2. **Past Paper & Diagram Solutions:** Koi bhi MDCAT question, numerical ya diagram attach karein aur step-by-step solution payein.\n3. **High-Yield Revision:** Sindh Board ke high-priority MDCAT exam points.\n\n> 💡 **Abhi Shuru Karein:** Niche apna sawal likhein ya koi photo upload karein aur **Ask** dabayein!`;
+      } else {
+        reply = `## 🎯 MDCAT Syllabus Guidance\n\nAapka sawal register ho chuka hai. Baraye meharbani apna sawal thora mazeed wazeh karein ya chapter ka naam batayein taake exact syllabus explanation di ja sake.`;
+      }
     }
 
     // Sanitize any stray LaTeX or delimiters so client always receives clean, human-readable text
@@ -4008,14 +4104,18 @@ Student's Question:
       data.activities.unshift({
         id: 'act_' + Date.now(),
         title: `AI Assistant Consultation: ${subject || 'Study'}`,
-        description: `Asked: "${question.slice(0, 50)}${question.length > 50 ? '...' : ''}"`,
+        description: `Asked: "${(question || 'Question').slice(0, 50)}${(question || '').length > 50 ? '...' : ''}"`,
         subject: subject || 'General',
         type: 'ai_question',
         timestamp: 'Just now',
       });
     });
 
-    res.json({ reply });
+    res.json({
+      reply,
+      answer: reply,
+      modelUsed: usedModel,
+    });
   } catch (err: any) {
     console.error('API Error in /api/ai/ask:', err);
     res.status(500).json({

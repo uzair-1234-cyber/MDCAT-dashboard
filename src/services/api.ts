@@ -528,7 +528,7 @@ export const api = {
     sourceExcerpt?: string;
     conversationHistory?: { role: 'user' | 'model'; parts: { text: string }[] }[];
     imageBase64?: string;
-  }): Promise<{ answer: string; modelUsed: string }> {
+  }): Promise<{ answer: string; reply: string; modelUsed: string }> {
     const res = await authFetch('/api/ai/ask', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -536,7 +536,12 @@ export const api = {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'AI Assistant request failed');
-    return data;
+    const text = data.answer || data.reply || '';
+    return {
+      answer: text,
+      reply: text,
+      modelUsed: data.modelUsed || '',
+    };
   },
 
   async getAiSessions(): Promise<ChatSession[]> {
@@ -857,9 +862,11 @@ export const api = {
     imageMimeType?: string;
   }): Promise<{ answer: string; reply: string; modelUsed: string }> {
     const res = await this.askAiAssistant(payload);
+    const finalAnswer = res.answer || res.reply || '';
     return {
       ...res,
-      reply: res.answer,
+      answer: finalAnswer,
+      reply: finalAnswer,
     };
   },
 

@@ -556,7 +556,7 @@ Apna subject aur chapter select karein, ya neeche direct sawal likhein ya diagra
       const aiMsg: Message = {
         id: 'ai_' + Date.now(),
         sender: 'ai',
-        text: response.reply,
+        text: response.reply || (response as any).answer || 'I am ready to help with your MDCAT preparation! Please ask your question.',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         contextTag: `${subject} Rationale`,
       };
