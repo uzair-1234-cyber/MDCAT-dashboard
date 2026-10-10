@@ -1311,7 +1311,8 @@ const INITIAL_DATABASE: DatabaseSchema = {
 // -------------------------------------------------------------
 const MaterialMongoSchema = new mongoose.Schema({
   id: { type: String, required: true },
-  userId: { type: String, required: true, default: 'usr_uzair_primary', index: true },
+  userId: { type: String, required: true, default: '', index: true },
+  userEmail: { type: String, default: '' },
   title: { type: String, default: '' },
   subject: { type: String, default: 'Biology' },
   chapter: { type: String, default: '' },
@@ -1326,7 +1327,7 @@ const MaterialMongoSchema = new mongoose.Schema({
   uploadDate: { type: String, default: '' },
   tags: { type: [String], default: [] },
   bookmarked: { type: Boolean, default: false },
-}, { timestamps: true });
+}, { timestamps: true, collection: 'materials' });
 MaterialMongoSchema.index({ id: 1, userId: 1 }, { unique: true });
 
 const MCQMongoSchema = new mongoose.Schema({
@@ -2521,9 +2522,46 @@ app.get('/api/materials', async (req, res) => {
   const store = getCurrentStore(req);
   await store.ensureSynced();
   const currentUserId = (store as any).userId;
+
   let list = (store.getData().materials || []).filter(
-    (m) => !m.userId || m.userId === currentUserId
+    (m) => m.userId === currentUserId
   );
+
+  // If Mongo is connected, also query MongoDB Atlas strictly for this user
+  try {
+    if (mongoose.connection.readyState === 1 && currentUserId && currentUserId !== 'usr_guest_fresh') {
+      const mongoMats = (await MaterialModel.find({ userId: currentUserId }).lean()) as any[];
+      if (mongoMats && mongoMats.length > 0) {
+        const map = new Map<string, StudyMaterial>();
+        for (const m of mongoMats) {
+          map.set(m.id, {
+            id: m.id,
+            title: m.title || '',
+            subject: m.subject || 'Biology',
+            chapter: m.chapter || '',
+            topic: m.topic || 'General',
+            type: m.type || 'PDF',
+            description: m.description || '',
+            fileName: m.fileName || 'Material.pdf',
+            fileUrl: m.fileUrl || '',
+            fileBase64: m.fileBase64 || '',
+            fileSize: m.fileSize || '1.5 MB',
+            contentSnippet: m.contentSnippet || '',
+            uploadDate: m.uploadDate || '',
+            tags: Array.isArray(m.tags) ? m.tags : [],
+            bookmarked: !!m.bookmarked,
+            userId: currentUserId,
+          });
+        }
+        for (const m of list) {
+          if (!map.has(m.id)) map.set(m.id, { ...m, userId: currentUserId });
+        }
+        list = Array.from(map.values());
+      }
+    }
+  } catch (mErr: any) {
+    console.warn('[Server Materials] Mongo lookup notice:', mErr?.message);
+  }
 
   if (subject && subject !== 'All') {
     list = list.filter((m) => m.subject.toLowerCase() === (subject as string).toLowerCase());
@@ -2547,11 +2585,15 @@ app.get('/api/materials', async (req, res) => {
 });
 
 app.post('/api/materials', async (req, res) => {
-  const { title, subject, chapter, topic, type, description, contentSnippet, tags, fileBase64, fileName, fileSize } = req.body;
+  const { title, subject, chapter, topic, type, description, contentSnippet, tags, fileBase64, fileName, fileSize, userId } = req.body;
 
   if (!title || !subject || !chapter) {
     return res.status(400).json({ error: 'Title, Subject, and Chapter are required.' });
   }
+
+  const currentStore = getCurrentStore(req);
+  const currentUserId = (currentStore as any).userId || (req.headers['x-user-id'] as string) || userId || 'usr_guest_fresh';
+  const currentUserEmail = (req.headers['x-user-email'] as string) || '';
 
   let savedFileName = fileName;
   let savedFileUrl = '';
@@ -2581,11 +2623,8 @@ app.post('/api/materials', async (req, res) => {
     }
   }
 
-  const currentStore = getCurrentStore(req);
-  const currentUserId = (currentStore as any).userId || 'usr_uzair_primary';
-
   const newMaterial: StudyMaterial = {
-    id: 'mat_' + Date.now(),
+    id: 'mat_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
     title,
     subject,
     chapter,
@@ -2600,10 +2639,12 @@ app.post('/api/materials', async (req, res) => {
     uploadDate: new Date().toISOString().split('T')[0],
     tags: Array.isArray(tags) ? tags : (tags || '').split(',').map((t: string) => t.trim()).filter(Boolean),
     bookmarked: false,
+    userId: currentUserId,
   };
 
   // 1. Immediately save to in-memory store and user's local file
   currentStore.updateData((data) => {
+    data.materials = (data.materials || []).filter((m) => m.id !== newMaterial.id);
     data.materials.unshift(newMaterial);
     data.activities.unshift({
       id: 'act_' + Date.now(),
@@ -2617,12 +2658,14 @@ app.post('/api/materials', async (req, res) => {
 
   // 2. Immediately persist to MongoDB Atlas with explicit upsert
   try {
-    await MaterialModel.findOneAndUpdate(
-      { id: newMaterial.id },
-      { ...newMaterial, userId: currentUserId },
-      { upsert: true, new: true }
-    );
-    console.log(`[MongoDB] Successfully persisted study material '${newMaterial.title}' (${newMaterial.id})`);
+    if (mongoose.connection.readyState === 1) {
+      await MaterialModel.findOneAndUpdate(
+        { id: newMaterial.id },
+        { ...newMaterial, userId: currentUserId, userEmail: currentUserEmail },
+        { upsert: true, new: true }
+      );
+      console.log(`[MongoDB] Successfully persisted study material '${newMaterial.title}' (${newMaterial.id}) for user ${currentUserId}`);
+    }
   } catch (mongoErr: any) {
     console.error('[MongoDB Error] Saving material to MongoDB:', mongoErr?.message || mongoErr);
   }

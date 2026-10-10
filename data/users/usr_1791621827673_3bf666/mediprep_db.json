@@ -890,13 +890,41 @@
       "classYear": "1st Year"
     }
   ],
-  "materials": [],
+  "materials": [
+    {
+      "id": "mat_1791623118909_imlb",
+      "title": "Cell Biology Notes for Aisha Khan",
+      "subject": "Biology",
+      "chapter": "Chapter 1 - Cell Structure",
+      "topic": "Mitochondria",
+      "type": "Notes",
+      "description": "",
+      "fileName": "Material.pdf",
+      "fileUrl": "",
+      "fileBase64": "",
+      "fileSize": "1.5 MB",
+      "contentSnippet": "Uploaded study document for First-Year Medical Preparation.",
+      "uploadDate": "2026-10-10",
+      "tags": [],
+      "bookmarked": false,
+      "userId": "usr_1791621827673_3bf666"
+    }
+  ],
   "mcqs": [],
   "quizAttempts": [],
   "mistakes": [],
   "notes": [],
   "revisionPlans": [],
-  "activities": [],
+  "activities": [
+    {
+      "id": "act_1791623118910",
+      "title": "Uploaded Study Material: Cell Biology Notes for Aisha Khan",
+      "description": "Added Notes for Biology - Chapter: Chapter 1 - Cell Structure.",
+      "subject": "Biology",
+      "type": "pdf_uploaded",
+      "timestamp": "Just now"
+    }
+  ],
   "pastPapers": [],
   "aiSessions": []
 }

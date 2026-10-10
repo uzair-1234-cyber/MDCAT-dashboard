@@ -11,7 +11,7 @@
     "dreamMedicalCollege": "Dow University of Health Sciences (DUHS) / King Edward",
     "personalMotto": "Discipline Today → Doctor Tomorrow. Make my parents proud.",
     "createdAt": "2026-10-02T09:45:23.936Z",
-    "lastLoginAt": "2026-10-03T08:33:24.362Z"
+    "lastLoginAt": "2026-10-10T09:05:19.110Z"
   },
   {
     "id": "usr_demo_student",
@@ -163,6 +163,32 @@
     "dreamMedicalCollege": "Dow University of Health Sciences",
     "personalMotto": "Discipline Today → Doctor Tomorrow.",
     "createdAt": "2026-10-10T08:43:47.739Z",
-    "lastLoginAt": "2026-10-10T08:43:55.007Z"
+    "lastLoginAt": "2026-10-10T09:05:18.889Z"
+  },
+  {
+    "id": "6ac9fabb30e930d926e3b6c8",
+    "email": "uzairkorejo633@gmail.com",
+    "name": "Sindh Board Student",
+    "passwordHash": "2370c648c42a18d07cc622245a5bf90375a796c4b663ff309dcd0cbad895d93139065f808a393a045ae164e6c5a7fbfd03df3f32cba8c25ccacc7935fefb49c3",
+    "salt": "bcrypt",
+    "aspirantType": "First-Year Sindh Board Medical Aspirant",
+    "targetExam": "MDCAT / NUMS",
+    "targetYear": "2026",
+    "dreamMedicalCollege": "Dow University of Health Sciences (DUHS) / King Edward",
+    "personalMotto": "Discipline Today → Doctor Tomorrow. Make my parents proud.",
+    "createdAt": "2026-10-10T08:43:39.912Z"
+  },
+  {
+    "id": "6ac9fd38e3ac5c964959d9c1",
+    "email": "haseeb@gmail.com",
+    "name": "haseeb",
+    "passwordHash": "$2b$10$HHGP23T9cP3PG1ijSKoXHe/2zIi5vM71xpERR8ks3deYFMLS8f1.a",
+    "salt": "bcrypt",
+    "aspirantType": "First-Year Sindh Board (XI Pre-Medical)",
+    "targetExam": "MDCAT / NUMS",
+    "targetYear": "2026",
+    "dreamMedicalCollege": "Dow University of Health Sciences (DUHS, Karachi)",
+    "personalMotto": "Discipline Today → Doctor Tomorrow.",
+    "createdAt": "2026-10-10T08:54:15.933Z"
   }
 ]

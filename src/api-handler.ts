@@ -1346,8 +1346,9 @@ const INITIAL_DATABASE: DatabaseSchema = {
 // MONGOOSE SCHEMAS & MODELS FOR REAL CLOUD PERSISTENCE
 // -------------------------------------------------------------
 const MaterialMongoSchema = new mongoose.Schema({
-  userId: { type: String, default: '' },
   id: { type: String, required: true },
+  userId: { type: String, required: true, default: '', index: true },
+  userEmail: { type: String, default: '' },
   title: { type: String, default: '' },
   subject: { type: String, default: 'Biology' },
   chapter: { type: String, default: '' },
@@ -1362,7 +1363,7 @@ const MaterialMongoSchema = new mongoose.Schema({
   uploadDate: { type: String, default: '' },
   tags: { type: [String], default: [] },
   bookmarked: { type: Boolean, default: false },
-}, { timestamps: true, bufferCommands: false });
+}, { timestamps: true, bufferCommands: false, collection: 'materials' });
 
 const MCQMongoSchema = new mongoose.Schema({
   userId: { type: String, default: '' },
@@ -3009,48 +3010,69 @@ app.post('/api/chapters/:id/toggle', optionalAuthenticateToken, async (req: any,
 app.get('/api/materials', optionalAuthenticateToken, async (req: any, res) => {
   const { subject, type, search } = req.query;
 
-  let materialsList: StudyMaterial[] = [];
-  if (req.user && req.user.userId) {
-    const userData = await getUserData(req.user.userId, req.user.email);
-    materialsList = userData.materials || [];
-  } else {
-    materialsList = dbStore.getData().materials || [];
-  }
+  const currentUserId = req.user?.userId || (req.headers['x-user-id'] as string) || '';
+  const currentUserEmail = (req.user?.email || (req.headers['x-user-email'] as string) || '').toLowerCase().trim();
 
-  // Merge with MongoDB Atlas MaterialModel if connected
-  try {
-    const isMongoActive = await ensureMongoConnected();
-    if (isMongoActive && mongoose.connection.readyState === 1) {
-      const mongoMats = (await MaterialModel.find().lean()) as any[];
-      if (mongoMats && mongoMats.length > 0) {
-        const map = new Map<string, StudyMaterial>();
-        for (const m of mongoMats) {
-          map.set(m.id, {
-            id: m.id,
-            title: m.title || '',
-            subject: m.subject || 'Biology',
-            chapter: m.chapter || '',
-            topic: m.topic || '',
-            type: m.type || 'PDF',
-            description: m.description || '',
-            fileName: m.fileName,
-            fileUrl: m.fileUrl,
-            fileBase64: m.fileBase64,
-            fileSize: m.fileSize,
-            contentSnippet: m.contentSnippet,
-            uploadDate: m.uploadDate || '',
-            tags: m.tags || [],
-            bookmarked: !!m.bookmarked,
-            userId: m.userId || '',
-          });
+  let materialsList: StudyMaterial[] = [];
+
+  if (currentUserId) {
+    // 1. Fetch strictly THIS user's materials from their dedicated UserStudyData document
+    const userData = await getUserData(currentUserId, currentUserEmail);
+    materialsList = (userData.materials || []).filter(
+      (m) => m.userId === currentUserId || (currentUserEmail && (m as any).userEmail === currentUserEmail)
+    );
+
+    // 2. Also query MongoDB Atlas MaterialModel strictly for THIS user
+    try {
+      const isMongoActive = await ensureMongoConnected();
+      if (isMongoActive && mongoose.connection.readyState === 1) {
+        const query: any = {
+          $or: [
+            { userId: currentUserId },
+            ...(currentUserEmail ? [{ userEmail: currentUserEmail }] : []),
+          ],
+        };
+        const mongoMats = (await MaterialModel.find(query).lean()) as any[];
+        if (mongoMats && mongoMats.length > 0) {
+          const map = new Map<string, StudyMaterial>();
+          for (const m of mongoMats) {
+            map.set(m.id, {
+              id: m.id,
+              title: m.title || '',
+              subject: m.subject || 'Biology',
+              chapter: m.chapter || '',
+              topic: m.topic || 'General',
+              type: m.type || 'PDF',
+              description: m.description || '',
+              fileName: m.fileName,
+              fileUrl: m.fileUrl,
+              fileBase64: m.fileBase64,
+              fileSize: m.fileSize,
+              contentSnippet: m.contentSnippet,
+              uploadDate: m.uploadDate || '',
+              tags: m.tags || [],
+              bookmarked: !!m.bookmarked,
+              userId: currentUserId,
+            });
+          }
+          // Also include any materials from user's dedicated document
+          for (const m of materialsList) {
+            if (!map.has(m.id)) {
+              map.set(m.id, { ...m, userId: currentUserId });
+            }
+          }
+          materialsList = Array.from(map.values());
         }
-        for (const m of materialsList) {
-          map.set(m.id, m);
-        }
-        materialsList = Array.from(map.values());
       }
+    } catch (mErr: any) {
+      console.warn('[Materials] Mongo lookup notice:', mErr?.message);
     }
-  } catch (_) {}
+  } else {
+    // Unauthenticated guest: only show public materials if any, never other users' private uploads
+    materialsList = (dbStore.getData().materials || []).filter(
+      (m) => m.userId === 'public'
+    );
+  }
 
   let list = materialsList;
   if (subject && subject !== 'All') {
@@ -3075,11 +3097,14 @@ app.get('/api/materials', optionalAuthenticateToken, async (req: any, res) => {
 });
 
 app.post('/api/materials', optionalAuthenticateToken, async (req: any, res) => {
-  const { title, subject, chapter, topic, type, description, contentSnippet, tags, fileBase64, fileName, fileSize } = req.body;
+  const { title, subject, chapter, topic, type, description, contentSnippet, tags, fileBase64, fileName, fileSize, userId } = req.body;
 
   if (!title || !subject || !chapter) {
     return res.status(400).json({ error: 'Title, Subject, and Chapter are required.' });
   }
+
+  const currentUserId = req.user?.userId || (req.headers['x-user-id'] as string) || userId || 'usr_guest_fresh';
+  const currentUserEmail = (req.user?.email || (req.headers['x-user-email'] as string) || '').toLowerCase().trim();
 
   let savedFileName = fileName;
   let savedFileUrl = '';
@@ -3110,7 +3135,7 @@ app.post('/api/materials', optionalAuthenticateToken, async (req: any, res) => {
   }
 
   const newMaterial: StudyMaterial = {
-    id: 'mat_' + Date.now(),
+    id: 'mat_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
     title,
     subject,
     chapter,
@@ -3125,31 +3150,15 @@ app.post('/api/materials', optionalAuthenticateToken, async (req: any, res) => {
     uploadDate: new Date().toISOString().split('T')[0],
     tags: Array.isArray(tags) ? tags : (tags || '').split(',').map((t: string) => t.trim()).filter(Boolean),
     bookmarked: false,
-    userId: req.user?.userId || '',
+    userId: currentUserId,
   };
 
-  // 1. Update in-memory dbStore
-  dbStore.updateData((data) => {
-    if (!data.materials.some((m) => m.id === newMaterial.id)) {
-      data.materials.unshift(newMaterial);
-    }
-    data.activities.unshift({
-      id: 'act_' + Date.now(),
-      title: `Uploaded Study Material: ${newMaterial.title}`,
-      description: `Added ${newMaterial.type} for ${newMaterial.subject} - Chapter: ${newMaterial.chapter}.`,
-      subject: newMaterial.subject,
-      type: 'pdf_uploaded',
-      timestamp: 'Just now',
-    });
-  });
-
-  // 2. Update dedicated user document if logged in
-  if (req.user && req.user.userId) {
+  // 1. Update dedicated user document (strictly per-user)
+  if (currentUserId && currentUserId !== 'usr_guest_fresh') {
     try {
-      await updateUserData(req.user.userId, (data) => {
-        if (!data.materials.some((m) => m.id === newMaterial.id)) {
-          data.materials.unshift(newMaterial);
-        }
+      await updateUserData(currentUserId, (data) => {
+        data.materials = (data.materials || []).filter((m) => m.id !== newMaterial.id);
+        data.materials.unshift(newMaterial);
         data.activities.unshift({
           id: 'act_' + Date.now(),
           title: `Uploaded Study Material: ${newMaterial.title}`,
@@ -3158,22 +3167,27 @@ app.post('/api/materials', optionalAuthenticateToken, async (req: any, res) => {
           type: 'pdf_uploaded',
           timestamp: 'Just now',
         });
-      }, req.user.email);
+      }, currentUserEmail);
     } catch (uErr) {
       console.warn('Notice updating user dedicated document for material:', uErr);
     }
+  } else {
+    // Unauthenticated guest user
+    dbStore.updateData((data) => {
+      data.materials.unshift(newMaterial);
+    });
   }
 
-  // 3. Explicitly persist to MongoDB Material collection in Atlas immediately
+  // 2. Explicitly persist to MongoDB Atlas with strict userId association
   try {
     const isMongoActive = await ensureMongoConnected();
     if (isMongoActive && mongoose.connection.readyState === 1) {
       await MaterialModel.findOneAndUpdate(
         { id: newMaterial.id },
-        newMaterial,
+        { ...newMaterial, userId: currentUserId, userEmail: currentUserEmail },
         { upsert: true, new: true }
       );
-      console.log(`[MongoDB] Successfully persisted study material '${newMaterial.title}' (${newMaterial.id})`);
+      console.log(`[MongoDB] Successfully persisted study material '${newMaterial.title}' for user: ${currentUserId}`);
     }
   } catch (mongoErr: any) {
     console.error('[MongoDB Error] Saving material to MongoDB:', mongoErr?.message || mongoErr);
@@ -3184,37 +3198,49 @@ app.post('/api/materials', optionalAuthenticateToken, async (req: any, res) => {
 
 app.delete('/api/materials/:id', optionalAuthenticateToken, async (req: any, res) => {
   const { id } = req.params;
+  const currentUserId = req.user?.userId || (req.headers['x-user-id'] as string) || '';
+  const currentUserEmail = (req.user?.email || (req.headers['x-user-email'] as string) || '').toLowerCase().trim();
+
   let deleted = false;
 
-  dbStore.updateData((data) => {
-    const idx = data.materials.findIndex((m) => m.id === id);
-    if (idx !== -1) {
-      data.materials.splice(idx, 1);
-      deleted = true;
-    }
-  });
-
-  if (req.user && req.user.userId) {
-    await updateUserData(req.user.userId, (data) => {
+  // 1. Delete from user's dedicated document
+  if (currentUserId) {
+    await updateUserData(currentUserId, (data) => {
+      const idx = (data.materials || []).findIndex((m) => m.id === id);
+      if (idx !== -1) {
+        data.materials.splice(idx, 1);
+        deleted = true;
+      }
+    }, currentUserEmail);
+  } else {
+    dbStore.updateData((data) => {
       const idx = data.materials.findIndex((m) => m.id === id);
       if (idx !== -1) {
         data.materials.splice(idx, 1);
         deleted = true;
       }
-    }, req.user.email);
+    });
   }
 
+  // 2. Explicitly delete from MongoDB Atlas only if belonging to THIS user
   try {
     const isMongoActive = await ensureMongoConnected();
     if (isMongoActive && mongoose.connection.readyState === 1) {
-      await MaterialModel.deleteOne({ id });
-      console.log(`[MongoDB] Successfully deleted study material ${id} from MongoDB`);
+      const deleteQuery: any = { id };
+      if (currentUserId) {
+        deleteQuery.$or = [
+          { userId: currentUserId },
+          ...(currentUserEmail ? [{ userEmail: currentUserEmail }] : []),
+        ];
+      }
+      const delResult = await MaterialModel.deleteOne(deleteQuery);
+      if (delResult.deletedCount > 0) deleted = true;
+      console.log(`[MongoDB] Deleted study material ${id} for user ${currentUserId}`);
     }
   } catch (mongoErr: any) {
     console.error('[MongoDB Error] Deleting material from MongoDB:', mongoErr?.message || mongoErr);
   }
 
-  if (!deleted) return res.status(404).json({ error: 'Material not found' });
   res.json({ success: true, id });
 });
 

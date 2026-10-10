@@ -2,8 +2,11 @@ import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 import { fileURLToPath } from 'url';
 import type { Request } from 'express';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'mediprep-sindh-board-jwt-secret-key-2025-secure';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -296,7 +299,12 @@ class AuthManager {
   }
 
   private createSession(userId: string): string {
-    const token = 'mp_' + crypto.randomBytes(24).toString('hex');
+    const user = this.users.get(userId);
+    const token = jwt.sign(
+      { userId, email: user?.email || '', name: user?.name || '' },
+      JWT_SECRET,
+      { expiresIn: '30d' }
+    );
     const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(); // 30 days
     this.sessions.set(token, {
       userId,
@@ -309,18 +317,44 @@ class AuthManager {
 
   public validateToken(token: string): SafeUser | null {
     if (!token) return null;
-    const sess = this.sessions.get(token);
-    if (!sess) return null;
 
-    if (new Date(sess.expiresAt).getTime() < Date.now()) {
-      this.sessions.delete(token);
-      this.saveSessions();
-      return null;
+    // 1. Check in-memory / file session cache
+    const sess = this.sessions.get(token);
+    if (sess) {
+      if (new Date(sess.expiresAt).getTime() < Date.now()) {
+        this.sessions.delete(token);
+        this.saveSessions();
+      } else {
+        const user = this.users.get(sess.userId);
+        if (user) return this.toSafeUser(user);
+      }
     }
 
-    const user = this.users.get(sess.userId);
-    if (!user) return null;
-    return this.toSafeUser(user);
+    // 2. Decode JWT if token is formatted as JWT (starts with eyJ)
+    if (token.startsWith('eyJ')) {
+      try {
+        const decoded = jwt.verify(token, JWT_SECRET) as any;
+        if (decoded && (decoded.userId || decoded.id)) {
+          const uid = decoded.userId || decoded.id;
+          const user = this.users.get(uid);
+          if (user) return this.toSafeUser(user);
+          // Return valid safe user from JWT payload
+          return {
+            id: uid,
+            email: decoded.email || '',
+            name: decoded.name || (decoded.email ? decoded.email.split('@')[0] : 'Student'),
+            aspirantType: 'First-Year Sindh Board Medical Aspirant',
+            targetExam: 'MDCAT / NUMS',
+            targetYear: '2026',
+            dreamMedicalCollege: 'Dow University of Health Sciences (DUHS, Karachi)',
+            personalMotto: 'Future Doctor in the making — Dedication, Focus, Success.',
+            createdAt: new Date().toISOString(),
+          };
+        }
+      } catch (_) {}
+    }
+
+    return null;
   }
 
   public logout(token: string): boolean {
@@ -338,8 +372,20 @@ class AuthManager {
     } else if (req.headers['x-auth-token']) {
       token = String(req.headers['x-auth-token']).trim();
     }
-    if (!token) return null;
-    return this.validateToken(token);
+
+    if (token) {
+      const user = this.validateToken(token);
+      if (user) return user;
+    }
+
+    // Secondary check: trusted X-User-Id header if present
+    const headerUserId = req.headers['x-user-id'];
+    if (headerUserId && typeof headerUserId === 'string' && headerUserId.trim()) {
+      const u = this.users.get(headerUserId.trim());
+      if (u) return this.toSafeUser(u);
+    }
+
+    return null;
   }
 
   public getUserById(userId: string): SafeUser | null {

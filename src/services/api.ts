@@ -71,8 +71,15 @@ export const authStorage = {
 async function authFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
   const headers = new Headers(init?.headers || {});
   const token = authStorage.getToken();
+  const user = authStorage.getUser();
   if (token && !headers.has('Authorization')) {
     headers.set('Authorization', `Bearer ${token}`);
+  }
+  if (user?.id && !headers.has('X-User-Id')) {
+    headers.set('X-User-Id', user.id);
+  }
+  if (user?.email && !headers.has('X-User-Email')) {
+    headers.set('X-User-Email', user.email);
   }
   return fetch(input, {
     ...init,
@@ -299,11 +306,17 @@ export const api = {
     fileName?: string;
     fileBase64?: string;
     fileSize?: string;
+    userId?: string;
   }): Promise<StudyMaterial> {
+    const user = authStorage.getUser();
+    const fullPayload = {
+      ...payload,
+      userId: payload.userId || user?.id || undefined,
+    };
     const res = await authFetch('/api/materials', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(fullPayload),
     });
     if (!res.ok) {
       const err = await res.json();
