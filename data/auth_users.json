@@ -190,5 +190,19 @@
     "dreamMedicalCollege": "Dow University of Health Sciences (DUHS, Karachi)",
     "personalMotto": "Discipline Today → Doctor Tomorrow.",
     "createdAt": "2026-10-10T08:54:15.933Z"
+  },
+  {
+    "id": "usr_1791624048155_5adbcb",
+    "email": "doctor_1791624048041@testmed.pk",
+    "name": "Dr. Test Aspirant",
+    "passwordHash": "$2b$10$nafovgPEbgUeCU0QUjYjs.rqb90ZbKIF4MMMm6XZEhmNqewSakfG2",
+    "salt": "bcrypt",
+    "aspirantType": "First-Year Sindh Board Medical Aspirant",
+    "targetExam": "MDCAT / NUMS",
+    "targetYear": "2026",
+    "dreamMedicalCollege": "Dow University of Health Sciences (DUHS)",
+    "personalMotto": "Discipline Today → Doctor Tomorrow.",
+    "createdAt": "2026-10-10T09:20:48.214Z",
+    "lastLoginAt": "2026-10-10T09:20:48.485Z"
   }
 ]

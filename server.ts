@@ -1461,6 +1461,7 @@ const AppStateModel = mongoose.models.AppState || mongoose.model('AppState', App
 
 const UserMongoSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+  userId: { type: String, default: '', index: true },
   password: { type: String, required: true },
   name: { type: String, default: '' },
   aspirantType: { type: String, default: 'MDCAT Aspirant' },
@@ -1522,6 +1523,7 @@ class DatabaseStore {
   private data: DatabaseSchema;
   private dbFilePath: string;
   private userId: string;
+  private userEmail: string = '';
   private isMongoConnected: boolean = false;
   private mongoUri: string | null = null;
   private lastMongoError: string | null = null;
@@ -1537,11 +1539,24 @@ class DatabaseStore {
   };
   private isSyncing: boolean = false;
 
-  constructor(dbFilePath: string = DB_FILE, userId: string = 'usr_uzair_primary') {
+  constructor(dbFilePath: string = DB_FILE, userId: string = 'usr_uzair_primary', userEmail?: string) {
     this.dbFilePath = dbFilePath;
     this.userId = userId;
+    this.userEmail = (userEmail || authManager.getUserById(userId)?.email || '').toLowerCase().trim();
     this.data = this.loadFromFile();
     this.initMongo();
+  }
+
+  public setUserEmail(email: string) {
+    if (email) this.userEmail = email.toLowerCase().trim();
+  }
+
+  public getUserEmail(): string {
+    return this.userEmail;
+  }
+
+  public getUserId(): string {
+    return this.userId;
   }
 
   private loadFromFile(): DatabaseSchema {
@@ -1656,9 +1671,14 @@ class DatabaseStore {
     if (!this.isMongoConnected || this.isSyncing) return;
     this.isSyncing = true;
     try {
-      // 1. Study Materials: Strict multi-tenant isolation. Fetch ONLY materials belonging to THIS student (userId)
-      const userMongoMaterials = (await MaterialModel.find({ userId: this.userId }).lean()) as any[];
-      console.log(`[MongoDB Sync] Found ${userMongoMaterials.length} study materials in MongoDB Atlas for student workspace (${this.userId})`);
+      // 1. Study Materials: Strict multi-tenant isolation. Fetch by userId OR userEmail
+      const email = (this.userEmail || authManager.getUserById(this.userId)?.email || '').toLowerCase().trim();
+      const orQuery: any[] = [{ userId: this.userId }];
+      if (email) {
+        orQuery.push({ userEmail: email });
+      }
+      const userMongoMaterials = (await MaterialModel.find({ $or: orQuery }).lean()) as any[];
+      console.log(`[MongoDB Sync] Found ${userMongoMaterials.length} study materials in MongoDB Atlas for student workspace (${this.userId} / ${email || 'no-email'})`);
 
       const existingMap = new Map<string, StudyMaterial>();
       for (const m of userMongoMaterials) {
@@ -1682,6 +1702,11 @@ class DatabaseStore {
         };
         existingMap.set(m.id, matItem);
 
+        // Keep MongoDB document in sync with current user ID and email
+        if (email && (m.userEmail !== email || m.userId !== this.userId)) {
+          MaterialModel.updateOne({ id: m.id }, { userId: this.userId, userEmail: email }).exec().catch(() => {});
+        }
+
         // Restore physical file to /uploads/ if missing on server disk
         if (m.fileBase64 && m.fileUrl) {
           try {
@@ -1698,14 +1723,14 @@ class DatabaseStore {
       // Merge only local materials that strictly belong to THIS user
       for (const localMat of (this.data.materials || [])) {
         // Discard any material that belongs to another user
-        if (localMat.userId && localMat.userId !== this.userId) {
+        if (localMat.userId && localMat.userId !== this.userId && (!email || (localMat as any).userEmail !== email)) {
           continue;
         }
         if (!existingMap.has(localMat.id)) {
-          const matWithUser = { ...localMat, userId: this.userId };
+          const matWithUser = { ...localMat, userId: this.userId, userEmail: email };
           existingMap.set(localMat.id, matWithUser);
           await MaterialModel.findOneAndUpdate(
-            { id: localMat.id, userId: this.userId },
+            { id: localMat.id },
             matWithUser,
             { upsert: true, new: true }
           );
