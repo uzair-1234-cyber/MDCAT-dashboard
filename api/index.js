@@ -152,9 +152,7 @@ if (geminiApiKey) {
 }
 var STABLE_FALLBACK_MODELS = [
   "gemini-2.5-flash",
-  "gemini-2.5-flash-lite",
-  "gemini-3.1-flash-lite",
-  "gemini-flash-latest"
+  "gemini-2.5-flash-lite"
 ];
 function formatAiErrorMessage(err) {
   if (!err) return "AI request encountered an unexpected issue.";
@@ -1150,7 +1148,7 @@ var INITIAL_DATABASE = {
   aiSessions: []
 };
 var MaterialMongoSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  userId: { type: String, default: "" },
   id: { type: String, required: true },
   title: { type: String, default: "" },
   subject: { type: String, default: "Biology" },
@@ -1166,9 +1164,9 @@ var MaterialMongoSchema = new mongoose.Schema({
   uploadDate: { type: String, default: "" },
   tags: { type: [String], default: [] },
   bookmarked: { type: Boolean, default: false }
-}, { timestamps: true });
+}, { timestamps: true, bufferCommands: false });
 var MCQMongoSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  userId: { type: String, default: "" },
   id: { type: String, required: true },
   subject: { type: String, default: "Biology" },
   chapter: { type: String, default: "" },
@@ -1188,9 +1186,9 @@ var MCQMongoSchema = new mongoose.Schema({
   isBookmarked: { type: Boolean, default: false },
   isDifficult: { type: Boolean, default: false },
   createdAt: { type: String, default: "" }
-}, { timestamps: true });
+}, { timestamps: true, bufferCommands: false });
 var QuizAttemptMongoSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  userId: { type: String, default: "" },
   id: { type: String, required: true },
   title: { type: String, default: "" },
   subject: { type: String, default: "" },
@@ -1205,9 +1203,9 @@ var QuizAttemptMongoSchema = new mongoose.Schema({
   date: { type: String, default: "" },
   weakTopics: { type: [String], default: [] },
   answersSummary: [mongoose.Schema.Types.Mixed]
-}, { timestamps: true });
+}, { timestamps: true, bufferCommands: false });
 var StudyNoteMongoSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  userId: { type: String, default: "" },
   id: { type: String, required: true },
   title: { type: String, default: "" },
   subject: { type: String, default: "Biology" },
@@ -1218,9 +1216,9 @@ var StudyNoteMongoSchema = new mongoose.Schema({
   bookmarked: { type: Boolean, default: false },
   createdAt: { type: String, default: "" },
   updatedAt: { type: String, default: "" }
-}, { timestamps: true });
+}, { timestamps: true, bufferCommands: false });
 var RevisionPlanMongoSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  userId: { type: String, default: "" },
   id: { type: String, required: true },
   subject: { type: String, default: "Biology" },
   chapter: { type: String, default: "" },
@@ -1230,26 +1228,26 @@ var RevisionPlanMongoSchema = new mongoose.Schema({
   priority: { type: String, default: "Medium" },
   status: { type: String, default: "Not Started" },
   notes: { type: String, default: "" }
-}, { timestamps: true });
+}, { timestamps: true, bufferCommands: false });
 var ActivityMongoSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  userId: { type: String, default: "" },
   id: { type: String, required: true },
   title: { type: String, default: "" },
   description: { type: String, default: "" },
   subject: { type: String, default: "" },
   type: { type: String, default: "" },
   timestamp: { type: String, default: "" }
-}, { timestamps: true });
+}, { timestamps: true, bufferCommands: false });
 var AppStateMongoSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  userId: { type: String, default: "" },
   key: { type: String, required: true, default: "main_state" },
   userProfile: mongoose.Schema.Types.Mixed,
   studyState: mongoose.Schema.Types.Mixed,
   chapters: [mongoose.Schema.Types.Mixed],
   subjects: [mongoose.Schema.Types.Mixed]
-}, { timestamps: true });
+}, { timestamps: true, bufferCommands: false });
 var MistakeMongoSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  userId: { type: String, default: "" },
   id: { type: String, required: true },
   mcqId: { type: String, default: "" },
   question: { type: String, default: "" },
@@ -1273,12 +1271,19 @@ var MistakeMongoSchema = new mongoose.Schema({
   mastered: { type: Boolean, default: false },
   createdAt: { type: String, default: "" },
   lastAttemptedAt: { type: String, default: "" }
-}, { timestamps: true });
+}, { timestamps: true, bufferCommands: false });
 var UserSchema = new mongoose.Schema({
-  email: { type: String, required: true, unique: true },
+  email: { type: String, required: true, unique: true, lowercase: true, trim: true },
   password: { type: String, required: true },
-  name: { type: String, default: "" }
-}, { timestamps: true });
+  name: { type: String, default: "" },
+  aspirantType: { type: String, default: "MDCAT Aspirant" },
+  targetExam: { type: String, default: "MDCAT 2025" },
+  targetYear: { type: String, default: "2025" },
+  dreamMedicalCollege: { type: String, default: "" },
+  personalMotto: { type: String, default: "" },
+  avatarUrl: { type: String, default: "" },
+  role: { type: String, default: "student" }
+}, { timestamps: true, bufferCommands: false, collection: "users" });
 var UserModel = mongoose.models.User || mongoose.model("User", UserSchema);
 var MaterialModel = mongoose.models.Material || mongoose.model("Material", MaterialMongoSchema);
 var MCQModel = mongoose.models.MCQ || mongoose.model("MCQ", MCQMongoSchema);
@@ -1292,7 +1297,7 @@ var UserStudyDataSchema = new mongoose.Schema({
   userId: { type: String, required: true, unique: true, index: true },
   userEmail: { type: String, default: "" },
   data: mongoose.Schema.Types.Mixed
-}, { timestamps: true });
+}, { timestamps: true, bufferCommands: false, collection: "user_study_data" });
 var UserStudyDataModel = mongoose.models.UserStudyData || mongoose.model("UserStudyData", UserStudyDataSchema);
 function syncStandardChapters(existingChapters) {
   const standard1stBio = INITIAL_DATABASE.chapters.filter((c) => c.subject === "Biology" && (c.classYear === "1st Year" || !c.classYear));
@@ -1744,35 +1749,56 @@ var optionalAuthenticateToken = (req, res, next) => {
     next();
   });
 };
-var isConnectingMongo = false;
+function getMongoConnectionConfig(uri) {
+  let dbName = "studypannel";
+  try {
+    const url = new URL(uri.replace(/^mongodb\+srv:\/\//i, "http://").replace(/^mongodb:\/\//i, "http://"));
+    const pathname = url.pathname.replace(/^\//, "").split("?")[0].trim();
+    if (pathname && pathname.length > 0) {
+      dbName = pathname;
+    }
+  } catch (_) {
+  }
+  return {
+    dbName,
+    serverSelectionTimeoutMS: 15e3,
+    connectTimeoutMS: 15e3,
+    socketTimeoutMS: 45e3,
+    maxPoolSize: 10,
+    bufferCommands: false
+  };
+}
+var cachedMongoPromise = null;
 async function ensureMongoConnected() {
   if (mongoose.connection.readyState === 1) return true;
   const uri = process.env.MONGODB_URI;
-  if (!uri || uri.includes("your_mongodb_connection_string") || !uri.startsWith("mongodb")) {
+  if (!uri || uri.includes("your_mongodb_connection_string") || !uri.startsWith("mongodb://") && !uri.startsWith("mongodb+srv://")) {
     return false;
   }
-  if (isConnectingMongo) {
-    for (let i = 0; i < 25; i++) {
-      if (mongoose.connection.readyState === 1) return true;
-      await new Promise((r) => setTimeout(r, 100));
+  if (cachedMongoPromise) {
+    return cachedMongoPromise;
+  }
+  cachedMongoPromise = (async () => {
+    try {
+      const config = getMongoConnectionConfig(uri);
+      await mongoose.connect(uri, config);
+      console.log(`[MongoDB] Connected successfully to database: "${mongoose.connection.name || config.dbName}"`);
+      await syncLocalUsersToMongo();
+      return true;
+    } catch (err) {
+      console.warn("[MongoDB] Connection notice:", err?.message || err);
+      return false;
+    } finally {
+      if (mongoose.connection.readyState !== 1) {
+        cachedMongoPromise = null;
+      }
     }
-    return mongoose.connection.readyState === 1;
+  })();
+  const ok = await cachedMongoPromise;
+  if (!ok) {
+    cachedMongoPromise = null;
   }
-  isConnectingMongo = true;
-  try {
-    await mongoose.connect(uri, {
-      serverSelectionTimeoutMS: 3e3,
-      connectTimeoutMS: 3e3,
-      dbName: "studypannel"
-    });
-    console.log("[MongoDB Serverless] Connected successfully to:", mongoose.connection.name || "studypannel");
-    return true;
-  } catch (err) {
-    console.warn("[MongoDB Serverless] Connection notice (resilient fallback active):", err?.message || err);
-    return false;
-  } finally {
-    isConnectingMongo = false;
-  }
+  return ok;
 }
 var LocalAuthStore = class {
   constructor() {
@@ -1821,25 +1847,81 @@ var LocalAuthStore = class {
       this.save();
     }
   }
+  getAll() {
+    this.load();
+    return Array.from(this.users.values());
+  }
   findByEmail(email) {
+    this.load();
     return this.users.get(email.toLowerCase().trim());
   }
   findById(id) {
+    this.load();
     for (const u of this.users.values()) {
       if (u.id === id) return u;
     }
     return void 0;
   }
   create(user) {
+    this.load();
     this.users.set(user.email.toLowerCase().trim(), user);
     this.save();
     return user;
   }
+  updatePassword(email, newHash) {
+    this.load();
+    const user = this.users.get(email.toLowerCase().trim());
+    if (user) {
+      user.passwordHash = newHash;
+      this.save();
+      return true;
+    }
+    return false;
+  }
+  updateProfile(id, updates) {
+    this.load();
+    for (const [email, user] of this.users.entries()) {
+      if (user.id === id) {
+        const updated = { ...user, ...updates };
+        this.users.set(email, updated);
+        this.save();
+        return updated;
+      }
+    }
+    return null;
+  }
 };
 var localAuthStore = new LocalAuthStore();
+async function syncLocalUsersToMongo() {
+  if (mongoose.connection.readyState !== 1) return;
+  try {
+    const list = localAuthStore.getAll();
+    for (const u of list) {
+      if (!u.email) continue;
+      const normalized = u.email.toLowerCase().trim();
+      const existing = await UserModel.findOne({ email: normalized }).lean();
+      if (!existing) {
+        await UserModel.create({
+          email: normalized,
+          password: u.passwordHash,
+          name: u.name,
+          aspirantType: u.aspirantType || "MDCAT Aspirant",
+          targetExam: u.targetExam || "MDCAT 2025",
+          targetYear: u.targetYear || "2025",
+          dreamMedicalCollege: u.dreamMedicalCollege || "",
+          personalMotto: u.personalMotto || "",
+          avatarUrl: u.avatarUrl || ""
+        });
+        console.log(`[MongoDB Sync] Backfilled local user ${normalized} to MongoDB Atlas`);
+      }
+    }
+  } catch (syncErr) {
+    console.warn("[MongoDB Sync] Notice backfilling users to Atlas:", syncErr?.message);
+  }
+}
 async function getUserData(userId, email) {
   const isMongoActive = await ensureMongoConnected();
-  if (isMongoActive) {
+  if (isMongoActive && mongoose.connection.readyState === 1) {
     try {
       let doc = await UserStudyDataModel.findOne({ userId });
       if (!doc) {
@@ -1870,7 +1952,7 @@ async function getUserData(userId, email) {
 }
 async function updateUserData(userId, updater, email) {
   const isMongoActive = await ensureMongoConnected();
-  if (isMongoActive) {
+  if (isMongoActive && mongoose.connection.readyState === 1) {
     try {
       let doc = await UserStudyDataModel.findOne({ userId });
       let currentData;
@@ -1897,70 +1979,104 @@ async function updateUserData(userId, updater, email) {
   dbStore.updateData(updater);
   return dbStore.getData();
 }
-app.post("/api/auth/signup", async (req, res) => {
+app.post(["/api/auth/signup", "/api/auth/register"], async (req, res) => {
   try {
-    const { email, password, name, targetExam, targetYear, dreamMedicalCollege } = req.body;
+    const { email, password, name, targetExam, targetYear, dreamMedicalCollege, aspirantType, personalMotto } = req.body;
     if (!email || !password) {
-      return res.status(400).json({ error: "Email and password are required" });
+      return res.status(400).json({
+        success: false,
+        message: "Email and password are required",
+        error: "Email and password are required"
+      });
     }
     if (typeof password !== "string" || password.length < 6) {
-      return res.status(400).json({ error: "Password must be at least 6 characters long" });
+      return res.status(400).json({
+        success: false,
+        message: "Password must be at least 6 characters long",
+        error: "Password must be at least 6 characters long"
+      });
     }
     const normalizedEmail = String(email).toLowerCase().trim();
     const isMongoActive = await ensureMongoConnected();
-    if (isMongoActive) {
+    if (isMongoActive && mongoose.connection.readyState === 1) {
       try {
-        const existing = await UserModel.findOne({ email: normalizedEmail });
+        const existing = await UserModel.findOne({ email: normalizedEmail }).lean();
         if (existing) {
-          return res.status(409).json({ error: "An account with this email already exists. Please log in." });
+          return res.status(409).json({
+            success: false,
+            message: "An account with this email already exists. Please log in.",
+            error: "User already exists"
+          });
         }
       } catch (e) {
-        console.warn("[Auth] Mongo check failed, falling back to local store:", e);
+        console.warn("[Auth] Mongo check notice:", e?.message || e);
       }
     }
     if (localAuthStore.findByEmail(normalizedEmail)) {
-      return res.status(409).json({ error: "An account with this email already exists. Please log in." });
+      return res.status(409).json({
+        success: false,
+        message: "An account with this email already exists. Please log in.",
+        error: "User already exists"
+      });
     }
     const hashedPassword = await bcrypt.hash(password, 10);
     const userName = name && String(name).trim() ? String(name).trim() : normalizedEmail.split("@")[0];
     const localUserId = `usr_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-    localAuthStore.create({
+    const createdLocal = localAuthStore.create({
       id: localUserId,
       email: normalizedEmail,
       passwordHash: hashedPassword,
       name: userName,
-      targetExam: targetExam ? String(targetExam).trim() : void 0,
-      targetYear: targetYear ? String(targetYear).trim() : void 0,
+      aspirantType: aspirantType ? String(aspirantType).trim() : "MDCAT Aspirant",
+      targetExam: targetExam ? String(targetExam).trim() : "MDCAT 2025",
+      targetYear: targetYear ? String(targetYear).trim() : "2025",
       dreamMedicalCollege: dreamMedicalCollege ? String(dreamMedicalCollege).trim() : void 0,
+      personalMotto: personalMotto ? String(personalMotto).trim() : void 0,
       createdAt: (/* @__PURE__ */ new Date()).toISOString()
     });
     const userInitialData = JSON.parse(JSON.stringify(INITIAL_DATABASE));
     userInitialData.userProfile.name = userName;
+    if (aspirantType) userInitialData.userProfile.aspirantType = String(aspirantType).trim();
     if (targetExam) userInitialData.userProfile.targetExam = String(targetExam).trim();
     if (targetYear) userInitialData.userProfile.targetYear = String(targetYear).trim();
     if (dreamMedicalCollege) userInitialData.userProfile.dreamMedicalCollege = String(dreamMedicalCollege).trim();
+    if (personalMotto) userInitialData.userProfile.personalMotto = String(personalMotto).trim();
     let effectiveUserId = localUserId;
-    if (isMongoActive) {
+    if (isMongoActive && mongoose.connection.readyState === 1) {
       try {
-        const newUser = await UserModel.create({
-          email: normalizedEmail,
-          password: hashedPassword,
-          name: userName
-        });
-        effectiveUserId = newUser._id.toString();
+        const mongoUser = await UserModel.findOneAndUpdate(
+          { email: normalizedEmail },
+          {
+            email: normalizedEmail,
+            password: hashedPassword,
+            name: userName,
+            aspirantType: aspirantType ? String(aspirantType).trim() : "MDCAT Aspirant",
+            targetExam: targetExam ? String(targetExam).trim() : "MDCAT 2025",
+            targetYear: targetYear ? String(targetYear).trim() : "2025",
+            dreamMedicalCollege: dreamMedicalCollege ? String(dreamMedicalCollege).trim() : "",
+            personalMotto: personalMotto ? String(personalMotto).trim() : ""
+          },
+          { upsert: true, new: true }
+        );
+        effectiveUserId = mongoUser._id.toString();
+        createdLocal.id = effectiveUserId;
+        localAuthStore.create(createdLocal);
         await UserStudyDataModel.findOneAndUpdate(
           { userId: effectiveUserId },
           { userId: effectiveUserId, userEmail: normalizedEmail, data: userInitialData },
           { upsert: true, new: true }
         );
+        console.log(`[Auth] Registered & verified new user in MongoDB Atlas: ${normalizedEmail} (ID: ${effectiveUserId})!`);
       } catch (mongoErr) {
-        console.warn("[Auth] Mongo user creation notice (using local fallback):", mongoErr?.message);
+        console.error("[Auth] Error writing user to MongoDB Atlas:", mongoErr?.message);
       }
+    } else {
+      console.warn(`[Auth] MongoDB not active; registered new user ${normalizedEmail} in resilient store.`);
     }
     const token = jwt.sign(
       { userId: effectiveUserId, email: normalizedEmail, name: userName },
       JWT_SECRET,
-      { expiresIn: "7d" }
+      { expiresIn: "30d" }
     );
     res.status(201).json({
       success: true,
@@ -1969,37 +2085,53 @@ app.post("/api/auth/signup", async (req, res) => {
       user: {
         id: effectiveUserId,
         email: normalizedEmail,
-        name: userName
+        name: userName,
+        aspirantType: aspirantType || "MDCAT Aspirant",
+        targetExam: targetExam || "MDCAT 2025",
+        targetYear: targetYear || "2025",
+        dreamMedicalCollege: dreamMedicalCollege || ""
       },
       data: userInitialData
     });
   } catch (err) {
     console.error("Signup failed:", err);
-    res.status(500).json({ error: "Signup failed", details: err?.message || String(err) });
+    res.status(500).json({
+      success: false,
+      message: "Signup failed. Please try again.",
+      error: err?.message || String(err)
+    });
   }
 });
 app.post("/api/auth/login", async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!email || !password) {
-      return res.status(400).json({ error: "Email and password are required" });
+      return res.status(400).json({
+        success: false,
+        message: "Email and password are required",
+        error: "Email and password are required"
+      });
     }
     const normalizedEmail = String(email).toLowerCase().trim();
     const isMongoActive = await ensureMongoConnected();
     let foundUser = null;
-    if (isMongoActive) {
+    if (isMongoActive && mongoose.connection.readyState === 1) {
       try {
-        const mongoUser = await UserModel.findOne({ email: normalizedEmail });
+        const mongoUser = await UserModel.findOne({ email: normalizedEmail }).lean();
         if (mongoUser) {
           foundUser = {
             id: mongoUser._id.toString(),
             email: mongoUser.email,
             name: mongoUser.name || mongoUser.email.split("@")[0],
-            passwordHash: mongoUser.password
+            passwordHash: mongoUser.password,
+            aspirantType: mongoUser.aspirantType,
+            targetExam: mongoUser.targetExam,
+            targetYear: mongoUser.targetYear,
+            dreamMedicalCollege: mongoUser.dreamMedicalCollege
           };
         }
       } catch (mongoErr) {
-        console.warn("[Auth] Mongo lookup notice, falling back to local store:", mongoErr?.message);
+        console.warn("[Auth] Mongo lookup notice:", mongoErr?.message);
       }
     }
     if (!foundUser) {
@@ -2009,22 +2141,52 @@ app.post("/api/auth/login", async (req, res) => {
           id: local.id,
           email: local.email,
           name: local.name,
-          passwordHash: local.passwordHash
+          passwordHash: local.passwordHash,
+          aspirantType: local.aspirantType,
+          targetExam: local.targetExam,
+          targetYear: local.targetYear,
+          dreamMedicalCollege: local.dreamMedicalCollege
         };
       }
     }
     if (!foundUser) {
-      return res.status(401).json({ error: "Invalid email or password" });
+      return res.status(401).json({
+        success: false,
+        message: "No account found with this email. Please check your spelling or sign up.",
+        error: "Invalid email or password"
+      });
     }
     const validPassword = await bcrypt.compare(password, foundUser.passwordHash);
     if (!validPassword) {
-      return res.status(401).json({ error: "Invalid email or password" });
+      return res.status(401).json({
+        success: false,
+        message: "Incorrect password. Please verify and try again.",
+        error: "Invalid password"
+      });
+    }
+    if (isMongoActive && mongoose.connection.readyState === 1) {
+      try {
+        const inMongo = await UserModel.findOne({ email: normalizedEmail }).lean();
+        if (!inMongo) {
+          const created = await UserModel.create({
+            email: normalizedEmail,
+            password: foundUser.passwordHash,
+            name: foundUser.name,
+            aspirantType: foundUser.aspirantType || "MDCAT Aspirant",
+            targetExam: foundUser.targetExam || "MDCAT 2025",
+            targetYear: foundUser.targetYear || "2025",
+            dreamMedicalCollege: foundUser.dreamMedicalCollege || ""
+          });
+          foundUser.id = created._id.toString();
+        }
+      } catch (_) {
+      }
     }
     const userData = await getUserData(foundUser.id, foundUser.email);
     const token = jwt.sign(
       { userId: foundUser.id, email: foundUser.email, name: foundUser.name },
       JWT_SECRET,
-      { expiresIn: "7d" }
+      { expiresIn: "30d" }
     );
     res.json({
       success: true,
@@ -2033,22 +2195,30 @@ app.post("/api/auth/login", async (req, res) => {
       user: {
         id: foundUser.id,
         email: foundUser.email,
-        name: foundUser.name
+        name: foundUser.name,
+        aspirantType: foundUser.aspirantType || "MDCAT Aspirant",
+        targetExam: foundUser.targetExam || "MDCAT 2025",
+        targetYear: foundUser.targetYear || "2025",
+        dreamMedicalCollege: foundUser.dreamMedicalCollege || ""
       },
       data: userData
     });
   } catch (err) {
     console.error("Login failed:", err);
-    res.status(500).json({ error: "Login failed", details: err?.message || String(err) });
+    res.status(500).json({
+      success: false,
+      message: "Login failed. Please try again.",
+      error: err?.message || String(err)
+    });
   }
 });
 app.get("/api/auth/me", authenticateToken, async (req, res) => {
   try {
     const userId = req.user?.userId;
     const isMongoActive = await ensureMongoConnected();
-    if (isMongoActive) {
+    if (isMongoActive && mongoose.connection.readyState === 1) {
       try {
-        const user = await UserModel.findById(userId).select("-password");
+        const user = await UserModel.findById(userId).select("-password").lean();
         if (user) {
           return res.json({
             success: true,
@@ -2083,10 +2253,103 @@ app.get("/api/auth/me", authenticateToken, async (req, res) => {
         }
       });
     }
-    res.status(404).json({ error: "User not found" });
+    res.status(404).json({ success: false, message: "User not found", error: "User not found" });
   } catch (err) {
-    res.status(500).json({ error: "Failed to fetch current user" });
+    res.status(500).json({ success: false, message: "Failed to fetch current user", error: err?.message || String(err) });
   }
+});
+app.put("/api/auth/profile", authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+    const { name, targetExam, targetYear, dreamMedicalCollege, personalMotto, avatarUrl } = req.body;
+    const isMongoActive = await ensureMongoConnected();
+    if (isMongoActive && mongoose.connection.readyState === 1) {
+      try {
+        await UserModel.findByIdAndUpdate(userId, {
+          ...name && { name: String(name).trim() }
+        });
+      } catch (_) {
+      }
+    }
+    const updatedLocal = localAuthStore.updateProfile(userId, {
+      ...name && { name: String(name).trim() },
+      ...targetExam && { targetExam: String(targetExam).trim() },
+      ...targetYear && { targetYear: String(targetYear).trim() },
+      ...dreamMedicalCollege && { dreamMedicalCollege: String(dreamMedicalCollege).trim() },
+      ...personalMotto && { personalMotto: String(personalMotto).trim() },
+      ...avatarUrl && { avatarUrl: String(avatarUrl).trim() }
+    });
+    await updateUserData(userId, (db) => {
+      if (name) db.userProfile.name = String(name).trim();
+      if (targetExam) db.userProfile.targetExam = String(targetExam).trim();
+      if (targetYear) db.userProfile.targetYear = String(targetYear).trim();
+      if (dreamMedicalCollege) db.userProfile.dreamMedicalCollege = String(dreamMedicalCollege).trim();
+      if (personalMotto) db.userProfile.personalMotto = String(personalMotto).trim();
+      if (avatarUrl) db.userProfile.avatarUrl = String(avatarUrl).trim();
+    }, req.user?.email);
+    res.json({
+      success: true,
+      message: "Profile updated successfully!",
+      user: {
+        id: userId,
+        email: req.user?.email,
+        name: name || updatedLocal?.name || req.user?.name
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Failed to update profile", error: err?.message || String(err) });
+  }
+});
+app.post("/api/auth/change-password", authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+    const userEmail = req.user?.email;
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ success: false, message: "Current and new password are required" });
+    }
+    if (typeof newPassword !== "string" || newPassword.length < 6) {
+      return res.status(400).json({ success: false, message: "New password must be at least 6 characters long" });
+    }
+    const isMongoActive = await ensureMongoConnected();
+    let userFound = false;
+    if (isMongoActive && mongoose.connection.readyState === 1) {
+      try {
+        const mongoUser = await UserModel.findById(userId);
+        if (mongoUser) {
+          const match = await bcrypt.compare(currentPassword, mongoUser.password);
+          if (!match) {
+            return res.status(400).json({ success: false, message: "Current password does not match." });
+          }
+          mongoUser.password = await bcrypt.hash(newPassword, 10);
+          await mongoUser.save();
+          userFound = true;
+        }
+      } catch (_) {
+      }
+    }
+    if (!userFound) {
+      const local = localAuthStore.findById(userId) || localAuthStore.findByEmail(userEmail || "");
+      if (local) {
+        const match = await bcrypt.compare(currentPassword, local.passwordHash);
+        if (!match) {
+          return res.status(400).json({ success: false, message: "Current password does not match." });
+        }
+        const newHash = await bcrypt.hash(newPassword, 10);
+        localAuthStore.updatePassword(local.email, newHash);
+        userFound = true;
+      }
+    }
+    if (!userFound) {
+      return res.status(404).json({ success: false, message: "User account not found" });
+    }
+    res.json({ success: true, message: "Password changed successfully!" });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Failed to change password", error: err?.message || String(err) });
+  }
+});
+app.post("/api/auth/logout", (req, res) => {
+  res.json({ success: true, message: "Logged out successfully" });
 });
 var handleHealth = (req, res) => {
   res.json({
@@ -2321,9 +2584,50 @@ app.post("/api/chapters/:id/toggle", optionalAuthenticateToken, async (req, res)
   }
   res.json(updatedChapter);
 });
-app.get("/api/materials", (req, res) => {
+app.get("/api/materials", optionalAuthenticateToken, async (req, res) => {
   const { subject, type, search } = req.query;
-  let list = dbStore.getData().materials;
+  let materialsList = [];
+  if (req.user && req.user.userId) {
+    const userData = await getUserData(req.user.userId, req.user.email);
+    materialsList = userData.materials || [];
+  } else {
+    materialsList = dbStore.getData().materials || [];
+  }
+  try {
+    const isMongoActive = await ensureMongoConnected();
+    if (isMongoActive && mongoose.connection.readyState === 1) {
+      const mongoMats = await MaterialModel.find().lean();
+      if (mongoMats && mongoMats.length > 0) {
+        const map = /* @__PURE__ */ new Map();
+        for (const m of mongoMats) {
+          map.set(m.id, {
+            id: m.id,
+            title: m.title || "",
+            subject: m.subject || "Biology",
+            chapter: m.chapter || "",
+            topic: m.topic || "",
+            type: m.type || "PDF",
+            description: m.description || "",
+            fileName: m.fileName,
+            fileUrl: m.fileUrl,
+            fileBase64: m.fileBase64,
+            fileSize: m.fileSize,
+            contentSnippet: m.contentSnippet,
+            uploadDate: m.uploadDate || "",
+            tags: m.tags || [],
+            bookmarked: !!m.bookmarked,
+            userId: m.userId || ""
+          });
+        }
+        for (const m of materialsList) {
+          map.set(m.id, m);
+        }
+        materialsList = Array.from(map.values());
+      }
+    }
+  } catch (_) {
+  }
+  let list = materialsList;
   if (subject && subject !== "All") {
     list = list.filter((m) => m.subject.toLowerCase() === subject.toLowerCase());
   }
@@ -2338,7 +2642,7 @@ app.get("/api/materials", (req, res) => {
   }
   res.json(list);
 });
-app.post("/api/materials", async (req, res) => {
+app.post("/api/materials", optionalAuthenticateToken, async (req, res) => {
   const { title, subject, chapter, topic, type, description, contentSnippet, tags, fileBase64, fileName, fileSize } = req.body;
   if (!title || !subject || !chapter) {
     return res.status(400).json({ error: "Title, Subject, and Chapter are required." });
@@ -2353,7 +2657,7 @@ app.post("/api/materials", async (req, res) => {
       if (cloudResult && cloudResult.url) {
         savedFileName = fileName;
         savedFileUrl = cloudResult.url;
-        console.log("[Materials] File permanently uploaded to Cloudinary:", savedFileUrl);
+        console.log("[Materials] File permanently uploaded to Cloudinary CDN:", savedFileUrl);
       } else {
         const sanitizedName = Date.now() + "_" + fileName.replace(/[^a-zA-Z0-9.-]/g, "_");
         const filePath = path.join(UPLOADS_DIR, sanitizedName);
@@ -2381,10 +2685,13 @@ app.post("/api/materials", async (req, res) => {
     fileSize: fileSize || "1.5 MB",
     uploadDate: (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
     tags: Array.isArray(tags) ? tags : (tags || "").split(",").map((t) => t.trim()).filter(Boolean),
-    bookmarked: false
+    bookmarked: false,
+    userId: req.user?.userId || ""
   };
   dbStore.updateData((data) => {
-    data.materials.unshift(newMaterial);
+    if (!data.materials.some((m) => m.id === newMaterial.id)) {
+      data.materials.unshift(newMaterial);
+    }
     data.activities.unshift({
       id: "act_" + Date.now(),
       title: `Uploaded Study Material: ${newMaterial.title}`,
@@ -2394,8 +2701,28 @@ app.post("/api/materials", async (req, res) => {
       timestamp: "Just now"
     });
   });
+  if (req.user && req.user.userId) {
+    try {
+      await updateUserData(req.user.userId, (data) => {
+        if (!data.materials.some((m) => m.id === newMaterial.id)) {
+          data.materials.unshift(newMaterial);
+        }
+        data.activities.unshift({
+          id: "act_" + Date.now(),
+          title: `Uploaded Study Material: ${newMaterial.title}`,
+          description: `Added ${newMaterial.type} for ${newMaterial.subject} - Chapter: ${newMaterial.chapter}.`,
+          subject: newMaterial.subject,
+          type: "pdf_uploaded",
+          timestamp: "Just now"
+        });
+      }, req.user.email);
+    } catch (uErr) {
+      console.warn("Notice updating user dedicated document for material:", uErr);
+    }
+  }
   try {
-    if (mongoose.connection.readyState >= 1) {
+    const isMongoActive = await ensureMongoConnected();
+    if (isMongoActive && mongoose.connection.readyState === 1) {
       await MaterialModel.findOneAndUpdate(
         { id: newMaterial.id },
         newMaterial,
@@ -2408,7 +2735,7 @@ app.post("/api/materials", async (req, res) => {
   }
   res.status(201).json(newMaterial);
 });
-app.delete("/api/materials/:id", async (req, res) => {
+app.delete("/api/materials/:id", optionalAuthenticateToken, async (req, res) => {
   const { id } = req.params;
   let deleted = false;
   dbStore.updateData((data) => {
@@ -2418,8 +2745,18 @@ app.delete("/api/materials/:id", async (req, res) => {
       deleted = true;
     }
   });
+  if (req.user && req.user.userId) {
+    await updateUserData(req.user.userId, (data) => {
+      const idx = data.materials.findIndex((m) => m.id === id);
+      if (idx !== -1) {
+        data.materials.splice(idx, 1);
+        deleted = true;
+      }
+    }, req.user.email);
+  }
   try {
-    if (mongoose.connection.readyState >= 1) {
+    const isMongoActive = await ensureMongoConnected();
+    if (isMongoActive && mongoose.connection.readyState === 1) {
       await MaterialModel.deleteOne({ id });
       console.log(`[MongoDB] Successfully deleted study material ${id} from MongoDB`);
     }
@@ -3203,8 +3540,9 @@ Student's Question:
     }
     contents.push(userContent);
     let reply = "";
+    let usedModel = "gemini-3.8-flash";
     try {
-      const { response } = await callGeminiWithModelFallback({
+      const { response, modelUsed } = await callGeminiWithModelFallback({
         contents,
         config: {
           systemInstruction: systemPrompt,
@@ -3212,7 +3550,8 @@ Student's Question:
         },
         endpointName: "/api/ai/ask"
       });
-      reply = response.text || "";
+      usedModel = modelUsed || "gemini-3.8-flash";
+      reply = response.text || response.candidates?.[0]?.content?.parts?.map((p) => p.text).filter(Boolean).join("\n") || "";
     } catch (err) {
       console.error("All Gemini fallback models exhausted in /api/ai/ask:", err);
       reply = `## \u{1F3AF} MDCAT Syllabus Guidance
@@ -3225,21 +3564,42 @@ Google Gemini servers par is waqt temporary traffic surge (503) hai. Lekin aapka
 
 *Aapka sawal tha:* "${(question || "").slice(0, 80)}"`;
     }
-    if (!reply) {
-      reply = "I analyzed your study materials, but could not generate a response. Please rephrase your question.";
+    const cleanQ = (question || "").trim().toLowerCase();
+    const isGreeting = /^(hy|hey|hi|hello|salam|slam|assalam|aao|hlo)\b/i.test(cleanQ) || cleanQ === "hy" || cleanQ === "hi" || cleanQ === "hello";
+    if (!reply || !reply.trim()) {
+      if (isGreeting) {
+        reply = `## \u{1FA7A} Assalam-o-Alaikum & Welcome, Future Doctor! \u2728
+
+Main **MediPrep AI** hoon \u2014 aapka 24/7 First-Year Sindh Textbook Board aur MDCAT Preparation Guide!
+
+### \u{1F52C} Main kis tarah madad kar sakta hoon:
+1. **Concept Breakdown:** Biology, Chemistry, Physics ya English ka koi bhi topic asaan Roman Urdu aur standard terminology mein samjhein.
+2. **Past Paper & Diagram Solutions:** Koi bhi MDCAT question, numerical ya diagram attach karein aur step-by-step solution payein.
+3. **High-Yield Revision:** Sindh Board ke high-priority MDCAT exam points.
+
+> \u{1F4A1} **Abhi Shuru Karein:** Niche apna sawal likhein ya koi photo upload karein aur **Ask** dabayein!`;
+      } else {
+        reply = `## \u{1F3AF} MDCAT Syllabus Guidance
+
+Aapka sawal register ho chuka hai. Baraye meharbani apna sawal thora mazeed wazeh karein ya chapter ka naam batayein taake exact syllabus explanation di ja sake.`;
+      }
     }
     reply = reply.replace(/\\text\{([^}]+)\}/g, "$1").replace(/\\mathrm\{([^}]+)\}/g, "$1").replace(/\\mathbf\{([^}]+)\}/g, "$1").replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, "($1 / $2)").replace(/\$\$/g, "").replace(/(?<!\\)\$/g, "");
     dbStore.updateData((data) => {
       data.activities.unshift({
         id: "act_" + Date.now(),
         title: `AI Assistant Consultation: ${subject || "Study"}`,
-        description: `Asked: "${question.slice(0, 50)}${question.length > 50 ? "..." : ""}"`,
+        description: `Asked: "${(question || "Question").slice(0, 50)}${(question || "").length > 50 ? "..." : ""}"`,
         subject: subject || "General",
         type: "ai_question",
         timestamp: "Just now"
       });
     });
-    res.json({ reply });
+    res.json({
+      reply,
+      answer: reply,
+      modelUsed: usedModel
+    });
   } catch (err) {
     console.error("API Error in /api/ai/ask:", err);
     res.status(500).json({

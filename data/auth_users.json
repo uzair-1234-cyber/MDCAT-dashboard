@@ -137,5 +137,32 @@
     "personalMotto": "Discipline Today → Doctor Tomorrow.",
     "createdAt": "2026-10-03T08:20:10.891Z",
     "lastLoginAt": "2026-10-03T08:20:10.891Z"
+  },
+  {
+    "id": "6abe0dcfb2e678f5b245d88e",
+    "email": "testaspirant@example.com",
+    "name": "Test Aspirant",
+    "passwordHash": "$2b$10$AhMbbQ4vx26y0k1UNeB9v.mtBluC1P7/XaV8S8jgqoThi.LidNHh2",
+    "salt": "bcrypt",
+    "aspirantType": "MDCAT Aspirant",
+    "targetExam": "MDCAT 2025",
+    "targetYear": "2025",
+    "dreamMedicalCollege": "",
+    "personalMotto": "",
+    "createdAt": "2026-10-01T07:37:51.207Z"
+  },
+  {
+    "id": "usr_1791621827673_3bf666",
+    "email": "test_student_mdcat@gmail.com",
+    "name": "Dr. Aisha Khan",
+    "passwordHash": "$2b$10$fkYoimldRPzRIbQmS7a2v.MxDE6uIpZj4kiYvlV/IuRA7bjDdwSLm",
+    "salt": "bcrypt",
+    "aspirantType": "First-Year Sindh Board Medical Aspirant",
+    "targetExam": "MDCAT 2025",
+    "targetYear": "2025",
+    "dreamMedicalCollege": "Dow University of Health Sciences",
+    "personalMotto": "Discipline Today → Doctor Tomorrow.",
+    "createdAt": "2026-10-10T08:43:47.739Z",
+    "lastLoginAt": "2026-10-10T08:43:55.007Z"
   }
 ]

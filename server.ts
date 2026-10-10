@@ -60,8 +60,6 @@ if (geminiApiKey) {
 const STABLE_FALLBACK_MODELS = [
   'gemini-2.5-flash',
   'gemini-2.5-flash-lite',
-  'gemini-3.1-flash-lite',
-  'gemini-flash-latest',
 ];
 
 interface FallbackGenParams {
@@ -1460,6 +1458,20 @@ const RevisionPlanModel = mongoose.models.RevisionPlan || mongoose.model('Revisi
 const ActivityModel = mongoose.models.Activity || mongoose.model('Activity', ActivityMongoSchema);
 const AppStateModel = mongoose.models.AppState || mongoose.model('AppState', AppStateMongoSchema);
 
+const UserMongoSchema = new mongoose.Schema({
+  email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+  password: { type: String, required: true },
+  name: { type: String, default: '' },
+  aspirantType: { type: String, default: 'MDCAT Aspirant' },
+  targetExam: { type: String, default: 'MDCAT 2025' },
+  targetYear: { type: String, default: '2025' },
+  dreamMedicalCollege: { type: String, default: '' },
+  personalMotto: { type: String, default: '' },
+  avatarUrl: { type: String, default: '' },
+  role: { type: String, default: 'student' },
+}, { timestamps: true, bufferCommands: false, collection: 'users' });
+const UserModel = mongoose.models.User || mongoose.model('User', UserMongoSchema);
+
 // Helper: Sync standard 1st Year Biology (14), Chemistry (12), Physics (14) & English chapters while preserving user progress & all 2nd Year chapters
 function syncStandardChapters(existingChapters: ChapterData[]): ChapterData[] {
   const standard1stBio = INITIAL_DATABASE.chapters.filter((c) => c.subject === 'Biology' && (c.classYear === '1st Year' || !c.classYear));
@@ -2091,7 +2103,7 @@ const dbStore = {
 // -------------------------------------------------------------
 
 // 1. Register new medical aspirant
-app.post('/api/auth/register', (req, res) => {
+app.post(['/api/auth/register', '/api/auth/signup'], async (req, res) => {
   try {
     const result = authManager.register(req.body);
     if (!result.success || !result.user) {
@@ -2109,6 +2121,32 @@ app.post('/api/auth/register', (req, res) => {
         personalMotto: result.user!.personalMotto,
       };
     });
+
+    // Also persist in MongoDB Atlas if connected
+    if (mongoose.connection.readyState === 1) {
+      try {
+        const normalizedEmail = result.user.email.toLowerCase().trim();
+        const rawUser = authManager.getUserByEmail(normalizedEmail);
+        await UserModel.findOneAndUpdate(
+          { email: normalizedEmail },
+          {
+            email: normalizedEmail,
+            password: rawUser?.passwordHash || '',
+            name: result.user.name,
+            aspirantType: result.user.aspirantType,
+            targetExam: result.user.targetExam,
+            targetYear: result.user.targetYear,
+            dreamMedicalCollege: result.user.dreamMedicalCollege,
+            personalMotto: result.user.personalMotto,
+          },
+          { upsert: true, new: true }
+        );
+        console.log(`[MongoDB] Successfully persisted student ${result.user.email} into MongoDB Atlas!`);
+      } catch (mongoErr: any) {
+        console.error('[MongoDB] Notice saving student to MongoDB Atlas:', mongoErr?.message);
+      }
+    }
+
     console.log(`[Auth] Registered new student: Dr. ${result.user.name} (${result.user.email}) -> Store ID: ${result.user.id}`);
     res.status(201).json(result);
   } catch (err: any) {
@@ -2118,10 +2156,37 @@ app.post('/api/auth/register', (req, res) => {
 });
 
 // 2. Student Login
-app.post('/api/auth/login', (req, res) => {
+app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
-    const result = authManager.login(email, password);
+    let result = authManager.login(email, password);
+
+    // If not found in local memory and Mongo is connected, check MongoDB Atlas!
+    if (!result.success && mongoose.connection.readyState === 1) {
+      try {
+        const normalizedEmail = String(email || '').trim().toLowerCase();
+        const mongoUser = (await UserModel.findOne({ email: normalizedEmail }).lean()) as any;
+        if (mongoUser) {
+          authManager.importUser({
+            id: mongoUser._id.toString(),
+            email: mongoUser.email,
+            name: mongoUser.name || mongoUser.email.split('@')[0],
+            passwordHash: mongoUser.password,
+            salt: 'bcrypt',
+            aspirantType: mongoUser.aspirantType || 'MDCAT Aspirant',
+            targetExam: mongoUser.targetExam || 'MDCAT 2025',
+            targetYear: mongoUser.targetYear || '2025',
+            dreamMedicalCollege: mongoUser.dreamMedicalCollege || '',
+            personalMotto: mongoUser.personalMotto || '',
+            createdAt: mongoUser.createdAt ? new Date(mongoUser.createdAt).toISOString() : new Date().toISOString(),
+          });
+          result = authManager.login(email, password);
+        }
+      } catch (mErr: any) {
+        console.warn('[MongoDB] Lookup notice on login:', mErr?.message);
+      }
+    }
+
     if (!result.success) {
       return res.status(401).json(result);
     }
@@ -4432,12 +4497,71 @@ async function startServer() {
   if (mongoUri && !mongoUri.includes('your_mongodb_connection_string')) {
     try {
       if (mongoose.connection.readyState < 1) {
+        let dbName = 'studypannel';
+        try {
+          const url = new URL(mongoUri.replace(/^mongodb\+srv:\/\//i, 'http://').replace(/^mongodb:\/\//i, 'http://'));
+          const pathname = url.pathname.replace(/^\//, '').split('?')[0].trim();
+          if (pathname && pathname.length > 0) dbName = pathname;
+        } catch (_) {}
+
         await mongoose.connect(mongoUri, {
-          serverSelectionTimeoutMS: 5000,
-          dbName: 'studypannel',
+          serverSelectionTimeoutMS: 15000,
+          connectTimeoutMS: 15000,
+          socketTimeoutMS: 45000,
+          bufferCommands: false,
+          maxPoolSize: 10,
+          dbName,
         });
-        console.log('[MongoDB Startup] Connected successfully to database:', mongoose.connection.name || 'studypannel');
+        console.log('[MongoDB Startup] Connected successfully to database:', mongoose.connection.name || dbName);
       }
+
+      // Sync users bidirectionally between MongoDB Atlas and authManager
+      try {
+        const mongoUsers = (await UserModel.find().lean()) as any[];
+        for (const mu of mongoUsers) {
+          if (!mu.email) continue;
+          const existing = authManager.getUserByEmail(mu.email);
+          if (!existing) {
+            authManager.importUser({
+              id: mu._id ? mu._id.toString() : 'usr_' + Date.now(),
+              email: mu.email,
+              name: mu.name || mu.email.split('@')[0],
+              passwordHash: mu.password || '',
+              salt: 'bcrypt',
+              aspirantType: mu.aspirantType || 'MDCAT Aspirant',
+              targetExam: mu.targetExam || 'MDCAT 2025',
+              targetYear: mu.targetYear || '2025',
+              dreamMedicalCollege: mu.dreamMedicalCollege || '',
+              personalMotto: mu.personalMotto || '',
+              createdAt: mu.createdAt ? new Date(mu.createdAt).toISOString() : new Date().toISOString(),
+            });
+            console.log(`[MongoDB Startup] Loaded user ${mu.email} from Atlas into local cache`);
+          }
+        }
+
+        const localUsers = authManager.getAllUsers();
+        for (const lu of localUsers) {
+          if (!lu.email) continue;
+          const normalized = lu.email.toLowerCase().trim();
+          const exists = await UserModel.findOne({ email: normalized }).lean();
+          if (!exists) {
+            await UserModel.create({
+              email: normalized,
+              password: lu.passwordHash,
+              name: lu.name,
+              aspirantType: lu.aspirantType || 'MDCAT Aspirant',
+              targetExam: lu.targetExam || 'MDCAT 2025',
+              targetYear: lu.targetYear || '2025',
+              dreamMedicalCollege: lu.dreamMedicalCollege || '',
+              personalMotto: lu.personalMotto || '',
+            });
+            console.log(`[MongoDB Startup] Synced student ${normalized} to MongoDB Atlas`);
+          }
+        }
+      } catch (uSyncErr: any) {
+        console.warn('[MongoDB Startup] User sync notice:', uSyncErr?.message);
+      }
+
       // Pre-sync materials into default store on boot
       const defaultStore = getUserStore('usr_uzair_primary');
       await defaultStore.syncFromMongoOrSeed();

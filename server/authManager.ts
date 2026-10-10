@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
+import bcrypt from 'bcrypt';
 import { fileURLToPath } from 'url';
 import type { Request } from 'express';
 
@@ -114,12 +115,24 @@ class AuthManager {
   }
 
   private hashPassword(password: string): { salt: string; hash: string } {
-    const salt = crypto.randomBytes(16).toString('hex');
-    const hash = crypto.scryptSync(password, salt, 64).toString('hex');
-    return { salt, hash };
+    try {
+      const hash = bcrypt.hashSync(password, 10);
+      return { salt: 'bcrypt', hash };
+    } catch {
+      const salt = crypto.randomBytes(16).toString('hex');
+      const hash = crypto.scryptSync(password, salt, 64).toString('hex');
+      return { salt, hash };
+    }
   }
 
   private verifyPassword(password: string, salt: string, storedHash: string): boolean {
+    if (salt === 'bcrypt' || (storedHash && (storedHash.startsWith('$2a$') || storedHash.startsWith('$2b$')))) {
+      try {
+        return bcrypt.compareSync(password, storedHash);
+      } catch {
+        return false;
+      }
+    }
     try {
       const hash = crypto.scryptSync(password, salt, 64).toString('hex');
       return crypto.timingSafeEqual(Buffer.from(hash, 'hex'), Buffer.from(storedHash, 'hex'));
@@ -384,6 +397,20 @@ class AuthManager {
     this.saveUsers();
 
     return { success: true, message: 'Password changed successfully.' };
+  }
+
+  public getAllUsers(): AuthUserRecord[] {
+    return Array.from(this.users.values());
+  }
+
+  public getUserByEmail(email: string): AuthUserRecord | undefined {
+    const norm = String(email || '').trim().toLowerCase();
+    return Array.from(this.users.values()).find((u) => u.email.toLowerCase() === norm);
+  }
+
+  public importUser(u: AuthUserRecord) {
+    this.users.set(u.id, u);
+    this.saveUsers();
   }
 }
 
