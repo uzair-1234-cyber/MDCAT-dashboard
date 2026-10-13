@@ -151,8 +151,8 @@ if (geminiApiKey) {
   });
 }
 var STABLE_FALLBACK_MODELS = [
-  "gemini-2.5-flash",
-  "gemini-2.5-flash-lite"
+  "gemini-3.5-flash",
+  "gemini-3.5-flash-lite"
 ];
 function formatAiErrorMessage(err) {
   if (!err) return "AI request encountered an unexpected issue.";
